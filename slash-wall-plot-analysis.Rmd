@@ -1,0 +1,107 @@
+---
+title: "Slash Wall Plot Analysis"
+author: "Peter Smallidge"
+date: "10/14/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE}
+# Library: dplyr, expss, ggplot2, ggpubr, labeling, plyr,
+#       tidyverse, skimr
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(plyr)
+library(labeling)
+library(ggpubr)
+library(expss)
+library(skimr)        ## install.packages("skimr")
+# ALT plus hypen = <- 
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+
+```
+
+
+
+<br>
+
+#Read data files as csv located within the repository
+#Conduct basic visualization of the data
+##Use the function "skim" to provide summary statistics
+##Use the function "table", "names", and "dim"
+
+```{r}
+setwd("~/R/slash-wall-vegetation")
+input.data = read.table("plot-data-2019.csv", header = TRUE, sep = ",")
+# str(input.data) displays the structure of the variables
+
+plot.data <- input.data
+#code below to convert character variables to factor variables. I don't think this is necessary.
+#
+  #select(harvest, location, low.spp, invasive.spp, mid.spp, upper.spp, vine.spp) %>% 
+ # mutate_if(is.character,as.factor)
+
+str(plot.data)
+
+glimpse(plot.data)
+names(plot.data)
+dim(plot.data)
+skim(plot.data)
+#skimr::skim_tee(plot.data) - same as previous line
+table(plot.data$ba)
+
+#
+
+```
+
+<br>
+
+#Subset data, group by harvest x location
+
+```{r}
+#sort and group df=plot.data by harvest name and location of plots
+
+# 1. create new data frame df=site
+site <- plot.data #%>%
+str(site)  
+# 2. exclude the rows=plots located on the perimeter
+  filter(location == "interior" | location == "control") %>%
+  
+# 3. retain variables for subsequent analysis
+#  select(harvest, location, low.cov, invasive.cov, mid.cov, upper.cov,
+#       ba, seedling.numb) %>%
+  
+  select(harvest, location, ba) %>%
+
+# 4. group the remaining data by harvest name and interior vs. control
+  group_by(harvest,location) %>% 
+
+#view(site)
+
+# 5.calculate average basal area
+# ba_summ <- site %>% 
+#   group_by(harvest, location) %>% 
+  summarize(basal_area = mean(ba)) %>% 
+  table()
+  #pivot_wider(names_from = location,
+ #             values_from = basal_area)
+  
+#view(ba_summ)
+
+#site %>% 
+#  select(harvest, location, basal_area) %>% 
+#  table()
+
+
+
+```
+
