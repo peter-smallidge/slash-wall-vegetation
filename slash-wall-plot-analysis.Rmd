@@ -71,8 +71,8 @@ table(plot.data$ba)
 #sort and group df=plot.data by harvest name and location of plots
 
 # 1. create new data frame df=site
-site <- plot.data #%>%
-str(site)  
+site <- plot.data %>% 
+ 
 # 2. exclude the rows=plots located on the perimeter
   filter(location == "interior" | location == "control") %>%
   
