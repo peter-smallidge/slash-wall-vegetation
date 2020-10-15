@@ -5,9 +5,11 @@ Peter Smallidge
 
 <br>
 
-\#Read data files as csv located within the repository \#Conduct basic
-visualization of the data \#\#Use the function “skim” to provide summary
-statistics \#\#Use the function “table”, “names”, and “dim”
+# Read data files as csv located within the repository
+
+# Conduct basic visualization of the data
+
+## Use the function “skim” to provide summary statistics
 
 ``` r
 setwd("~/R/slash-wall-vegetation")
@@ -20,93 +22,11 @@ plot.data <- input.data
   #select(harvest, location, low.spp, invasive.spp, mid.spp, upper.spp, vine.spp) %>% 
  # mutate_if(is.character,as.factor)
 
-str(plot.data)
-```
-
-    ## 'data.frame':    248 obs. of  28 variables:
-    ##  $ harvest      : chr  "Boot" "Boot" "Boot" "Boot" ...
-    ##  $ season       : int  2019 2019 2019 2019 2019 2019 2019 2019 2019 2019 ...
-    ##  $ date         : chr  "2020.06.16" "2020.06.16" "2020.06.17" "2020.06.22" ...
-    ##  $ location     : chr  "interior" "interior" "interior" "interior" ...
-    ##  $ plot         : int  349 350 351 352 353 354 355 356 357 358 ...
-    ##  $ disturb      : chr  "l" "m" "a" "m" ...
-    ##  $ slash        : chr  "p" "p" "m" "m" ...
-    ##  $ fern         : chr  "a" "m" "a" "l" ...
-    ##  $ herb         : chr  "m" "l" "p" "p" ...
-    ##  $ low.cov      : chr  "h" "h" "m" "h" ...
-    ##  $ low.spp      : chr  "rubu" "rubu" "rubu" "rubu" ...
-    ##  $ invasive.cov : chr  "p" "a" "a" "a" ...
-    ##  $ invasive.spp : chr  "loni" "" "" "" ...
-    ##  $ mid.cov      : chr  "p" "p" "m" "p" ...
-    ##  $ mid.spp      : chr  "761" "761" "531" "372" ...
-    ##  $ upper.cov    : chr  "l" "p" "m" "l" ...
-    ##  $ upper.spp    : int  318 531 531 318 316 316 NA 316 NA 316 ...
-    ##  $ vine.cov     : chr  "a" "a" "a" "a" ...
-    ##  $ vine.spp     : chr  "" "" "" "" ...
-    ##  $ baf          : int  10 10 10 10 10 10 10 10 10 10 ...
-    ##  $ oakhick      : int  NA NA NA NA NA NA NA NA NA NA ...
-    ##  $ beech        : int  NA 1 1 NA NA NA NA NA NA NA ...
-    ##  $ maple        : chr  "2" "" "2" "3" ...
-    ##  $ birch        : int  NA NA NA NA NA NA NA NA NA NA ...
-    ##  $ hdwd         : int  NA NA NA NA 1 NA NA NA NA NA ...
-    ##  $ conifer      : int  NA NA NA NA NA NA NA NA NA NA ...
-    ##  $ ba           : int  20 10 30 30 60 30 0 40 30 20 ...
-    ##  $ seedling.numb: int  100 50 100 100 25 10 100 10 0 10 ...
-
-``` r
-glimpse(plot.data)
-```
-
-    ## Rows: 248
-    ## Columns: 28
-    ## $ harvest       <chr> "Boot", "Boot", "Boot", "Boot", "Boot", "Boot", "Boot...
-    ## $ season        <int> 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019,...
-    ## $ date          <chr> "2020.06.16", "2020.06.16", "2020.06.17", "2020.06.22...
-    ## $ location      <chr> "interior", "interior", "interior", "interior", "inte...
-    ## $ plot          <int> 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359...
-    ## $ disturb       <chr> "l", "m", "a", "m", "p", "p", "p", "l", "a", "l", "p"...
-    ## $ slash         <chr> "p", "p", "m", "m", "m", "h", "p", "h", "h", "m", "m"...
-    ## $ fern          <chr> "a", "m", "a", "l", "m", "l", "a", "p", "h", "p", "p"...
-    ## $ herb          <chr> "m", "l", "p", "p", "m", "p", "p", "p", "p", "p", "p"...
-    ## $ low.cov       <chr> "h", "h", "m", "h", "m", "h", "h", "h", "m", "h", "h"...
-    ## $ low.spp       <chr> "rubu", "rubu", "rubu", "rubu", "rubu", "rubu", "rubu...
-    ## $ invasive.cov  <chr> "p", "a", "a", "a", "p", "a", "a", "a", "a", "a", "a"...
-    ## $ invasive.spp  <chr> "loni", "", "", "", "rosa", "", "", "", "", "", "", "...
-    ## $ mid.cov       <chr> "p", "p", "m", "p", "p", "p", "m", "p", "l", "p", "m"...
-    ## $ mid.spp       <chr> "761", "761", "531", "372", "951", "samb", "761", "76...
-    ## $ upper.cov     <chr> "l", "p", "m", "l", "m", "p", "a", "m", "a", "p", "l"...
-    ## $ upper.spp     <int> 318, 531, 531, 318, 316, 316, NA, 316, NA, 316, 316, ...
-    ## $ vine.cov      <chr> "a", "a", "a", "a", "p", "p", "a", "a", "p", "p", "a"...
-    ## $ vine.spp      <chr> "", "", "", "", "viti", "viti", "", "", "viti", "viti...
-    ## $ baf           <int> 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 1...
-    ## $ oakhick       <int> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 1, NA, NA...
-    ## $ beech         <int> NA, 1, 1, NA, NA, NA, NA, NA, NA, NA, NA, 1, NA, NA, ...
-    ## $ maple         <chr> "2", "", "2", "3", "5", "3", "", "4", "3", "2", "4", ...
-    ## $ birch         <int> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N...
-    ## $ hdwd          <int> NA, NA, NA, NA, 1, NA, NA, NA, NA, NA, NA, NA, NA, NA...
-    ## $ conifer       <int> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N...
-    ## $ ba            <int> 20, 10, 30, 30, 60, 30, 0, 40, 30, 20, 40, 60, 50, 20...
-    ## $ seedling.numb <int> 100, 50, 100, 100, 25, 10, 100, 10, 0, 10, 50, 50, 10...
-
-``` r
-names(plot.data)
-```
-
-    ##  [1] "harvest"       "season"        "date"          "location"     
-    ##  [5] "plot"          "disturb"       "slash"         "fern"         
-    ##  [9] "herb"          "low.cov"       "low.spp"       "invasive.cov" 
-    ## [13] "invasive.spp"  "mid.cov"       "mid.spp"       "upper.cov"    
-    ## [17] "upper.spp"     "vine.cov"      "vine.spp"      "baf"          
-    ## [21] "oakhick"       "beech"         "maple"         "birch"        
-    ## [25] "hdwd"          "conifer"       "ba"            "seedling.numb"
-
-``` r
-dim(plot.data)
-```
-
-    ## [1] 248  28
-
-``` r
+# These are redundant with the more thorough output of "skim"
+#str(plot.data)
+#glimpse(plot.data)
+#names(plot.data)
+#dim(plot.data)
 skim(plot.data)
 ```
 
@@ -172,36 +92,126 @@ table(plot.data$ba)
     ##  71  52  41  31  19  20   8   2   3   1
 
 ``` r
+#the following does not work. Variable "maple" should be integer
+#plot.data %>% 
+#  mutate_at(vars(beech, maple, birch, hdwd,conifer),integer)
+
+#the following does not work...note maple is "character"
+#plot.data %>% 
+#  cols(
+#    maple=col_integer()
+#  )
+
+head(plot.data)
+```
+
+    ##   harvest season       date location plot disturb slash fern herb low.cov
+    ## 1    Boot   2019 2020.06.16 interior  349       l     p    a    m       h
+    ## 2    Boot   2019 2020.06.16 interior  350       m     p    m    l       h
+    ## 3    Boot   2019 2020.06.17 interior  351       a     m    a    p       m
+    ## 4    Boot   2019 2020.06.22 interior  352       m     m    l    p       h
+    ## 5    Boot   2019 2020.06.17 interior  353       p     m    m    m       m
+    ## 6    Boot   2019 2020.06.22 interior  354       p     h    l    p       h
+    ##   low.spp invasive.cov invasive.spp mid.cov mid.spp upper.cov upper.spp
+    ## 1    rubu            p         loni       p     761         l       318
+    ## 2    rubu            a                    p     761         p       531
+    ## 3    rubu            a                    m     531         m       531
+    ## 4    rubu            a                    p     372         l       318
+    ## 5    rubu            p         rosa       p     951         m       316
+    ## 6    rubu            a                    p    samb         p       316
+    ##   vine.cov vine.spp baf oakhick beech maple birch hdwd conifer ba seedling.numb
+    ## 1        a           10      NA    NA     2    NA   NA      NA 20           100
+    ## 2        a           10      NA     1          NA   NA      NA 10            50
+    ## 3        a           10      NA     1     2    NA   NA      NA 30           100
+    ## 4        a           10      NA    NA     3    NA   NA      NA 30           100
+    ## 5        p     viti  10      NA    NA     5    NA    1      NA 60            25
+    ## 6        p     viti  10      NA    NA     3    NA   NA      NA 30            10
+
+``` r
 #
 ```
 
 <br>
 
-\#Subset full data, group by harvest x location
+\#Subset data, group by harvest x location
 
 ``` r
-#sort and group df=plot.data by harvest name and location of plots
+# Sort and group data by site (harvest name + interior vs. control)
+# https://cmdlinetips.com/2020/08/dplyr-groupby-and-summarize-group-by-one-or-more-variables/ 
+# 
 
-# 1. create new data frame df=site
-site <- plot.data %>%
-  
-# 2. exclude the rows=plots located on the perimeter
-  filter(location == "interior" | location == "control") %>% 
-  
-# 3. retain variables for subsequent analysis
-#  select(harvest, location, low.cov, invasive.cov, mid.cov, upper.cov,
-#       ba, seedling.numb) %>%
-  
-  select(harvest, location, ba) %>%
+site <- plot.data %>% 
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba) %>% 
+  group_by(harvest, location) %>% 
+  summarize(basal_area = mean(ba, na.rm = TRUE))
 
-# 4. group the remaining data by harvest name and interior vs. control
-  group_by(harvest,location)
-
-print(site)
+site
 ```
 
-    ## # A tibble: 174 x 3
-    ## # Groups:   harvest, location [7]
+    ##   basal_area
+    ## 1   23.50575
+
+``` r
+site_alt <- plot.data %>% 
+   filter(!(location=="perimeter"))
+
+#the equivalent filter result also comes from ...
+  #filter(location =="interior" | location=="control")
+
+site_alt %>% 
+  group_by(harvest) %>% 
+  summarize(basal_area=mean(ba))
+```
+
+    ##   basal_area
+    ## 1   23.50575
+
+``` r
+#view(site_alt)
+
+#write.table(site_alt, "site_BA_means.txt", sep="\t")
+```
+
+``` r
+# site %>% 
+# pivot_wider(names_from = location,
+#             values_from = basal_area)
+  
+#view(ba_summ)
+
+#site %>% 
+#  select(harvest, location, basal_area) %>% 
+#  table()
+```
+
+``` r
+site <- plot.data %>% 
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba)
+
+  head(site)
+```
+
+    ##   harvest location ba
+    ## 1    Boot interior 20
+    ## 2    Boot interior 10
+    ## 3    Boot interior 30
+    ## 4    Boot interior 30
+    ## 5    Boot interior 60
+    ## 6    Boot interior 30
+
+``` r
+site <- plot.data %>% 
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba) %>% 
+  group_by(harvest, location)
+
+head(site, n=20)
+```
+
+    ## # A tibble: 20 x 3
+    ## # Groups:   harvest, location [1]
     ##    harvest location    ba
     ##    <chr>   <chr>    <int>
     ##  1 Boot    interior    20
@@ -214,20 +224,26 @@ print(site)
     ##  8 Boot    interior    40
     ##  9 Boot    interior    30
     ## 10 Boot    interior    20
-    ## # ... with 164 more rows
+    ## 11 Boot    interior    40
+    ## 12 Boot    interior    60
+    ## 13 Boot    interior    50
+    ## 14 Boot    interior    20
+    ## 15 Boot    interior    20
+    ## 16 Boot    interior    40
+    ## 17 Boot    interior    40
+    ## 18 Boot    interior    50
+    ## 19 Boot    interior    50
+    ## 20 Boot    interior    60
 
 ``` r
-# 5.calculate average basal area
- ba_summ <- site %>% 
-   group_by(harvest, location) %>% 
-  #summarize(basal_area = mean(ba)) %>% 
-  table()
-  #pivot_wider(names_from = location,
- #             values_from = basal_area)
-  
-view(ba_summ)
+site <- plot.data %>% 
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba) %>% 
+  group_by(harvest, location) %>% 
+  summarize(basal_area = mean(ba, na.rm = TRUE))
 
-#site %>% 
-#  select(harvest, location, basal_area) %>% 
-#  table()
+site
 ```
+
+    ##   basal_area
+    ## 1   23.50575

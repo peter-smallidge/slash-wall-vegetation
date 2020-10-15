@@ -21,7 +21,7 @@ library(labeling)
 library(ggpubr)
 library(expss)
 library(skimr)        ## install.packages("skimr")
-# ALT plus hypen = <- 
+# ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
 # ctrl + ALT + I = insert chunk
 # filter rows, select columns
@@ -34,10 +34,9 @@ library(skimr)        ## install.packages("skimr")
 
 <br>
 
-#Read data files as csv located within the repository
-#Conduct basic visualization of the data
-##Use the function "skim" to provide summary statistics
-##Use the function "table", "names", and "dim"
+# Read data files as csv located within the repository  
+# Conduct basic visualization of the data  
+## Use the function "skim" to provide summary statistics  
 
 ```{r}
 setwd("~/R/slash-wall-vegetation")
@@ -50,14 +49,26 @@ plot.data <- input.data
   #select(harvest, location, low.spp, invasive.spp, mid.spp, upper.spp, vine.spp) %>% 
  # mutate_if(is.character,as.factor)
 
-str(plot.data)
-
-glimpse(plot.data)
-names(plot.data)
-dim(plot.data)
+# These are redundant with the more thorough output of "skim"
+#str(plot.data)
+#glimpse(plot.data)
+#names(plot.data)
+#dim(plot.data)
 skim(plot.data)
 #skimr::skim_tee(plot.data) - same as previous line
 table(plot.data$ba)
+
+#the following does not work. Variable "maple" should be integer
+#plot.data %>% 
+#  mutate_at(vars(beech, maple, birch, hdwd,conifer),integer)
+
+#the following does not work...note maple is "character"
+#plot.data %>% 
+#  cols(
+#    maple=col_integer()
+#  )
+
+head(plot.data)
 
 #
 
@@ -68,32 +79,44 @@ table(plot.data$ba)
 #Subset data, group by harvest x location
 
 ```{r}
-#sort and group df=plot.data by harvest name and location of plots
+# Sort and group data by site (harvest name + interior vs. control)
+# https://cmdlinetips.com/2020/08/dplyr-groupby-and-summarize-group-by-one-or-more-variables/ 
+# 
 
-# 1. create new data frame df=site
 site <- plot.data %>% 
- 
-# 2. exclude the rows=plots located on the perimeter
-  filter(location == "interior" | location == "control") %>%
-  
-# 3. retain variables for subsequent analysis
-#  select(harvest, location, low.cov, invasive.cov, mid.cov, upper.cov,
-#       ba, seedling.numb) %>%
-  
-  select(harvest, location, ba) %>%
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba) %>% 
+  group_by(harvest, location) %>% 
+  summarize(basal_area = mean(ba, na.rm = TRUE))
 
-# 4. group the remaining data by harvest name and interior vs. control
-  group_by(harvest,location) %>% 
+site
 
-#view(site)
 
-# 5.calculate average basal area
-# ba_summ <- site %>% 
-#   group_by(harvest, location) %>% 
-  summarize(basal_area = mean(ba)) %>% 
-  table()
-  #pivot_wider(names_from = location,
- #             values_from = basal_area)
+```
+
+```{r}
+
+site_alt <- plot.data %>% 
+   filter(!(location=="perimeter"))
+
+#the equivalent filter result also comes from ...
+  #filter(location =="interior" | location=="control")
+
+site_alt %>% 
+  group_by(harvest) %>% 
+  summarize(basal_area=mean(ba))
+#view(site_alt)
+
+#write.table(site_alt, "site_BA_means.txt", sep="\t")
+
+```
+
+
+
+```{r}
+# site %>% 
+# pivot_wider(names_from = location,
+#             values_from = basal_area)
   
 #view(ba_summ)
 
@@ -102,6 +125,38 @@ site <- plot.data %>%
 #  table()
 
 
+
+```
+
+
+```{r}
+site <- plot.data %>% 
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba)
+
+  head(site)
+
+```
+
+
+```{r}
+site <- plot.data %>% 
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba) %>% 
+  group_by(harvest, location)
+
+head(site, n=20)
+```
+
+
+```{r}
+site <- plot.data %>% 
+  filter(location =="interior" | location=="control") %>% 
+  select(harvest, location, ba) %>% 
+  group_by(harvest, location) %>% 
+  summarize(basal_area = mean(ba, na.rm = TRUE))
+
+site
 
 ```
 
