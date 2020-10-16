@@ -1,0 +1,74 @@
+---
+title: "seedling height analysis"
+author: "Peter Smallidge"
+date: "10/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Analysis of seedling heights 2018 & 2019
+
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+```
+
+### read data from csv file, check variables and data structure
+
+```{r}
+input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv")
+str(input.data)
+
+ht.data <- input.data %>% 
+  rename(ht.2019 = tot.ht)
+# learn code to convert numeric values to character values , 316 = "RM", 318 = "SM", 356 = "SV" 
+#  recode('531' = "AB")
+str(ht.data)
+
+
+
+#skim(ht.data)
+#str(ht.data)  there are 1158 rows in original data frame
+head(ht.data)
+#dim(ht.data)
+
+```
+
+### Determine average total height at end of 2019
+
+```{r}
+# determine average total height and annual increment by harvest, origin, and spp
+# 1. filter to retain priority species
+# 2. select numeric variable
+# 3. group by harvest, origin, and spp
+# 4. summarize
+ht.avg <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
+          spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
+            spp == "762" | spp == "833" | spp == "951") %>% 
+  select(harvest, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
+  group_by(harvest, origin, spp) %>% 
+  summarise(ht.2019 = mean(ht.2019))
+  
+  #summarise_at(vars(ht.2019:basal.dia),mean, n, sd)
+
+(ht.avg)
+
+
+dim(ht.avg)
+  
+
+```
+

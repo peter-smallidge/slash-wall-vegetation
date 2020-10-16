@@ -1,4 +1,4 @@
-Harvest,season,sample-date,location,point,spp,origin,basal-dia,tot-ht,yr-current,inc-2019,yr-previous,inc-2018
+harvest,season,samp.date,location,point,spp,origin,basal.dia,tot.ht,yr.curr,inc.2019,yr.prev,inc.2018
 Boot,2019,2020.06.22,perimeter,960,951,t,1.1,124.5,2019,24,2018,20
 Boot,2019,2020.06.19,interior,358,316,s,0.15,20.5,2019,14,2018,6.5
 Boot,2019,2020.06.22,interior,364,316,s,0.15,21,2019,9,2018,9
