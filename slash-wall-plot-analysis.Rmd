@@ -143,48 +143,5 @@ write.table(site, "site_BA_means.txt", sep="\t")
   
 #view(ba_summ)
 
-site %>% 
-#  select(harvest, location, basal_area) %>% 
-  table()
-
-
-
-```
-
-### Iteration of filter and select in attempt to de-bug ###
-```{r}
-site <- plot.data %>% 
-  filter(location =="interior" | location=="control") %>% 
-  select(harvest, location, ba)
-
-  head(site)
-
-```
-
-<br>
-### Iteration of filter, select and group_by
-
-
-```{r}
-site <- plot.data %>% 
-  filter(location =="interior" | location=="control") %>% 
-  select(harvest, location, ba) %>% 
-  group_by(harvest, location)
-
-head(site, n=10)
-```
-
-<br>
-### Iteration of filter, select, group_by, and summarize
-
-```{r}
-site <- plot.data %>% 
-  filter(location =="interior" | location=="control") %>% 
-  select(harvest, location, ba) %>% 
-  group_by(harvest, location) %>% 
-  summarize(basal_area = mean(ba, na.rm = TRUE))
-
-site
-
 ```
 
