@@ -14,13 +14,14 @@ knitr::opts_chunk$set(echo = TRUE)
 # Library: dplyr, expss, ggplot2, ggpubr, labeling, plyr,
 #       tidyverse, skimr
 library(tidyverse)
-library(dplyr)
-library(ggplot2)
-library(plyr)
-library(labeling)
-library(ggpubr)
-library(expss)
+#library(plyr) # - conflicts with dplyr. If used, load dplyr after plyr
+#library(dplyr)
+#library(ggplot2)
+#library(labeling)
+#library(ggpubr)
+#library(expss)
 library(skimr)        ## install.packages("skimr")
+#
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
 # ctrl + ALT + I = insert chunk
@@ -39,9 +40,12 @@ library(skimr)        ## install.packages("skimr")
 ## Use the function "skim" to provide summary statistics  
 
 ```{r}
-setwd("~/R/slash-wall-vegetation")
-input.data = read.table("plot-data-2019.csv", header = TRUE, sep = ",")
-plot.data <- input.data
+#setwd("~/R/slash-wall-vegetation")
+#input.data = read.table("plot-data-2019.csv", header = TRUE, sep = ",")
+#plot.data <- input.data
+
+plot.data = read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv")
+
 
 # str(input.data) displays the structure of the variables
 skim(plot.data)
@@ -57,17 +61,6 @@ plot.data %>%
 
 head(plot.data, n=10)
 tail(plot.data, n=10)
-
-```
-
-### test the grouping function in skim, which reports "grouping" variables ###
-
-
-```{r}
-plot.data %>% 
-  arrange(harvest, location) %>% 
-  group_by(harvest,location) %>% 
-  skim()
 
 ```
 
@@ -92,7 +85,9 @@ plot.data %>%
 
 #the following does not work. Variable "maple" should be integer
 #plot.data %>% 
-#  mutate_at(vars(beech, maple, birch, hdwd,conifer),integer)
+#  mutate(vars(maple, na.rm=TRUE),integer)
+
+#spec(plot.data)
 
 #the following does not work...note maple is "character"
 #plot.data %>% 
@@ -112,16 +107,21 @@ plot.data %>%
 # https://cmdlinetips.com/2020/08/dplyr-groupby-and-summarize-group-by-one-or-more-variables/ 
 # Pat Sullivan suggested adding "as.data.frame()" which worked for him but not for me.
 # Pat may have been using a different version of dyplr or maybe base R.
+# Nina Thirkildsen suggested adding "dplyr::" before each verb. Including the package name
+# is a way to ensure that it is the package's version of the verb that is used, 
+# not a different package's verb.
+# *** the problem was loading too many libraries with conflicts. Currently just load tidyverse and skimr
 
 
 site <- plot.data %>% 
-  filter(location =="interior" | location=="control") %>% 
+ #filter(location =="interior" | location=="control") %>% 
   select(harvest, location, ba) %>% 
   group_by(harvest, location) %>% 
   summarize(basal_area = mean(ba)) %>% 
-  as.data.frame()
-
+  arrange(harvest, location)
+  
 site
+write.table(site, "site_BA_means.txt", sep="\t")
 
 
 ```
@@ -130,18 +130,7 @@ site
 
 ```{r}
 
-site_alt <- plot.data %>% 
-   filter(!(location=="perimeter"))
-
-#the equivalent filter result also comes from ...
-  #filter(location =="interior" | location=="control")
-
-site_alt %>% 
-  group_by(harvest) %>% 
-  summarize(basal_area=mean(ba))
-#view(site_alt)
-
-#write.table(site_alt, "site_BA_means.txt", sep="\t")
+#write.table(site, "site_BA_means.txt", sep="\t")
 
 ```
 
@@ -154,9 +143,9 @@ site_alt %>%
   
 #view(ba_summ)
 
-#site %>% 
+site %>% 
 #  select(harvest, location, basal_area) %>% 
-#  table()
+  table()
 
 
 

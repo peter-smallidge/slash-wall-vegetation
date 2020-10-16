@@ -2,13 +2,14 @@ library(tidyverse)
 
 plot.data = read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv")
 
-head(plot.data)
+spec(plot.data)
+dim(plot.data)
 
 site <- plot.data %>% 
-  filter(location =="interior" | location=="control") %>% 
-  select(harvest, location, ba) %>% 
-  group_by(harvest, location) %>% 
-  summarize(basal_area = mean(ba))
+  dplyr::filter(location =="interior" | location=="control") %>% 
+  dplyr::select(harvest, location, ba) %>% 
+  dplyr::group_by(harvest, location) %>% 
+  dplyr::summarize(basal_area = mean(ba))
 
 site  
 
