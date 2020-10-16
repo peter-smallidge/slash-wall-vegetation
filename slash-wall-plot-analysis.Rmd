@@ -34,29 +34,42 @@ library(skimr)        ## install.packages("skimr")
 
 <br>
 
-# Read data files as csv located within the repository  
-# Conduct basic visualization of the data  
+## Read data files as csv located within the repository  
+## Conduct basic visualization of the data  
 ## Use the function "skim" to provide summary statistics  
 
 ```{r}
 setwd("~/R/slash-wall-vegetation")
 input.data = read.table("plot-data-2019.csv", header = TRUE, sep = ",")
-# str(input.data) displays the structure of the variables
-
 plot.data <- input.data
+
+# str(input.data) displays the structure of the variables
+skim(plot.data)
+table(plot.data$ba)
+
+head(plot.data, n=10)
+tail(plot.data, n=10)
+
+```
+
+<br>
+
+<!-- note to self: the following code was tried for purpose of manipulating data. Either it didn't work or was subsequently deemed not necessary -->
+
+
+```{r}
+#plot.data <- input.data
 #code below to convert character variables to factor variables. I don't think this is necessary.
 #
   #select(harvest, location, low.spp, invasive.spp, mid.spp, upper.spp, vine.spp) %>% 
  # mutate_if(is.character,as.factor)
 
-# These are redundant with the more thorough output of "skim"
+#    These are redundant with the more thorough output of "skim"
 #str(plot.data)
 #glimpse(plot.data)
 #names(plot.data)
 #dim(plot.data)
-skim(plot.data)
 #skimr::skim_tee(plot.data) - same as previous line
-table(plot.data$ba)
 
 #the following does not work. Variable "maple" should be integer
 #plot.data %>% 
@@ -68,31 +81,33 @@ table(plot.data$ba)
 #    maple=col_integer()
 #  )
 
-head(plot.data)
-
-#
-
 ```
+
 
 <br>
 
-#Subset data, group by harvest x location
+### Subset data, group and summarize for harvest x location
 
 ```{r}
 # Sort and group data by site (harvest name + interior vs. control)
 # https://cmdlinetips.com/2020/08/dplyr-groupby-and-summarize-group-by-one-or-more-variables/ 
-# 
+# Pat Sullivan suggested adding "as.data.frame()" which worked for him but not for me.
+# Pat may have been using a different version of dyplr or maybe base R.
+
 
 site <- plot.data %>% 
   filter(location =="interior" | location=="control") %>% 
   select(harvest, location, ba) %>% 
   group_by(harvest, location) %>% 
-  summarize(basal_area = mean(ba, na.rm = TRUE))
+  summarize(basal_area = mean(ba)) %>% 
+  as.data.frame()
 
 site
 
 
 ```
+
+
 
 ```{r}
 
@@ -128,7 +143,7 @@ site_alt %>%
 
 ```
 
-
+### Iteration of filter and select in attempt to de-bug ###
 ```{r}
 site <- plot.data %>% 
   filter(location =="interior" | location=="control") %>% 
@@ -138,6 +153,9 @@ site <- plot.data %>%
 
 ```
 
+<br>
+### Iteration of filter, select and group_by
+
 
 ```{r}
 site <- plot.data %>% 
@@ -145,9 +163,11 @@ site <- plot.data %>%
   select(harvest, location, ba) %>% 
   group_by(harvest, location)
 
-head(site, n=20)
+head(site, n=10)
 ```
 
+<br>
+### Iteration of filter, select, group_by, and summarize
 
 ```{r}
 site <- plot.data %>% 
