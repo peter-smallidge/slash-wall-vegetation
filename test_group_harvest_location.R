@@ -11,3 +11,8 @@ site <- plot.data %>%
   summarize(basal_area = mean(ba))
 
 site  
+
+plot.data %>% 
+  arrange(harvest, location) %>% 
+  group_by(harvest,location) %>% 
+  skim()
