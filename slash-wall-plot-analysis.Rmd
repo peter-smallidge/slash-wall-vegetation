@@ -47,8 +47,27 @@ plot.data <- input.data
 skim(plot.data)
 table(plot.data$ba)
 
+
+### test the grouping function in skim, which reports "grouping" variables ###
+
+plot.data %>% 
+  arrange(harvest, location) %>% 
+  group_by(harvest,location) %>% 
+  skim()
+
 head(plot.data, n=10)
 tail(plot.data, n=10)
+
+```
+
+### test the grouping function in skim, which reports "grouping" variables ###
+
+
+```{r}
+plot.data %>% 
+  arrange(harvest, location) %>% 
+  group_by(harvest,location) %>% 
+  skim()
 
 ```
 
