@@ -2,7 +2,7 @@
 title: "seedling height analysis"
 author: "Peter Smallidge"
 date: "10/16/2020"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(skimr)        ## install.packages("skimr")
+library(dplyr)
 #
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
@@ -25,21 +26,53 @@ library(skimr)        ## install.packages("skimr")
 
 ```
 
+
+#### code to replace one character value with another character value
+```{r}
+library(dplyr)
+char_vec <- sample(c("a", "b", "c"), 10, replace = TRUE)
+print(char_vec)
+recode(char_vec, a = "Apple")
+char_vec <- recode(char_vec, a = "Apple", b = "Banana") %>% as.data.frame()
+print(char_vec)
+```
+
+
 ### read data from csv file, check variables and data structure
 
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted
+the file "cheat sheet data-import" has details -->
+
+
 ```{r}
-input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv")
+input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv",
+                      col_types=cols(spp=col_character()))
 str(input.data)
 
 ht.data <- input.data %>% 
   rename(ht.2019 = tot.ht)
+
+#ht.data %>% recode(spp, "318" = "SM", "531", "AB", "372" = "SB")
+
+#recode(y , "pear" = "apple", "banana" = "pineapple" )
+
+# in an earlier csv file there was an "S" and all should have been lower case.  The code for 
+# mutate that follows did not work. I changed the value in the original data file
+#ht.data %>% 
+#  mutate_if(spp=recode(spp, '531' = 'AB'))
+
+table(ht.data$spp)
+
+#df %>% mutate(result=recode(result, 'Win'='1', 'Loss'='0'))
+
 # learn code to convert numeric values to character values , 316 = "RM", 318 = "SM", 356 = "SV" 
 #  recode('531' = "AB")
-str(ht.data)
+glimpse(ht.data)
 
 
 
-#skim(ht.data)
+skim(ht.data)
 #str(ht.data)  there are 1158 rows in original data frame
 head(ht.data)
 #dim(ht.data)
@@ -60,9 +93,14 @@ ht.avg <- ht.data %>%
             spp == "762" | spp == "833" | spp == "951") %>% 
   select(harvest, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
   group_by(harvest, origin, spp) %>% 
-  summarise(ht.2019 = mean(ht.2019))
+  add_count(spp) %>% 
+  summarise(
+    ht.2019 = mean(ht.2019),
+    inc.2019 = mean(inc.2019),
+    n=n()
+  )
   
-  #summarise_at(vars(ht.2019:basal.dia),mean, n, sd)
+  
 
 (ht.avg)
 
@@ -70,5 +108,32 @@ ht.avg <- ht.data %>%
 dim(ht.avg)
   
 
+```
+
+### Visualize data relationships
+
+```{r}
+library(ggplot2)
+
+ht.data.com <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318"  | spp == "372" |
+           spp ==  "541"  |
+            spp == "762" | spp == "833" | spp == "951") 
+
+ggplot(data=ht.data.com, mapping = aes(x=basal.dia, y = ht.2019, size = spp)) +
+  geom_point(mapping = aes(size = spp), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  facet_wrap(~origin, nrow=1) +
+  theme_bw()
+
+
+```
+
+```{r}
+ht.data.com %>% 
+  filter(spp==531) %>% 
+  group_by(origin) %>% 
+  ggplot()+
+    geom_boxplot(mapping=aes(x=spp, y=ht.2019))
 ```
 
