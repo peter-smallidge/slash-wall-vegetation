@@ -53,7 +53,7 @@ str(regen.data)
   table(regen.data$radius.01)
   table(regen.data$radius.other)
 
-glimpse(ht.data)
+#glimpse(regen.data)
 
 skim(regen.data)
 #str(regen.data)  there are xxxx rows in original data frame
@@ -62,14 +62,15 @@ head(regen.data)
 
 ```
 
-### Convert plot seedling counts to per acre values
+### Convert plot seedling counts to per acre values by point
 
 ```{r}
 # convert seedling counts to per acre values
-# 1. convert missting (NA) to 0 else density values inflated
+# 1. convert missing (NA) to 0 else density values inflated
 # 2. multiple *.seed01 x 1000 (radius 3.7 ft). use mutate
 # 3. multiple *. x (radius = 6) use mutate
-# 4. aggregate into all suppressed and all exposed and top4 per acre
+# 4. aggregate into all suppressed and all exposed and top4 per acre for each point
+# 5. subsequently, need to average points for final values per acre
 
 regen.per.acre <- regen.data %>% 
   replace(is.na(.), 0) %>% 
@@ -99,7 +100,7 @@ write.table(regen.per.acre, "regen-acre-expanded.txt", sep="\t")
 # commercial regeneration species
 # 316 318 372 541 621 762  802 832 833 951 
 # 
-# desirable diversity species (no interfering)
+# desirable diversity species (no interfering, includes Populus, paper birch, not pin cherry)
 # 129 261 316 318 356 372 375 500 541 621 743 746 762 802 832 833  90 920 951
 ```
 
@@ -152,6 +153,10 @@ commercial.per.acre_point <- regen.per.acre %>%
   group_by(harvest, location, point) %>% 
   summarise(
     per.acre_point.supp = sum(suppressed), #need to total all species within a point
+    per.acre_point.exp01 = sum(exp.seed01A),
+    per.acre_point.exp02 = sum(exp.seed02A),
+    per.acre_point.exp03 = sum(exp.seed03A),
+    per.acre_point.expsapl = sum(exp.saplA),
     per.acre_point.exp = sum(exposed),
     per.acre_point.top4 = sum(top4A)
   )
@@ -164,6 +169,10 @@ commercial.per.acre <- commercial.per.acre_point %>%
   group_by(harvest, location) %>% 
   summarize(
     per.acre.supp = mean(per.acre_point.supp),
+    per.acre.exp01 = mean(per.acre_point.exp01),
+    per.acre.exp02 = mean(per.acre_point.exp02),
+    per.acre.exp03 = mean(per.acre_point.exp03),
+    per.acre.expsapl = mean(per.acre_point.expsapl),
     per.acre.exp = mean(per.acre_point.exp),
     per.acre.top4 = mean(per.acre_point.top4)
   )
