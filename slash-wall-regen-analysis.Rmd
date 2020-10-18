@@ -1,0 +1,177 @@
+---
+title: "Regneration Analysis"
+author: "Peter Smallidge"
+date: "10/17/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Analysis of regeneation plot data - 2019
+
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(dplyr)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+```
+
+
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted
+the file "cheat sheet data-import" has details -->
+
+
+```{r}
+input.data = read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
+                      col_types=cols(spp=col_character(), sup.seed03=col_number(),
+                                     sup.sapl=col_number()))
+str(input.data)
+
+regen.data <- input.data %>% 
+  select(-other) %>% 
+  filter(!spp == "ush")
+
+str(regen.data)
+
+#check to ensure no unexpected values
+  table(regen.data$spp)
+  table(regen.data$origin)
+  table(regen.data$radius.01)
+  table(regen.data$radius.other)
+
+glimpse(ht.data)
+
+skim(regen.data)
+#str(regen.data)  there are xxxx rows in original data frame
+head(regen.data)
+#dim(regen.data)
+
+```
+
+### Convert plot seedling counts to per acre values
+
+```{r}
+# convert seedling counts to per acre values
+# 1. convert missting (NA) to 0 else density values inflated
+# 2. multiple *.seed01 x 1000 (radius 3.7 ft). use mutate
+# 3. multiple *. x (radius = 6) use mutate
+# 4. aggregate into all suppressed and all exposed and top4 per acre
+
+regen.per.acre <- regen.data %>% 
+  replace(is.na(.), 0) %>% 
+  mutate(
+    sup.seed01A = sup.seed01 * (43560 /((3.14156) * (3.7 * 3.7))),
+    sup.seed02A = sup.seed01 * (43560 /((3.14156) * (6 * 6))),
+    sup.seed03A = sup.seed01 * (43560 /((3.14156) * (6 * 6))),
+    sup.saplA = sup.seed01 * (43560 /((3.14156) * (6 * 6))),
+    exp.seed01A = sup.seed01 * (43560 /((3.14156) * (3.7 * 3.7))),
+    exp.seed02A = sup.seed01 * (43560 /((3.14156) * (6 * 6))),
+    exp.seed03A = sup.seed01 * (43560 /((3.14156) * (6 * 6))),
+    exp.saplA = sup.seed01 * (43560 /((3.14156) * (6 * 6)))
+  ) %>% 
+  mutate(
+    suppressed = sup.seed01A + sup.seed02A + sup.seed03A + sup.saplA,
+    exposed = exp.seed01A + exp.seed02A + exp.seed03A + exp.saplA,
+    top4A = top4 * exposed
+  ) %>% 
+  select(harvest, location, spp, origin, point, sup.seed01A, sup.seed02A, sup.seed03A, sup.saplA,
+         exp.seed01A, exp.seed02A, exp.seed03A, exp.saplA, suppressed, exposed, top4A)
+head(regen.per.acre)
+table(regen.per.acre$spp)
+view(regen.per.acre)
+write.table(regen.per.acre, "regen-acre-expanded.txt", sep="\t")
+
+
+# commercial regeneration species
+# 316 318 372 541 621 762  802 832 833 951 
+# 
+# desirable diversity species (no interfering)
+# 129 261 316 318 356 372 375 500 541 621 743 746 762 802 832 833  90 920 951
+```
+
+## DIVERSITY SPECIES
+### calculate total seedling density for diversity species
+
+```{r}
+# Calculate total seedling desity of desirable non-interfering species
+# 1. filter undesired or interfering species
+# 2. 
+diversity.per.acre_point <- regen.per.acre %>% 
+  filter(spp %in% c("129", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
+                    "746", "762", "802", "832", "833", "90", "920", "951")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarise(
+    per.acre_point.supp = sum(suppressed), #need to total all species within a point
+    per.acre_point.exp = sum(exposed),
+    per.acre_point.top4 = sum(top4A)
+  )
+head(diversity.per.acre_point)
+
+write.table(diversity.per.acre_point, "diversity-acre-point.txt", sep="\t")
+
+
+diversity.per.acre <- diversity.per.acre_point %>% 
+  group_by(harvest, location) %>% 
+  summarize(
+    per.acre.supp = mean(per.acre_point.supp),
+    per.acre.exp = mean(per.acre_point.exp),
+    per.acre.top4 = mean(per.acre_point.top4)
+  )
+head(diversity.per.acre)
+write.table(diversity.per.acre, "diversity-acre.txt", sep="\t")
+
+
+```
+
+
+## COMMERCIAL SPECIES
+### calculate total seedling density for commercial species
+
+```{r}
+# Calculate total seedling desity of desirable non-interfering species
+# 1. filter undesired or interfering species
+# 2. 
+
+commercial.per.acre_point <- regen.per.acre %>% 
+  filter(spp %in% c("316", "318",  "372", "541", "621",
+                     "762", "802", "832", "833", "951")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarise(
+    per.acre_point.supp = sum(suppressed), #need to total all species within a point
+    per.acre_point.exp = sum(exposed),
+    per.acre_point.top4 = sum(top4A)
+  )
+head(commercial.per.acre_point)
+
+write.table(commercial.per.acre_point, "commercial-acre-point.txt", sep="\t")
+
+
+commercial.per.acre <- commercial.per.acre_point %>% 
+  group_by(harvest, location) %>% 
+  summarize(
+    per.acre.supp = mean(per.acre_point.supp),
+    per.acre.exp = mean(per.acre_point.exp),
+    per.acre.top4 = mean(per.acre_point.top4)
+  )
+head(commercial.per.acre)
+write.table(commercial.per.acre, "commercial-acre.txt", sep="\t")
+
+
+```
+
+
+

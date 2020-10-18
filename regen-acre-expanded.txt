@@ -1,0 +1,12 @@
+number	harvest	location	per.acre.supp	per.acre.exp	per.acre.top4
+1	boot	interior	11412	11412	9130
+2	boot	perimeter	9674	9674	4170
+3	cgl	control	3872	3872	2633
+4	crp	control	929	929	232
+5	cwb	control	7434	7434	15101
+6	gl	interior	6904	6904	6163
+7	gl	perimeter	8992	8992	9056
+8	rp	interior	6794	6794	578
+9	rp	perimeter	8673	8673	1668
+10	wedge	interior	6288	6288	867
+11	wedge	perimeter	8673	8673	0
