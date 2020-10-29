@@ -22,7 +22,7 @@ library(dplyr)
 # ctrl plus shift plus m = %>% 
 # ctrl + ALT + I = insert chunk
 # filter rows, select columns
-# 
+# RMD comment = <!-- comment -->
 
 ```
 
@@ -31,7 +31,7 @@ library(dplyr)
 ### read data from csv file, check variables and data structure
 
 <!-- note to self: in the "read_csv" code, after the file location the code
-for 'col..." etc ensures that the specified column is adjusted
+for 'col..." etc ensures that the specified column is adjusted to correct data type
 the file "cheat sheet data-import" has details -->
 
 
@@ -42,8 +42,9 @@ input.data = read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
 str(input.data)
 
 regen.data <- input.data %>% 
-  select(-other) %>% 
-  filter(!spp == "ush")
+  select(-other) %>%  # removes the column for "other"
+  filter(!spp == "ush")  #removes the row where species = "ush"
+   # find a way to replace origin = u to origin 
 
 str(regen.data)
 
@@ -65,16 +66,16 @@ head(regen.data)
 ### Convert plot seedling counts to per acre values by point
 
 ```{r}
-# convert seedling counts to per acre values
+# convert seedling counts to per acre values, data resolution for species by plot
 # 1. convert missing (NA) to 0 else density values inflated
 # 2. multiple *.seed01 x 1000 (radius 3.7 ft). use mutate
 # 3. multiple *. x (radius = 6) use mutate
-# 4. aggregate into all suppressed and all exposed and top4 per acre for each point
+# 4. aggregate into "all suppressed" and "all exposed" and top4 per acre for each point
 # 5. subsequently, need to average points for final values per acre
 
 regen.per.acre <- regen.data %>% 
   replace(is.na(.), 0) %>% 
-  mutate(
+   mutate(
     sup.seed01A = sup.seed01 * (43560 /((3.14156) * (3.7 * 3.7))),
     sup.seed02A = sup.seed01 * (43560 /((3.14156) * (6 * 6))),
     sup.seed03A = sup.seed01 * (43560 /((3.14156) * (6 * 6))),
@@ -87,15 +88,21 @@ regen.per.acre <- regen.data %>%
   mutate(
     suppressed = sup.seed01A + sup.seed02A + sup.seed03A + sup.saplA,
     exposed = exp.seed01A + exp.seed02A + exp.seed03A + exp.saplA,
-    top4A = top4 * exposed
+    top4A = top4 * (43560 /((3.14156) * (6 * 6))) 
   ) %>% 
-  select(harvest, location, spp, origin, point, sup.seed01A, sup.seed02A, sup.seed03A, sup.saplA,
+  select(harvest, location, point, spp, origin, sup.seed01A, sup.seed02A, sup.seed03A, sup.saplA,
          exp.seed01A, exp.seed02A, exp.seed03A, exp.saplA, suppressed, exposed, top4A)
-head(regen.per.acre)
+
+regen.per.acre %>% 
+  arrange(harvest, location, point, spp) %>% 
+  view(n=25)
+
 table(regen.per.acre$spp)
 view(regen.per.acre)
 write.table(regen.per.acre, "regen-acre-expanded.txt", sep="\t")
 
+regen.per.acre %>% 
+  write_csv(path = "regen-acre-expanded.csv")
 
 # commercial regeneration species
 # 316 318 372 541 621 762  802 832 833 951 
