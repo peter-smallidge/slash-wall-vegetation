@@ -36,26 +36,42 @@ the file "cheat sheet data-import" has details -->
 
 
 ```{r}
-input.data = read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
+input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
                       col_types=cols(spp=col_character(), 
                                      sup.seed03=col_number(),
                                      sup.sapl=col_number(),
                                      point=col_character()))
 str(input.data)
 
+plot.data <- read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv",
+                              col_types = cols(point=col_character(),
+                                              upper_spp=col_character(),
+                                               baf=col_number(),
+                                              oakhick=col_number(),
+                                              beech=col_number(),
+                                              maple=col_number(),
+                                              birch=col_number(),
+                                              hdwd=col_number(),
+                                              conifer=col_number(),
+                                              ba=col_number()
+                                              ))
+str(plot.data) # there are 248 plots in 2019 data
+
+ 
+
 regen.data <- input.data %>% 
   select(-other) %>%  # removes the column for "other"
   filter(!spp == "ush") %>%   #removes the row where species = "ush"
-   # find a way to replace origin = u to origin 
   replace(is.na(.), 0) %>% 
   arrange(harvest, location, point, spp) %>% 
   print(n=15)
 
-str(regen.data)
+#str(regen.data)
+unique(regen.data$point)  # n=242 points with seedlings from 2019 field data
 
 #check to ensure no unexpected values
   table(regen.data$spp)
-  table(regen.data$origin)
+  table(regen.data$origin) # origin = "u" = spp = 001 = empty seedling plot
   table(regen.data$radius.01)
   table(regen.data$radius.other)
 
@@ -68,7 +84,25 @@ head(regen.data)
 
 ```
 
-### Convert plot seedling counts to per acre values by point
+### Create tibble of the count of points
+
+```{r}
+
+point.count <-  plot.data %>% # create variable for total plots for denominator of average density
+  group_by(harvest, location, point) %>% 
+  summarize(n =n()) %>% 
+  mutate(count = n/n) %>% 
+  select(harvest, location, point, count) 
+
+dim(point.count) # n=248 unique points
+head(point.count,n=10L) 
+
+
+```
+
+
+
+### Convert plot seedling counts to per acre values by plot (var=point)
 
 ```{r}
 # convert seedling counts to per acre values, data resolution for species by plot
@@ -99,16 +133,10 @@ regen.per.acre <- regen.data %>%
 
 regen.per.acre %>% 
   arrange(harvest, location, point, spp) %>% 
-  print(n=25)
+  head(n=15L)
 
-point.count <-  regen.per.acre %>% # create variable for total plots for denominator of average density
-  group_by(harvest, location, point) %>% 
-  summarize(n =n()) %>% 
-  mutate(count = n/n) %>% 
-  select(harvest, location, point, count) %>% 
-  print(n=10)
 
-str(regen.per.acre)
+dim(regen.per.acre)
 
 table(regen.per.acre$spp)
 #view(regen.per.acre)
@@ -130,39 +158,49 @@ regen.per.acre %>%
 ```
 
 ## DIVERSITY SPECIES
-### calculate total seedling density for diversity species
+### calculate total seedling density for "diversity" species
+#### diversity species include: spr, ewp, hem, rem, sum, serv, swb, pab, hawt, wha, yep, bta, qua, blc, oaks, willow, bassw 
 
 ```{r}
 # Calculate total seedling desity of desirable non-interfering species
 # 1. filter undesired or interfering species to retain species of "diversity value"
 # 2. calculate density
 diversity.per.acre_point <- regen.per.acre %>% 
-  filter(spp %in% c("129", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
+  filter(spp %in% c("001", "29", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
                     "746", "762", "802", "832", "833", "90", "920", "951")) %>% 
   group_by(harvest, location, point) %>% 
   summarise(
     per.acre_point.supp = sum(suppressed), #need to total all species within a point
     per.acre_point.exp = sum(exposed),
     per.acre_point.top4 = sum(top4A)
-  )
-head(diversity.per.acre_point)
+  )%>% 
+  full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
+  replace(is.na(.), 0)
+
+# use "full_join" because plots with no diversity species have been removed from df = diversity.per.acre_point. Replace na=0 ensures accurate calculation of mean stem count per acre.
+
+dim(diversity.per.acre_point)
+head(diversity.per.acre_point, n=10L)
 
 diversity.per.acre_point %>% 
-write_csv( "diversity-acre-point.csv")
+write_csv(path = "diversity-acre-point.csv") # n=248 points
 
-###   calculations at point-level were confirmed for boot>interior>#350, #355 and #361
+###   calculations at point-level were confirmed 10/29/2020 for boot>interior>#350, #355 and #361
 
 
 
-diversity.per.acre <- diversity.per.acre_point %>% 
+diversity_per_acre <- diversity.per.acre_point %>% 
   group_by(harvest, location) %>% 
   summarize(
-    per.acre.supp = mean(per.acre_point.supp),
-    per.acre.exp = mean(per.acre_point.exp),
-    per.acre.top4 = mean(per.acre_point.top4)
-  )
-head(diversity.per.acre)
-write.table(diversity.per.acre, "diversity-acre.txt", sep="\t")
+    div.per.acre.supp = sum(per.acre_point.supp) / sum(count),
+    div.per.acre.exp = sum(per.acre_point.exp) / sum(count),
+    div.per.acre.top4 = sum(per.acre_point.top4) / sum(count)
+  ) 
+head(diversity_per_acre, n=15L)
+
+diversity_per_acre %>% 
+  write_csv(path = "diversity-per-acre.csv")
+#calculations confirmed 10/30/2020 for boot interior and wedge interior
 
 
 ```
@@ -170,6 +208,7 @@ write.table(diversity.per.acre, "diversity-acre.txt", sep="\t")
 
 ## COMMERCIAL SPECIES
 ### calculate total seedling density for commercial species
+#### diversity species include: rem, sum, swb, wha, yep,blc, oaks,bassw 
 
 ```{r}
 # Calculate total seedling desity of desirable non-interfering species
@@ -181,32 +220,46 @@ commercial.per.acre_point <- regen.per.acre %>%
                      "762", "802", "832", "833", "951")) %>% 
   group_by(harvest, location, point) %>% 
   summarise(
-    per.acre_point.supp = sum(suppressed), #need to total all species within a point
-    per.acre_point.exp01 = sum(exp.seed01A),
-    per.acre_point.exp02 = sum(exp.seed02A),
-    per.acre_point.exp03 = sum(exp.seed03A),
-    per.acre_point.expsapl = sum(exp.saplA),
-    per.acre_point.exp = sum(exposed),
-    per.acre_point.top4 = sum(top4A)
-  )
-head(commercial.per.acre_point)
+    comm.per.acre_point.supp = sum(suppressed), #total all commercial species within a point
+    comm.per.acre_point.exp01 = sum(exp.seed01A),
+    comm.per.acre_point.exp02 = sum(exp.seed02A),
+    comm.per.acre_point.exp03 = sum(exp.seed03A),
+    comm.per.acre_point.expsapl = sum(exp.saplA),
+    comm.per.acre_point.exp = sum(exposed),
+    comm.per.acre_point.top4 = sum(top4A)
+  )%>% 
+  full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
+  replace(is.na(.), 0)
 
-write.table(commercial.per.acre_point, "commercial-acre-point.txt", sep="\t")
+commercial.per.acre_point %>% 
+  arrange(harvest, location, point) %>% 
+  head(n=10L)
+# points without commercial species have value = "0"
+# 
+
+commercial.per.acre_point %>% 
+  write_csv(path = "commercial-per-acre-point.csv")  # allows for confirmation of calculations
+
+# OLD format ...write.table(commercial.per.acre_point, "commercial-acre-point.txt", sep="\t")
 
 
 commercial.per.acre <- commercial.per.acre_point %>% 
   group_by(harvest, location) %>% 
   summarize(
-    per.acre.supp = mean(per.acre_point.supp),
-    per.acre.exp01 = mean(per.acre_point.exp01),
-    per.acre.exp02 = mean(per.acre_point.exp02),
-    per.acre.exp03 = mean(per.acre_point.exp03),
-    per.acre.expsapl = mean(per.acre_point.expsapl),
-    per.acre.exp = mean(per.acre_point.exp),
-    per.acre.top4 = mean(per.acre_point.top4)
+    comm.per.acre.supp = mean(comm.per.acre_point.supp),
+    comm.per.acre.exp01 = mean(comm.per.acre_point.exp01),
+    comm.per.acre.exp02 = mean(comm.per.acre_point.exp02),
+    comm.per.acre.exp03 = mean(comm.per.acre_point.exp03),
+    comm.per.acre.expsapl = mean(comm.per.acre_point.expsapl),
+    comm.per.acre.exp = mean(comm.per.acre_point.exp),
+    comm.per.acre.top4 = mean(comm.per.acre_point.top4)
   )
-head(commercial.per.acre)
-write.table(commercial.per.acre, "commercial-acre.txt", sep="\t")
+head(commercial.per.acre, n=15L)
+
+commercial.per.acre %>% 
+  write_csv(path = "commercial-per-acre.csv") # data desired for description of treatments
+
+# OLD format...write.table(commercial.per.acre, "commercial-acre.txt", sep="\t")
 
 
 ```

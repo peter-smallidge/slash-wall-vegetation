@@ -1,4 +1,4 @@
-harvest,season,date,location,point,disturb,slash,fern,herb,low-cov,low-spp,invasive-cov,invasive-spp,mid-cov,mid-spp,upper-cov,upper-spp,vine-cov,vine-spp,baf,oakhick,beech,maple,birch,hdwd,conifer,ba,seedling-numb
+harvest,season,date,location,point,disturb,slash,fern,herb,low_cov,low_spp,invasive_cov,invasive_spp,mid_cov,mid_spp,upper_cov,upper_spp,vine_cov,vine_spp,baf,oakhick,beech,maple,birch,hdwd,conifer,ba,seedling-numb
 boot,2019,2020.06.16,interior,349,l,p,a,m,h,rubu,p,loni,p,761,l,318,a,,10,,,2,,,,20,100
 boot,2019,2020.06.16,interior,350,m,p,m,l,h,rubu,a,,p,761,p,531,a,,10,,1,,,,,10,50
 boot,2019,2020.06.17,interior,351,a,m,a,p,m,rubu,a,,m,531,m,531,a,,10,,1,2,,,,30,100
@@ -154,7 +154,7 @@ gl,2019,2020.04.16,perimeter,835,m,l,,m,m,rubu,a,,l,531,p,762,a,,10,,,1,,1,,20,
 gl,2019,2020.04.08,interior,836,l,l,a,h,l,rubu,a,,a,,a,,a,,10,2,,,,,,20,
 gl,2019,2020.04.08,interior,837,l,l,a,m,m,rubu,a,,l,rubu,a,,a,,10,,,,,,,0,
 gl,2019,2020.04.08,interior,838,l,l,l,h,l,rubu,a,,l,761,a,,a,,10,,,,,,,0,
-gl,2019,2020.04.14,interior,839,l,m,a,l,l,rubu,a,,l,rhus,a,,,,10,,,`,,,,0,
+gl,2019,2020.04.14,interior,839,l,m,a,l,l,rubu,a,,l,rhus,a,,,,10,,,,,,,0,
 gl,2019,2020.04.14,interior,840,p,m,a,l,p,rubu,a,,a,,a,,,,10,1,,,,,,10,
 gl,2019,2020.04.14,interior,841,a,l,m,m,l,rubu,a,,a,,a,,a,,10,1,,2,,,,30,
 gl,2019,2020.04.14,interior,842,l,l,p,l,h,rubu,a,,a,,a,,a,,10,,,,,,,0,
