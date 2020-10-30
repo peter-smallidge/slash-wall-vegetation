@@ -37,8 +37,10 @@ the file "cheat sheet data-import" has details -->
 
 ```{r}
 input.data = read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
-                      col_types=cols(spp=col_character(), sup.seed03=col_number(),
-                                     sup.sapl=col_number()))
+                      col_types=cols(spp=col_character(), 
+                                     sup.seed03=col_number(),
+                                     sup.sapl=col_number(),
+                                     point=col_character()))
 str(input.data)
 
 regen.data <- input.data %>% 
@@ -99,12 +101,26 @@ regen.per.acre %>%
   arrange(harvest, location, point, spp) %>% 
   print(n=25)
 
+point.count <-  regen.per.acre %>% # create variable for total plots for denominator of average density
+  group_by(harvest, location, point) %>% 
+  summarize(n =n()) %>% 
+  mutate(count = n/n) %>% 
+  select(harvest, location, point, count) %>% 
+  print(n=10)
+
+str(regen.per.acre)
+
 table(regen.per.acre$spp)
 #view(regen.per.acre)
 #write.table(regen.per.acre, "regen-acre-expanded.txt", sep="\t")
 
 regen.per.acre %>% 
-  write_csv(path = "\regen-acre-expanded.csv")
+  write_csv(path = "regen-acre-expanded.csv") 
+#this path places file into the current directory
+#the data include per acre density by species by point by location by harvest
+
+###   calculations were confirmed for boot>interior>#350 and #355
+
 
 # commercial regeneration species
 # 316 318 372 541 621 762  802 832 833 951 
@@ -118,8 +134,8 @@ regen.per.acre %>%
 
 ```{r}
 # Calculate total seedling desity of desirable non-interfering species
-# 1. filter undesired or interfering species
-# 2. 
+# 1. filter undesired or interfering species to retain species of "diversity value"
+# 2. calculate density
 diversity.per.acre_point <- regen.per.acre %>% 
   filter(spp %in% c("129", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
                     "746", "762", "802", "832", "833", "90", "920", "951")) %>% 
@@ -131,7 +147,11 @@ diversity.per.acre_point <- regen.per.acre %>%
   )
 head(diversity.per.acre_point)
 
-write.table(diversity.per.acre_point, "diversity-acre-point.txt", sep="\t")
+diversity.per.acre_point %>% 
+write_csv( "diversity-acre-point.csv")
+
+###   calculations at point-level were confirmed for boot>interior>#350, #355 and #361
+
 
 
 diversity.per.acre <- diversity.per.acre_point %>% 
