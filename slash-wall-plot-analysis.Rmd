@@ -14,12 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 # Library: dplyr, expss, ggplot2, ggpubr, labeling, plyr,
 #       tidyverse, skimr
 library(tidyverse)
-#library(plyr) # - conflicts with dplyr. If used, load dplyr after plyr
-#library(dplyr)
-#library(ggplot2)
-#library(labeling)
-#library(ggpubr)
-#library(expss)
 library(skimr)        ## install.packages("skimr")
 #
 # ALT plus hypen = <- (within chunk)

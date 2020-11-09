@@ -1,5 +1,5 @@
 ---
-title: "file=cumulative and facet example"
+title: "cumulative and facet example"
 output: github_document
 ---
 
@@ -9,14 +9,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### sample code to graph cumulative summations
 #### plot height growth of seedlings through time, facet by species
+#### code from C:\Users\pjs23\Documents\R\ntres6940\Lessons-pdf-6940-data-science\Lesson 9_ ggplot part 2.pdf
 
 ```{r}
-# code from C:\Users\pjs23\Documents\R\ntres6940\Lessons-pdf-6940-data-science\Lesson 9_ ggplot part 2.pdf
 
-```
-
-
-```{r}
 library(tidyverse)
 # read datafile
 # 
@@ -25,15 +21,6 @@ coronavirus <- read_csv('https://raw.githubusercontent.com/RamiKrispin/coronavir
 
 #graph with facet by country
 #
-
-top10_countries <- coronavirus %>%
-filter(type == "confirmed") %>%
-group_by(country) %>%
-summarize(total_cases = sum(cases)) %>%
-arrange(-total_cases) %>%
-head(10) %>%
-.$country
-
 coronavirus %>%
 filter(type == "confirmed", country %in% top10_countries) %>%
 group_by(country, date) %>%
