@@ -12,6 +12,8 @@ for 'col..." etc ensures that the specified column is adjusted to correct data t
 the file "cheat sheet data-import" has details -->
 
 ``` r
+# Seedling data
+
 input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
                       col_types=cols(spp=col_character(), 
                                      sup.seed03=col_number(),
@@ -62,6 +64,8 @@ str(input.data)
     ##   .. )
 
 ``` r
+# Plot data
+# 
 plot.data <- read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv",
                               col_types = cols(point=col_character(),
                                               upper_spp=col_character(),
@@ -340,7 +344,7 @@ head(point.count,n=10L)
 ### Convert plot seedling counts to per acre values by plot (var=point)
 
 ``` r
-# convert seedling counts to per acre values, data resolution for species by plot
+# convert seedling counts to per acre values, data resolution = species x plot
 # 1. convert missing (NA) to 0 else density values inflated (completed in previous chunk)
 # 2. multiple *.seed01 x 1000 (radius 3.7 ft). use mutate
 # 3. multiple *. x (radius = 6) use mutate
@@ -462,7 +466,9 @@ diversity.per.acre_point <- regen.per.acre %>%
     ## `summarise()` regrouping output by 'harvest', 'location' (override with `.groups` argument)
 
 ``` r
-# use "full_join" because plots with no diversity species have been removed from df = diversity.per.acre_point. Replace na=0 ensures accurate calculation of mean stem count per acre.
+# use "full_join" because plots with no diversity species have been removed from 
+# dataframe = diversity.per.acre_point. 
+# Replace na=0 ensures accurate calculation of mean stem count per acre.
 
 dim(diversity.per.acre_point)
 ```
@@ -595,7 +601,7 @@ commercial.per.acre_point %>%
 commercial.per.acre_point %>% 
   write_csv(path = "commercial-per-acre-point.csv")  # allows for confirmation of calculations
 
-# OLD format ...write.table(commercial.per.acre_point, "commercial-acre-point.txt", sep="\t")
+# OLD "write" format ...write.table(commercial.per.acre_point, "commercial-acre-point.txt", sep="\t")
 
 
 commercial.per.acre <- commercial.per.acre_point %>% 

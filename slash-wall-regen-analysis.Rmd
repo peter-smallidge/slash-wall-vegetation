@@ -36,6 +36,8 @@ the file "cheat sheet data-import" has details -->
 
 
 ```{r}
+# Seedling data
+
 input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
                       col_types=cols(spp=col_character(), 
                                      sup.seed03=col_number(),
@@ -43,6 +45,8 @@ input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
                                      point=col_character()))
 str(input.data)
 
+# Plot data
+# 
 plot.data <- read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv",
                               col_types = cols(point=col_character(),
                                               upper_spp=col_character(),
@@ -105,7 +109,7 @@ head(point.count,n=10L)
 ### Convert plot seedling counts to per acre values by plot (var=point)
 
 ```{r}
-# convert seedling counts to per acre values, data resolution for species by plot
+# convert seedling counts to per acre values, data resolution = species x plot
 # 1. convert missing (NA) to 0 else density values inflated (completed in previous chunk)
 # 2. multiple *.seed01 x 1000 (radius 3.7 ft). use mutate
 # 3. multiple *. x (radius = 6) use mutate
@@ -162,22 +166,39 @@ regen.per.acre %>%
 #### diversity species include: spr, ewp, hem, rem, sum, serv, swb, pab, hawt, wha, yep, bta, qua, blc, oaks, willow, bassw 
 
 ```{r}
+
 # Calculate total seedling desity of desirable non-interfering species
 # 1. filter undesired or interfering species to retain species of "diversity value"
 # 2. calculate density
+
 diversity.per.acre_point <- regen.per.acre %>% 
   filter(spp %in% c("001", "29", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
                     "746", "762", "802", "832", "833", "90", "920", "951")) %>% 
-  group_by(harvest, location, point) %>% 
+
+    group_by(harvest, location, point) %>% 
   summarise(
-    per.acre_point.supp = sum(suppressed), #need to total all species within a point
+    
+    per.acre_point.sup.seed01A = sum(sup.seed01A), #need to total all species within a point
+    per.acre_point.sup.seed02A = sum(sup.seed02A), 
+    per.acre_point.sup.seed03A = sum(sup.seed03A), 
+    per.acre_point.sup.saplA = sum(sup.saplA), 
+    
+    per.acre_point.exp.seed01A = sum(exp.seed01A),
+    per.acre_point.exp.seed02A = sum(exp.seed02A),
+    per.acre_point.exp.seed03A = sum(exp.seed03A),
+    per.acre_point.exp.saplA = sum(exp.saplA),
+    
+    per.acre_point.supp = sum(suppressed), 
     per.acre_point.exp = sum(exposed),
     per.acre_point.top4 = sum(top4A)
   )%>% 
   full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
   replace(is.na(.), 0)
 
-# use "full_join" because plots with no diversity species have been removed from df = diversity.per.acre_point. Replace na=0 ensures accurate calculation of mean stem count per acre.
+
+# use "full_join" because plots with no diversity species have been removed from 
+# dataframe = diversity.per.acre_point. 
+# Replace na=0 ensures accurate calculation of mean stem count per acre.
 
 dim(diversity.per.acre_point)
 head(diversity.per.acre_point, n=10L)
@@ -204,6 +225,32 @@ diversity_per_acre %>%
 
 
 ```
+
+#### calculate stocking of diversity species
+
+```{r}
+# post harvest stocking thresholds inside fences
+# for stems > 5 ft requires 540/acre
+# 
+
+div_stocking_per_acre <- diversity.per.acre_point %>% 
+  mutate(stk_supp = 0,
+         stk_exp01 = 0,
+         stk_exp02 = 0,
+         stk_exp03 = 0,
+         stk_exp.01.02 = 0,
+         stk_exp = 0)
+
+head(div_stocking_per_acre)
+    
+  if(div_stocking_per_acre$per.acre_point.sup.seed01A > "550") {  
+    mutate(stk_supp = 1)
+  }
+
+
+
+```
+
 
 
 ## COMMERCIAL SPECIES
@@ -240,7 +287,7 @@ commercial.per.acre_point %>%
 commercial.per.acre_point %>% 
   write_csv(path = "commercial-per-acre-point.csv")  # allows for confirmation of calculations
 
-# OLD format ...write.table(commercial.per.acre_point, "commercial-acre-point.txt", sep="\t")
+# OLD "write" format ...write.table(commercial.per.acre_point, "commercial-acre-point.txt", sep="\t")
 
 
 commercial.per.acre <- commercial.per.acre_point %>% 
