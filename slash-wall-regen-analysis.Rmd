@@ -235,6 +235,18 @@ write_csv(path = "diversity-acre-point.csv") # n=248 points
 diversity_per_acre <- diversity.per.acre_point %>% 
   group_by(harvest, location) %>% 
   summarize(
+    div.per.acre.sup01 = mean(per.acre_point.sup.seed01A),
+    div.per.acre.sup02 = mean(per.acre_point.sup.seed02A),
+    div.per.acre.sup03 = mean(per.acre_point.sup.seed03A),
+    
+    div.per.acre.exp01 = mean(per.acre_point.exp.seed01A),
+    div.per.acre.exp02 = mean(per.acre_point.exp.seed02A),
+    div.per.acre.exp03 = mean(per.acre_point.exp.seed03A),
+    
+    div.per.acre.supsapl = mean(per.acre_point.sup.saplA),
+    div.per.acre.expsapl = mean(per.acre_point.exp.saplA),
+
+    #different way to calculate the mean
     div.per.acre.supp = sum(per.acre_point.supp) / sum(count),
     div.per.acre.exp = sum(per.acre_point.exp) / sum(count),
     div.per.acre.total = sum(per.acre_point.total) / sum(count),
@@ -301,17 +313,24 @@ commercial.per.acre_point <- regen.per.acre %>%
                      "762", "802", "832", "833", "951")) %>% 
   group_by(harvest, location, point) %>% 
   summarise(
+    comm.per.acre_point.sup01 = sum(sup.seed01A), 
+    comm.per.acre_point.sup02 = sum(sup.seed02A), 
+    comm.per.acre_point.sup03 = sum(sup.seed03A), 
+    comm.per.acre_point.supsapl = sum(sup.saplA),
     comm.per.acre_point.supp = sum(suppressed), #total all commercial species within a point
     comm.per.acre_point.exp01 = sum(exp.seed01A),
     comm.per.acre_point.exp02 = sum(exp.seed02A),
     comm.per.acre_point.exp03 = sum(exp.seed03A),
     comm.per.acre_point.expsapl = sum(exp.saplA),
     comm.per.acre_point.exp = sum(exposed),
-    comm.per.acre_point.total = sum(total),
+    comm.per.acre_point.total = sum(total), # total includes 01. 02. and 03. not sapl
     comm.per.acre_point.top4 = sum(top4A)
   )%>% 
   full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
   replace(is.na(.), 0)
+
+
+
 
 # Sort and Print "commercial.per.acre_point"
 commercial.per.acre_point %>% 
@@ -329,6 +348,9 @@ commercial.per.acre_point %>%
 commercial.per.acre <- commercial.per.acre_point %>% 
   group_by(harvest, location) %>% 
   summarize(
+    comm.per.acre.sup01 = mean(comm.per.acre_point.sup01),
+    comm.per.acre.sup02 = mean(comm.per.acre_point.sup02),
+    comm.per.acre.sup03 = mean(comm.per.acre_point.sup03),
     comm.per.acre.supp = mean(comm.per.acre_point.supp),
     comm.per.acre.exp01 = mean(comm.per.acre_point.exp01),
     comm.per.acre.exp02 = mean(comm.per.acre_point.exp02),

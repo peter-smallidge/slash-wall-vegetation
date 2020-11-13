@@ -1,0 +1,106 @@
+---
+title: "test of sample code"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(dplyr)
+library(readr)
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+
+```
+
+### load data for sample coding
+
+```{r}
+test.df <- read_csv("commercial-per-acre-point.csv", 
+    col_types = cols(point = col_integer())) %>% 
+  select(harvest, location, point, comm.per.acre_point.exp01, count)
+
+  str(test.df)
+  print(test.df, n=20)
+  
+```
+
+### calculate % of a variable within a group
+### for each level of "harvest" what percentage are "interior" vs. "perimeter"
+
+```{r}
+# count the number of locations within each harvest
+location.n <- test.df %>% 
+  filter(location == "interior" | location == "perimeter")%>% 
+  group_by(harvest, location) %>% 
+  summarize(
+    loc.numb = sum(count)
+  )
+
+head(location.n)
+
+# count the number of harvests
+harvest.n <- location.n %>% 
+  group_by(harvest) %>% 
+  summarize(
+    harv.numb = sum(loc.numb)
+  )
+
+head(harvest.n)
+
+#merge the counts by location with counts by harvest
+loc.pct <- location.n %>% 
+  full_join(harvest.n, by = "harvest") %>% 
+  replace(is.na(.),0) %>% 
+  mutate(
+    location.pct = (loc.numb/harv.numb*100) # how to adjust significant digits?
+  )
+
+head(loc.pct)
+
+
+
+
+ 
+
+```
+
+
+
+### assign a value to a new variable based on the value of an existing variable
+### stocking (seedlings per acre) should exceed 2887.5
+
+```{r}
+
+stocking.01 <- test.df %>% 
+  rename(seedling.acre = comm.per.acre_point.exp01) %>% 
+  str
+  
+plot_list <- c(349, 350, 351)
+#str(plot_list)
+
+for(point in plot_list){
+  stocking.02 <- stocking.01 %>% 
+    filter(point == plot) %>% 
+    mutate(stk = 0) %>% 
+    if (seedling.acre > 2887.5) { # do this with ifelse rather than the initial "stk=0"
+      mutate(stk=1)
+    }
+    }
+
+
+```
+
+
+
+### 
