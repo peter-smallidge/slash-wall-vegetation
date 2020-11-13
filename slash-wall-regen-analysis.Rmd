@@ -5,11 +5,25 @@ date: "10/17/2020"
 output: github_document
 ---
 
+
+```{r}
+# code from one of Maria's "notes" pages
+# TOC may only work with html output
+
+# title: "Lesson 13: Factors"
+# output: 
+#  html_document:
+#    keep_md: yes 
+#    toc: true
+#    toc_depth: 2 
+```
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Analysis of regeneation plot data - 2019
+### Analysis of slash wall regeneation plot data - 2019
 
 
 ```{r, include=FALSE}
@@ -128,12 +142,14 @@ regen.per.acre <- regen.data %>%
     exp.saplA = exp.sapl * (43560 /((3.14156) * (6 * 6)))
   ) %>% 
   mutate(
-    suppressed = sup.seed01A + sup.seed02A + sup.seed03A + sup.saplA,
-    exposed = exp.seed01A + exp.seed02A + exp.seed03A + exp.saplA,
+    suppressed = sup.seed01A + sup.seed02A + sup.seed03A,
+    exposed = exp.seed01A + exp.seed02A + exp.seed03A,
+    total = sup.seed01A + sup.seed02A + sup.seed03A + 
+      exp.seed01A + exp.seed02A + exp.seed03A,
     top4A = top4 * (43560 /((3.14156) * (6 * 6))) 
   ) %>% 
   select(harvest, location, point, spp, origin, sup.seed01A, sup.seed02A, sup.seed03A, sup.saplA,
-         exp.seed01A, exp.seed02A, exp.seed03A, exp.saplA, suppressed, exposed, top4A)
+         exp.seed01A, exp.seed02A, exp.seed03A, exp.saplA, suppressed, exposed, total, top4A)
 
 regen.per.acre %>% 
   arrange(harvest, location, point, spp) %>% 
@@ -167,7 +183,7 @@ regen.per.acre %>%
 
 ```{r}
 
-# Calculate total seedling desity of desirable non-interfering species
+# Calculate total seedling density of desirable non-interfering species
 # 1. filter undesired or interfering species to retain species of "diversity value"
 # 2. calculate density
 
@@ -190,6 +206,7 @@ diversity.per.acre_point <- regen.per.acre %>%
     
     per.acre_point.supp = sum(suppressed), 
     per.acre_point.exp = sum(exposed),
+    per.acre_point.total = sum(total),
     per.acre_point.top4 = sum(top4A)
   )%>% 
   full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
@@ -201,10 +218,15 @@ diversity.per.acre_point <- regen.per.acre %>%
 # Replace na=0 ensures accurate calculation of mean stem count per acre.
 
 dim(diversity.per.acre_point)
+
+# Print "divesity.per.acre_point"
 head(diversity.per.acre_point, n=10L)
 
 diversity.per.acre_point %>% 
 write_csv(path = "diversity-acre-point.csv") # n=248 points
+
+
+
 
 ###   calculations at point-level were confirmed 10/29/2020 for boot>interior>#350, #355 and #361
 
@@ -215,8 +237,11 @@ diversity_per_acre <- diversity.per.acre_point %>%
   summarize(
     div.per.acre.supp = sum(per.acre_point.supp) / sum(count),
     div.per.acre.exp = sum(per.acre_point.exp) / sum(count),
+    div.per.acre.total = sum(per.acre_point.total) / sum(count),
     div.per.acre.top4 = sum(per.acre_point.top4) / sum(count)
   ) 
+
+# Print "diversity_per_acre"
 head(diversity_per_acre, n=15L)
 
 diversity_per_acre %>% 
@@ -230,8 +255,17 @@ diversity_per_acre %>%
 
 ```{r}
 # post harvest stocking thresholds inside fences
+# 
+# set a "stocking" variable for each height class = 0
+# increment through data and if stocking is > threshold then change stocking = 1
+# calculate percentage of "stocked plots"  as sum(stocking.x)/sum(count)*100
+# 
 # for stems > 5 ft requires 540/acre
 # 
+# stocking thresholds from SILVAH
+# my filename is "2013-silvah-quick-reference-guide-allegheny-hardwoods"
+# for "other desirable" seedling need 15 per 6 ft radius = 15 * 385 = 5777 for deer impact = 1
+# for saplings need 2 per plot = 770 per acre
 
 div_stocking_per_acre <- diversity.per.acre_point %>% 
   mutate(stk_supp = 0,
@@ -243,9 +277,9 @@ div_stocking_per_acre <- diversity.per.acre_point %>%
 
 head(div_stocking_per_acre)
     
-  if(div_stocking_per_acre$per.acre_point.sup.seed01A > "550") {  
-    mutate(stk_supp = 1)
-  }
+ # if(div_stocking_per_acre$per.acre_point.sup.seed01A > 550) {  
+#    mutate(stk_supp = 1)
+ # }
 
 
 
@@ -273,11 +307,13 @@ commercial.per.acre_point <- regen.per.acre %>%
     comm.per.acre_point.exp03 = sum(exp.seed03A),
     comm.per.acre_point.expsapl = sum(exp.saplA),
     comm.per.acre_point.exp = sum(exposed),
+    comm.per.acre_point.total = sum(total),
     comm.per.acre_point.top4 = sum(top4A)
   )%>% 
   full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
   replace(is.na(.), 0)
 
+# Sort and Print "commercial.per.acre_point"
 commercial.per.acre_point %>% 
   arrange(harvest, location, point) %>% 
   head(n=10L)
@@ -299,6 +335,7 @@ commercial.per.acre <- commercial.per.acre_point %>%
     comm.per.acre.exp03 = mean(comm.per.acre_point.exp03),
     comm.per.acre.expsapl = mean(comm.per.acre_point.expsapl),
     comm.per.acre.exp = mean(comm.per.acre_point.exp),
+    comm.per.acre.total = mean(comm.per.acre_point.total),
     comm.per.acre.top4 = mean(comm.per.acre_point.top4)
   )
 head(commercial.per.acre, n=15L)

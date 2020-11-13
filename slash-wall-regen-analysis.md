@@ -3,7 +3,22 @@ Regneration Analysis
 Peter Smallidge
 10/17/2020
 
-### Analysis of regeneation plot data - 2019
+``` r
+# code from one of Maria's "notes" pages
+# TOC may only work with html output
+
+# title: "Lesson 13: Factors"
+# output: 
+#  html_document:
+#    keep_md: yes 
+#    toc: true
+#    toc_depth: 2 
+```
+
+title: “Lesson 13: Factors” output: html\_document: keep\_md: yes toc:
+true toc\_depth: 2
+
+### Analysis of slash wall regeneation plot data - 2019
 
 ### read data from csv file, check variables and data structure
 
@@ -363,19 +378,21 @@ regen.per.acre <- regen.data %>%
     exp.saplA = exp.sapl * (43560 /((3.14156) * (6 * 6)))
   ) %>% 
   mutate(
-    suppressed = sup.seed01A + sup.seed02A + sup.seed03A + sup.saplA,
-    exposed = exp.seed01A + exp.seed02A + exp.seed03A + exp.saplA,
+    suppressed = sup.seed01A + sup.seed02A + sup.seed03A,
+    exposed = exp.seed01A + exp.seed02A + exp.seed03A,
+    total = sup.seed01A + sup.seed02A + sup.seed03A + 
+      exp.seed01A + exp.seed02A + exp.seed03A,
     top4A = top4 * (43560 /((3.14156) * (6 * 6))) 
   ) %>% 
   select(harvest, location, point, spp, origin, sup.seed01A, sup.seed02A, sup.seed03A, sup.saplA,
-         exp.seed01A, exp.seed02A, exp.seed03A, exp.saplA, suppressed, exposed, top4A)
+         exp.seed01A, exp.seed02A, exp.seed03A, exp.saplA, suppressed, exposed, total, top4A)
 
 regen.per.acre %>% 
   arrange(harvest, location, point, spp) %>% 
   head(n=15L)
 ```
 
-    ## # A tibble: 15 x 16
+    ## # A tibble: 15 x 17
     ##    harvest location point spp   origin sup.seed01A sup.seed02A sup.seed03A
     ##    <chr>   <chr>    <chr> <chr> <chr>        <dbl>       <dbl>       <dbl>
     ##  1 boot    interior 349   372   s            7090.           0           0
@@ -393,15 +410,15 @@ regen.per.acre %>%
     ## 13 boot    interior 353   746   s               0            0           0
     ## 14 boot    interior 354   372   s            5064.           0           0
     ## 15 boot    interior 355   316   s           14180.           0           0
-    ## # ... with 8 more variables: sup.saplA <dbl>, exp.seed01A <dbl>,
+    ## # ... with 9 more variables: sup.saplA <dbl>, exp.seed01A <dbl>,
     ## #   exp.seed02A <dbl>, exp.seed03A <dbl>, exp.saplA <dbl>, suppressed <dbl>,
-    ## #   exposed <dbl>, top4A <dbl>
+    ## #   exposed <dbl>, total <dbl>, top4A <dbl>
 
 ``` r
 dim(regen.per.acre)
 ```
 
-    ## [1] 926  16
+    ## [1] 926  17
 
 ``` r
 table(regen.per.acre$spp)
@@ -447,16 +464,30 @@ regen.per.acre %>%
 #### diversity species include: spr, ewp, hem, rem, sum, serv, swb, pab, hawt, wha, yep, bta, qua, blc, oaks, willow, bassw
 
 ``` r
-# Calculate total seedling desity of desirable non-interfering species
+# Calculate total seedling density of desirable non-interfering species
 # 1. filter undesired or interfering species to retain species of "diversity value"
 # 2. calculate density
+
 diversity.per.acre_point <- regen.per.acre %>% 
   filter(spp %in% c("001", "29", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
                     "746", "762", "802", "832", "833", "90", "920", "951")) %>% 
-  group_by(harvest, location, point) %>% 
+
+    group_by(harvest, location, point) %>% 
   summarise(
-    per.acre_point.supp = sum(suppressed), #need to total all species within a point
+    
+    per.acre_point.sup.seed01A = sum(sup.seed01A), #need to total all species within a point
+    per.acre_point.sup.seed02A = sum(sup.seed02A), 
+    per.acre_point.sup.seed03A = sum(sup.seed03A), 
+    per.acre_point.sup.saplA = sum(sup.saplA), 
+    
+    per.acre_point.exp.seed01A = sum(exp.seed01A),
+    per.acre_point.exp.seed02A = sum(exp.seed02A),
+    per.acre_point.exp.seed03A = sum(exp.seed03A),
+    per.acre_point.exp.saplA = sum(exp.saplA),
+    
+    per.acre_point.supp = sum(suppressed), 
     per.acre_point.exp = sum(exposed),
+    per.acre_point.total = sum(total),
     per.acre_point.top4 = sum(top4A)
   )%>% 
   full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
@@ -473,31 +504,39 @@ diversity.per.acre_point <- regen.per.acre %>%
 dim(diversity.per.acre_point)
 ```
 
-    ## [1] 248   7
+    ## [1] 248  16
 
 ``` r
+# Print "divesity.per.acre_point"
 head(diversity.per.acre_point, n=10L)
 ```
 
-    ## # A tibble: 10 x 7
+    ## # A tibble: 10 x 16
     ## # Groups:   harvest, location [1]
     ##    harvest location point per.acre_point.~ per.acre_point.~ per.acre_point.~
     ##    <chr>   <chr>    <chr>            <dbl>            <dbl>            <dbl>
-    ##  1 boot    interior 349              7090.            2026.             385.
-    ##  2 boot    interior 350              2026.            5064.               0 
-    ##  3 boot    interior 351                 0             9116.               0 
-    ##  4 boot    interior 352              3039.             385.               0 
-    ##  5 boot    interior 353              5064.           14180.            1541.
-    ##  6 boot    interior 354              5064.               0                0 
-    ##  7 boot    interior 355             17218.            8630.               0 
-    ##  8 boot    interior 356                 0                0                0 
-    ##  9 boot    interior 357              1013.             385.             385.
-    ## 10 boot    interior 358              1013.               0                0 
-    ## # ... with 1 more variable: count <dbl>
+    ##  1 boot    interior 349              7090.                0                0
+    ##  2 boot    interior 350              2026.                0                0
+    ##  3 boot    interior 351                 0                 0                0
+    ##  4 boot    interior 352              3039.                0                0
+    ##  5 boot    interior 353              5064.                0                0
+    ##  6 boot    interior 354              5064.                0                0
+    ##  7 boot    interior 355             17218.                0                0
+    ##  8 boot    interior 356                 0                 0                0
+    ##  9 boot    interior 357              1013.                0                0
+    ## 10 boot    interior 358              1013.                0                0
+    ## # ... with 10 more variables: per.acre_point.sup.saplA <dbl>,
+    ## #   per.acre_point.exp.seed01A <dbl>, per.acre_point.exp.seed02A <dbl>,
+    ## #   per.acre_point.exp.seed03A <dbl>, per.acre_point.exp.saplA <dbl>,
+    ## #   per.acre_point.supp <dbl>, per.acre_point.exp <dbl>,
+    ## #   per.acre_point.total <dbl>, per.acre_point.top4 <dbl>, count <dbl>
 
 ``` r
 diversity.per.acre_point %>% 
 write_csv(path = "diversity-acre-point.csv") # n=248 points
+
+
+
 
 ###   calculations at point-level were confirmed 10/29/2020 for boot>interior>#350, #355 and #361
 
@@ -508,6 +547,7 @@ diversity_per_acre <- diversity.per.acre_point %>%
   summarize(
     div.per.acre.supp = sum(per.acre_point.supp) / sum(count),
     div.per.acre.exp = sum(per.acre_point.exp) / sum(count),
+    div.per.acre.total = sum(per.acre_point.total) / sum(count),
     div.per.acre.top4 = sum(per.acre_point.top4) / sum(count)
   ) 
 ```
@@ -515,29 +555,82 @@ diversity_per_acre <- diversity.per.acre_point %>%
     ## `summarise()` regrouping output by 'harvest' (override with `.groups` argument)
 
 ``` r
+# Print "diversity_per_acre"
 head(diversity_per_acre, n=15L)
 ```
 
-    ## # A tibble: 11 x 5
+    ## # A tibble: 11 x 6
     ## # Groups:   harvest [7]
-    ##    harvest location  div.per.acre.supp div.per.acre.exp div.per.acre.top4
-    ##    <chr>   <chr>                 <dbl>            <dbl>             <dbl>
-    ##  1 boot    interior              4823.            4299.              422.
-    ##  2 boot    perimeter             3672.            5763.              241.
-    ##  3 cgl     control               1609.           11410.              657.
-    ##  4 crp     control                419.            7033.              677.
-    ##  5 cwb     control               2860.            5341.              680.
-    ##  6 gl      interior              2933.            4879.              788.
-    ##  7 gl      perimeter             4656.            7858.              990.
-    ##  8 rp      interior              3594.           16629.             1078.
-    ##  9 rp      perimeter             4189.            8641.              770.
-    ## 10 wedge   interior              2098.           10117.              303.
-    ## 11 wedge   perimeter             2836.            4696.              616.
+    ##    harvest location div.per.acre.su~ div.per.acre.exp div.per.acre.to~
+    ##    <chr>   <chr>               <dbl>            <dbl>            <dbl>
+    ##  1 boot    interior            4823.            4299.            9122.
+    ##  2 boot    perimet~            3672.            5763.            9435.
+    ##  3 cgl     control             1609.           11410.           13018.
+    ##  4 crp     control              419.            7006.            7425.
+    ##  5 cwb     control             2860.            5341.            8200.
+    ##  6 gl      interior            2933.            4861.            7794.
+    ##  7 gl      perimet~            4656.            7836.           12492.
+    ##  8 rp      interior            3594.           16423.           20017.
+    ##  9 rp      perimet~            4189.            8612.           12800.
+    ## 10 wedge   interior            2098.           10117.           12215.
+    ## 11 wedge   perimet~            2836.            4696.            7532.
+    ## # ... with 1 more variable: div.per.acre.top4 <dbl>
 
 ``` r
 diversity_per_acre %>% 
   write_csv(path = "diversity-per-acre.csv")
 #calculations confirmed 10/30/2020 for boot interior and wedge interior
+```
+
+#### calculate stocking of diversity species
+
+``` r
+# post harvest stocking thresholds inside fences
+# 
+# set a "stocking" variable for each height class = 0
+# increment through data and if stocking is > threshold then change stocking = 1
+# calculate percentage of "stocked plots"  as sum(stocking.x)/sum(count)*100
+# 
+# for stems > 5 ft requires 540/acre
+# 
+# stocking thresholds from SILVAH
+# my filename is "2013-silvah-quick-reference-guide-allegheny-hardwoods"
+# for "other desirable" seedling need 15 per 6 ft radius = 15 * 385 = 5777 for deer impact = 1
+# for saplings need 2 per plot = 770 per acre
+
+div_stocking_per_acre <- diversity.per.acre_point %>% 
+  mutate(stk_supp = 0,
+         stk_exp01 = 0,
+         stk_exp02 = 0,
+         stk_exp03 = 0,
+         stk_exp.01.02 = 0,
+         stk_exp = 0)
+
+head(div_stocking_per_acre)
+```
+
+    ## # A tibble: 6 x 22
+    ## # Groups:   harvest, location [1]
+    ##   harvest location point per.acre_point.~ per.acre_point.~ per.acre_point.~
+    ##   <chr>   <chr>    <chr>            <dbl>            <dbl>            <dbl>
+    ## 1 boot    interior 349              7090.                0                0
+    ## 2 boot    interior 350              2026.                0                0
+    ## 3 boot    interior 351                 0                 0                0
+    ## 4 boot    interior 352              3039.                0                0
+    ## 5 boot    interior 353              5064.                0                0
+    ## 6 boot    interior 354              5064.                0                0
+    ## # ... with 16 more variables: per.acre_point.sup.saplA <dbl>,
+    ## #   per.acre_point.exp.seed01A <dbl>, per.acre_point.exp.seed02A <dbl>,
+    ## #   per.acre_point.exp.seed03A <dbl>, per.acre_point.exp.saplA <dbl>,
+    ## #   per.acre_point.supp <dbl>, per.acre_point.exp <dbl>,
+    ## #   per.acre_point.total <dbl>, per.acre_point.top4 <dbl>, count <dbl>,
+    ## #   stk_supp <dbl>, stk_exp01 <dbl>, stk_exp02 <dbl>, stk_exp03 <dbl>,
+    ## #   stk_exp.01.02 <dbl>, stk_exp <dbl>
+
+``` r
+ # if(div_stocking_per_acre$per.acre_point.sup.seed01A > 550) {  
+#    mutate(stk_supp = 1)
+ # }
 ```
 
 ## COMMERCIAL SPECIES
@@ -562,6 +655,7 @@ commercial.per.acre_point <- regen.per.acre %>%
     comm.per.acre_point.exp03 = sum(exp.seed03A),
     comm.per.acre_point.expsapl = sum(exp.saplA),
     comm.per.acre_point.exp = sum(exposed),
+    comm.per.acre_point.total = sum(total),
     comm.per.acre_point.top4 = sum(top4A)
   )%>% 
   full_join(point.count, by = c("harvest",  "location",  "point")) %>% 
@@ -571,12 +665,13 @@ commercial.per.acre_point <- regen.per.acre %>%
     ## `summarise()` regrouping output by 'harvest', 'location' (override with `.groups` argument)
 
 ``` r
+# Sort and Print "commercial.per.acre_point"
 commercial.per.acre_point %>% 
   arrange(harvest, location, point) %>% 
   head(n=10L)
 ```
 
-    ## # A tibble: 10 x 11
+    ## # A tibble: 10 x 12
     ## # Groups:   harvest, location [1]
     ##    harvest location point comm.per.acre_p~ comm.per.acre_p~ comm.per.acre_p~
     ##    <chr>   <chr>    <chr>            <dbl>            <dbl>            <dbl>
@@ -590,9 +685,10 @@ commercial.per.acre_point %>%
     ##  8 boot    interior 356                 0                0                0 
     ##  9 boot    interior 357              1013.               0              385.
     ## 10 boot    interior 358              1013.               0                0 
-    ## # ... with 5 more variables: comm.per.acre_point.exp03 <dbl>,
+    ## # ... with 6 more variables: comm.per.acre_point.exp03 <dbl>,
     ## #   comm.per.acre_point.expsapl <dbl>, comm.per.acre_point.exp <dbl>,
-    ## #   comm.per.acre_point.top4 <dbl>, count <dbl>
+    ## #   comm.per.acre_point.total <dbl>, comm.per.acre_point.top4 <dbl>,
+    ## #   count <dbl>
 
 ``` r
 # points without commercial species have value = "0"
@@ -613,6 +709,7 @@ commercial.per.acre <- commercial.per.acre_point %>%
     comm.per.acre.exp03 = mean(comm.per.acre_point.exp03),
     comm.per.acre.expsapl = mean(comm.per.acre_point.expsapl),
     comm.per.acre.exp = mean(comm.per.acre_point.exp),
+    comm.per.acre.total = mean(comm.per.acre_point.total),
     comm.per.acre.top4 = mean(comm.per.acre_point.top4)
   )
 ```
@@ -623,7 +720,7 @@ commercial.per.acre <- commercial.per.acre_point %>%
 head(commercial.per.acre, n=15L)
 ```
 
-    ## # A tibble: 11 x 9
+    ## # A tibble: 11 x 10
     ## # Groups:   harvest [7]
     ##    harvest location comm.per.acre.s~ comm.per.acre.e~ comm.per.acre.e~
     ##    <chr>   <chr>               <dbl>            <dbl>            <dbl>
@@ -638,9 +735,9 @@ head(commercial.per.acre, n=15L)
     ##  9 rp      perimet~            1714.            2104.            593. 
     ## 10 wedge   interior            2026.            9550.            110. 
     ## 11 wedge   perimet~            2836.            2836.            193. 
-    ## # ... with 4 more variables: comm.per.acre.exp03 <dbl>,
+    ## # ... with 5 more variables: comm.per.acre.exp03 <dbl>,
     ## #   comm.per.acre.expsapl <dbl>, comm.per.acre.exp <dbl>,
-    ## #   comm.per.acre.top4 <dbl>
+    ## #   comm.per.acre.total <dbl>, comm.per.acre.top4 <dbl>
 
 ``` r
 commercial.per.acre %>% 
