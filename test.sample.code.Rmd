@@ -15,7 +15,7 @@ library(dplyr)
 library(readr)
 
 #
-# ALT plus hypen = <- (within chunk)
+# ALT plus hypen = <- (must be within chunk)
 # ctrl plus shift plus m = %>% 
 # ctrl + ALT + I = insert chunk
 # filter rows, select columns
@@ -29,6 +29,10 @@ library(readr)
 test.df <- read_csv("commercial-per-acre-point.csv", 
     col_types = cols(point = col_integer())) %>% 
   select(harvest, location, point, comm.per.acre_point.exp01, count)
+
+# ??
+# where harvest == "crp" change to "rp"
+# replace(test.df$harvest,)
 
   str(test.df)
   print(test.df, n=20)
@@ -86,15 +90,21 @@ stocking.01 <- test.df %>%
   rename(seedling.acre = comm.per.acre_point.exp01) %>% 
   str
   
-plot_list <- c(349, 350, 351)
-#str(plot_list)
+plot_list <-  c(349, 350, 351)
+ # unique(c(stocking.01$point))
+ # c(349, 350, 351)
+str(plot_list)
 
-for(point in plot_list){
+newdata = list()
+
+for(pnt in plot_list){   # alternatively for(i in 1:20)
   stocking.02 <- stocking.01 %>% 
-    filter(point == plot) %>% 
+    filter(point == pnt) %>% 
     mutate(stk = 0) %>% 
     if (seedling.acre > 2887.5) { # do this with ifelse rather than the initial "stk=0"
       mutate(stk=1)
+      
+      newdata[[1]] <- stocking.02
     }
     }
 
