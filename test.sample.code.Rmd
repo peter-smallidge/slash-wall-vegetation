@@ -11,8 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(skimr)        ## install.packages("skimr")
-library(dplyr)
-library(readr)
+#library(dplyr)
+#library(readr)
 
 #
 # ALT plus hypen = <- (must be within chunk)
