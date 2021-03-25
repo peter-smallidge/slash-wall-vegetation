@@ -35,10 +35,16 @@ library(dplyr)
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
 # ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
 # filter rows, select columns
 # RMD comment = <!-- comment -->
+# 
+# 
+
+
 
 ```
+
 
 
 
@@ -50,7 +56,10 @@ the file "cheat sheet data-import" has details -->
 
 
 ```{r}
-# Seedling data
+# Seedling data, located in the same folder as this 
+# the initial read of the data revealed that some columns were incorrectly
+# recognized when inputted. the code for "col_types=" was added in a second pass
+# of "read_csv" to clarify the desired data type.
 
 input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
                       col_types=cols(spp=col_character(), 

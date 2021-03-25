@@ -38,6 +38,7 @@ print(char_vec)
 ```
 
 
+
 ### read data from csv file, check variables and data structure
 
 <!-- note to self: in the "read_csv" code, after the file location the code

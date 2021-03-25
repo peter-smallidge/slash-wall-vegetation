@@ -38,6 +38,25 @@ test.df <- read_csv("commercial-per-acre-point.csv",
   print(test.df, n=20)
   
 ```
+### test code to replace values 
+
+```{r}
+library(tidyverse)
+data <- tribble(
+  ~X25, ~Other,
+  "a", NA,
+  "b", NA,
+  "Other", "c",
+  "Other", "d"
+)
+View(data)
+
+data2 <- data %>% mutate(X25 = replace(X25, X25 == "x", Other))
+view(data2)
+
+```
+
+
 
 ### calculate % of a variable within a group
 ### for each level of "harvest" what percentage are "interior" vs. "perimeter"
