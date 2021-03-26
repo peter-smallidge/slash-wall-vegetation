@@ -51,12 +51,12 @@ data <- tribble(
 )
 View(data)
 
-data2 <- data %>% mutate(X25 = replace(X25, X25 == "Other", Other))
-view(data2)
+#data2 <- data %>% mutate(X25 = replace(X25, X25 == "Other", Other))
+#view(data2)
 
-data3 <- data %>% 
-  data$X25[data$X25 == a] <- "z"
-view(data3)
+#data3 <- data %>% 
+#  data$X25[data$X25 == a] <- "z"
+#view(data3)
 
 num_vec <- c(1:4, NA)
 num2 <- recode(num_vec, `2` = 20L, `4` = 40L)
@@ -76,14 +76,25 @@ test <- tribble(
   1, "p", 318,
   2, "p", 316,
   3, "i", 531,
-  4, "i", 318
+  4, "i", 318,
+  5, "i", 541
 )
 view(test)
 str(test)
 
 test2 <- test
 test2$species[test2$species == 318] <-  "sm"
+test2$location[test2$location == "p"] <-  "perimeter"
 view(test2)
+
+## the following code doesn't work
+test3 <- test %>% 
+mutate (
+  species[species == 318] <-  "sm",
+  species == 316 <- "rm",
+  location[location == "p"] <-  "perimeter"
+)
+view(test3)
 
 
 

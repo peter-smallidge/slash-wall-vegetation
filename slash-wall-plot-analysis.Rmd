@@ -41,8 +41,8 @@ library(skimr)        ## install.packages("skimr")
 plot.data = read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv")
 
 
-# str(input.data) displays the structure of the variables
-skim(plot.data)
+str(plot.data) #displays the structure of the variables
+#skim(plot.data)
 table(plot.data$ba)
 
 
@@ -50,12 +50,23 @@ table(plot.data$ba)
 
 plot.data %>% 
   arrange(harvest, location) %>% 
-  group_by(harvest,location) %>% 
-  skim()
+  group_by(harvest,location) 
+#  skim()
+
+  plot.data$harvest[plot.data$harvest == "cgl"] <- "gas_line"
+  plot.data$harvest[plot.data$harvest == "crp"] <- "red-pine"
+  plot.data$harvest[plot.data$harvest == "cwb"] <- "wedge_boot"
+  plot.data$harvest[plot.data$harvest == "rp"] <- "red-pine"
+  plot.data$harvest[plot.data$harvest == "gl"] <- "gas_line"
+
 
 head(plot.data, n=10)
 tail(plot.data, n=10)
 
+
+#test2 <- test
+#test2$species[test2$species == 318] <-  "sm"
+#test2$location[test2$location == "p"] <-  "perimeter"
 ```
 
 <br>
@@ -104,7 +115,10 @@ tail(plot.data, n=10)
 # Nina Thirkildsen suggested adding "dplyr::" before each verb. Including the package name
 # is a way to ensure that it is the package's version of the verb that is used, 
 # not a different package's verb.
-# *** the problem was loading too many libraries with conflicts. Currently just load tidyverse and skimr
+# 
+# UPDATE
+# *** the problem was loading too many libraries with conflicts. 
+# Currently just load tidyverse and skimr
 
 
 site <- plot.data %>% 

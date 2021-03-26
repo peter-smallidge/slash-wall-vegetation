@@ -25,10 +25,11 @@ plot.data = read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv")
     ##   .default = col_character(),
     ##   season = col_double(),
     ##   point = col_double(),
-    ##   `upper-spp` = col_double(),
+    ##   upper_spp = col_double(),
     ##   baf = col_double(),
     ##   oakhick = col_double(),
     ##   beech = col_double(),
+    ##   maple = col_double(),
     ##   birch = col_double(),
     ##   hdwd = col_double(),
     ##   conifer = col_double(),
@@ -49,8 +50,8 @@ skim(plot.data)
 | Number of columns                                | 28        |
 | \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_   |           |
 | Column type frequency:                           |           |
-| character                                        | 17        |
-| numeric                                          | 11        |
+| character                                        | 16        |
+| numeric                                          | 12        |
 | \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ |           |
 | Group variables                                  | None      |
 
@@ -67,16 +68,15 @@ Data summary
 | slash          |          0 |           1.00 |   1 |   1 |     0 |         5 |          0 |
 | fern           |          8 |           0.97 |   1 |   1 |     0 |         6 |          0 |
 | herb           |          0 |           1.00 |   1 |   4 |     0 |         6 |          0 |
-| low-cov        |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| low-spp        |          0 |           1.00 |   4 |   4 |     0 |         4 |          0 |
-| invasive-cov   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| invasive-spp   |        212 |           0.15 |   4 |   4 |     0 |         4 |          0 |
-| mid-cov        |          0 |           1.00 |   1 |   1 |     0 |         5 |          0 |
-| mid-spp        |         18 |           0.93 |   3 |   4 |     0 |        29 |          0 |
-| upper-cov      |          1 |           1.00 |   1 |   1 |     0 |         5 |          0 |
-| vine-cov       |          3 |           0.99 |   1 |   1 |     0 |         4 |          0 |
-| vine-spp       |        188 |           0.24 |   4 |   4 |     0 |         4 |          0 |
-| maple          |        137 |           0.45 |   1 |   2 |     0 |        10 |          0 |
+| low\_cov       |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| low\_spp       |          0 |           1.00 |   4 |   4 |     0 |         4 |          0 |
+| invasive\_cov  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| invasive\_spp  |        212 |           0.15 |   4 |   4 |     0 |         4 |          0 |
+| mid\_cov       |          0 |           1.00 |   1 |   1 |     0 |         5 |          0 |
+| mid\_spp       |         18 |           0.93 |   3 |   4 |     0 |        29 |          0 |
+| upper\_cov     |          1 |           1.00 |   1 |   1 |     0 |         5 |          0 |
+| vine\_cov      |          3 |           0.99 |   1 |   1 |     0 |         4 |          0 |
+| vine\_spp      |        188 |           0.24 |   4 |   4 |     0 |         4 |          0 |
 
 **Variable type: numeric**
 
@@ -84,10 +84,11 @@ Data summary
 | :------------- | ---------: | -------------: | ------: | -----: | ---: | ------: | -----: | ------: | ---: | :---- |
 | season         |          0 |           1.00 | 2019.00 |   0.00 | 2019 | 2019.00 | 2019.0 | 2019.00 | 2019 | ▁▁▇▁▁ |
 | point          |          0 |           1.00 |  705.92 | 217.25 |  334 |  395.75 |  773.5 |  860.25 |  975 | ▆▁▁▇▆ |
-| upper-spp      |         79 |           0.68 |  503.75 | 245.79 |  129 |  318.00 |  318.0 |  833.00 |  951 | ▁▇▁▁▅ |
+| upper\_spp     |         79 |           0.68 |  503.75 | 245.79 |  129 |  318.00 |  318.0 |  833.00 |  951 | ▁▇▁▁▅ |
 | baf            |          0 |           1.00 |   10.00 |   0.00 |   10 |   10.00 |   10.0 |   10.00 |   10 | ▁▁▇▁▁ |
 | oakhick        |        178 |           0.28 |    2.04 |   1.16 |    1 |    1.00 |    2.0 |    3.00 |    5 | ▇▃▃▂▁ |
 | beech          |        236 |           0.05 |    1.42 |   0.67 |    1 |    1.00 |    1.0 |    2.00 |    3 | ▇▁▃▁▁ |
+| maple          |        138 |           0.44 |    2.73 |   1.92 |    1 |    1.00 |    2.0 |    4.00 |   10 | ▇▃▂▁▁ |
 | birch          |        242 |           0.02 |    1.00 |   0.00 |    1 |    1.00 |    1.0 |    1.00 |    1 | ▁▁▇▁▁ |
 | hdwd           |        233 |           0.06 |    1.20 |   0.41 |    1 |    1.00 |    1.0 |    1.00 |    2 | ▇▁▁▁▂ |
 | conifer        |        237 |           0.04 |    1.36 |   0.67 |    1 |    1.00 |    1.0 |    1.50 |    3 | ▇▁▂▁▁ |
@@ -118,8 +119,8 @@ plot.data %>%
 | Number of columns                                | 28                |
 | \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_   |                   |
 | Column type frequency:                           |                   |
-| character                                        | 15                |
-| numeric                                          | 11                |
+| character                                        | 14                |
+| numeric                                          | 12                |
 | \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ |                   |
 | Group variables                                  | harvest, location |
 
@@ -184,116 +185,105 @@ Data summary
 | herb           | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
 | herb           | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
 | herb           | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| low-cov        | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| low-cov        | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| low-cov        | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| low-cov        | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| low-cov        | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| low-cov        | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| low-cov        | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| low-cov        | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| low-cov        | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| low-cov        | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| low-cov        | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| low-spp        | boot    | interior  |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
-| low-spp        | boot    | perimeter |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
-| low-spp        | cgl     | control   |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
-| low-spp        | crp     | control   |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
-| low-spp        | cwb     | control   |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
-| low-spp        | gl      | interior  |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
-| low-spp        | gl      | perimeter |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
-| low-spp        | rp      | interior  |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
-| low-spp        | rp      | perimeter |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
-| low-spp        | wedge   | interior  |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
-| low-spp        | wedge   | perimeter |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
-| invasive-cov   | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| invasive-cov   | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| invasive-cov   | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         1 |          0 |
-| invasive-cov   | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| invasive-cov   | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| invasive-cov   | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| invasive-cov   | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| invasive-cov   | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| invasive-cov   | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| invasive-cov   | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| invasive-cov   | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         1 |          0 |
-| invasive-spp   | boot    | interior  |         17 |           0.19 |   4 |   4 |     0 |         2 |          0 |
-| invasive-spp   | boot    | perimeter |         13 |           0.19 |   4 |   4 |     0 |         2 |          0 |
-| invasive-spp   | cgl     | control   |         17 |           0.00 |  NA |  NA |     0 |         0 |          0 |
-| invasive-spp   | crp     | control   |         22 |           0.24 |   4 |   4 |     0 |         2 |          0 |
-| invasive-spp   | cwb     | control   |         24 |           0.29 |   4 |   4 |     0 |         1 |          0 |
-| invasive-spp   | gl      | interior  |         43 |           0.02 |   4 |   4 |     0 |         1 |          0 |
-| invasive-spp   | gl      | perimeter |         34 |           0.03 |   4 |   4 |     0 |         1 |          0 |
-| invasive-spp   | rp      | interior  |         10 |           0.33 |   4 |   4 |     0 |         2 |          0 |
-| invasive-spp   | rp      | perimeter |          9 |           0.31 |   4 |   4 |     0 |         3 |          0 |
-| invasive-spp   | wedge   | interior  |         13 |           0.07 |   4 |   4 |     0 |         1 |          0 |
-| invasive-spp   | wedge   | perimeter |         10 |           0.00 |  NA |  NA |     0 |         0 |          0 |
-| mid-cov        | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| mid-cov        | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| mid-cov        | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| mid-spp        | boot    | interior  |          0 |           1.00 |   3 |   4 |     0 |         6 |          0 |
-| mid-spp        | boot    | perimeter |          1 |           0.94 |   3 |   3 |     0 |         5 |          0 |
-| mid-spp        | cgl     | control   |          0 |           1.00 |   3 |   3 |     0 |         7 |          0 |
-| mid-spp        | crp     | control   |          2 |           0.93 |   3 |   3 |     0 |         9 |          0 |
-| mid-spp        | cwb     | control   |          8 |           0.76 |   3 |   4 |     0 |         8 |          0 |
-| mid-spp        | gl      | interior  |          5 |           0.89 |   3 |   4 |     0 |        15 |          0 |
-| mid-spp        | gl      | perimeter |          2 |           0.94 |   3 |   4 |     0 |         9 |          0 |
-| mid-spp        | rp      | interior  |          0 |           1.00 |   3 |   3 |     0 |         8 |          0 |
-| mid-spp        | rp      | perimeter |          0 |           1.00 |   3 |   3 |     0 |         7 |          0 |
-| mid-spp        | wedge   | interior  |          0 |           1.00 |   3 |   3 |     0 |         3 |          0 |
-| mid-spp        | wedge   | perimeter |          0 |           1.00 |   3 |   4 |     0 |         3 |          0 |
-| upper-cov      | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| upper-cov      | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| upper-cov      | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| upper-cov      | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| upper-cov      | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         5 |          0 |
-| upper-cov      | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| upper-cov      | gl      | perimeter |          1 |           0.97 |   1 |   1 |     0 |         3 |          0 |
-| upper-cov      | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
-| upper-cov      | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| upper-cov      | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         5 |          0 |
-| upper-cov      | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| vine-cov       | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| vine-cov       | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| vine-cov       | cgl     | control   |          1 |           0.94 |   1 |   1 |     0 |         2 |          0 |
-| vine-cov       | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| vine-cov       | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| vine-cov       | gl      | interior  |          2 |           0.95 |   1 |   1 |     0 |         4 |          0 |
-| vine-cov       | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| vine-cov       | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| vine-cov       | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
-| vine-cov       | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| vine-cov       | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
-| vine-spp       | boot    | interior  |         14 |           0.33 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | boot    | perimeter |         11 |           0.31 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | cgl     | control   |         14 |           0.18 |   4 |   4 |     0 |         2 |          0 |
-| vine-spp       | crp     | control   |         21 |           0.28 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | cwb     | control   |         31 |           0.09 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | gl      | interior  |         29 |           0.34 |   4 |   4 |     0 |         3 |          0 |
-| vine-spp       | gl      | perimeter |         34 |           0.03 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | rp      | interior  |          9 |           0.40 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | rp      | perimeter |         10 |           0.23 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | wedge   | interior  |          9 |           0.36 |   4 |   4 |     0 |         1 |          0 |
-| vine-spp       | wedge   | perimeter |          6 |           0.40 |   4 |   4 |     0 |         1 |          0 |
-| maple          | boot    | interior  |          3 |           0.86 |   1 |   1 |     0 |         6 |          0 |
-| maple          | boot    | perimeter |          4 |           0.75 |   1 |   1 |     0 |         3 |          0 |
-| maple          | cgl     | control   |         17 |           0.00 |  NA |  NA |     0 |         0 |          0 |
-| maple          | crp     | control   |         27 |           0.07 |   1 |   1 |     0 |         1 |          0 |
-| maple          | cwb     | control   |          2 |           0.94 |   1 |   1 |     0 |         7 |          0 |
-| maple          | gl      | interior  |         27 |           0.39 |   1 |   1 |     0 |         3 |          0 |
-| maple          | gl      | perimeter |         28 |           0.20 |   1 |   1 |     0 |         2 |          0 |
-| maple          | rp      | interior  |         14 |           0.07 |   1 |   1 |     0 |         1 |          0 |
-| maple          | rp      | perimeter |         12 |           0.08 |   1 |   1 |     0 |         1 |          0 |
-| maple          | wedge   | interior  |          2 |           0.86 |   1 |   2 |     0 |         7 |          0 |
-| maple          | wedge   | perimeter |          1 |           0.90 |   1 |   1 |     0 |         4 |          0 |
+| low\_cov       | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| low\_cov       | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| low\_cov       | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| low\_cov       | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| low\_cov       | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| low\_cov       | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| low\_cov       | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| low\_cov       | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| low\_cov       | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| low\_cov       | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| low\_cov       | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| low\_spp       | boot    | interior  |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
+| low\_spp       | boot    | perimeter |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
+| low\_spp       | cgl     | control   |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
+| low\_spp       | crp     | control   |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
+| low\_spp       | cwb     | control   |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
+| low\_spp       | gl      | interior  |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
+| low\_spp       | gl      | perimeter |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
+| low\_spp       | rp      | interior  |          0 |           1.00 |   4 |   4 |     0 |         2 |          0 |
+| low\_spp       | rp      | perimeter |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
+| low\_spp       | wedge   | interior  |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
+| low\_spp       | wedge   | perimeter |          0 |           1.00 |   4 |   4 |     0 |         1 |          0 |
+| invasive\_cov  | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| invasive\_cov  | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| invasive\_cov  | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         1 |          0 |
+| invasive\_cov  | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| invasive\_cov  | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| invasive\_cov  | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| invasive\_cov  | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| invasive\_cov  | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| invasive\_cov  | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| invasive\_cov  | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| invasive\_cov  | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         1 |          0 |
+| invasive\_spp  | boot    | interior  |         17 |           0.19 |   4 |   4 |     0 |         2 |          0 |
+| invasive\_spp  | boot    | perimeter |         13 |           0.19 |   4 |   4 |     0 |         2 |          0 |
+| invasive\_spp  | cgl     | control   |         17 |           0.00 |  NA |  NA |     0 |         0 |          0 |
+| invasive\_spp  | crp     | control   |         22 |           0.24 |   4 |   4 |     0 |         2 |          0 |
+| invasive\_spp  | cwb     | control   |         24 |           0.29 |   4 |   4 |     0 |         1 |          0 |
+| invasive\_spp  | gl      | interior  |         43 |           0.02 |   4 |   4 |     0 |         1 |          0 |
+| invasive\_spp  | gl      | perimeter |         34 |           0.03 |   4 |   4 |     0 |         1 |          0 |
+| invasive\_spp  | rp      | interior  |         10 |           0.33 |   4 |   4 |     0 |         2 |          0 |
+| invasive\_spp  | rp      | perimeter |          9 |           0.31 |   4 |   4 |     0 |         3 |          0 |
+| invasive\_spp  | wedge   | interior  |         13 |           0.07 |   4 |   4 |     0 |         1 |          0 |
+| invasive\_spp  | wedge   | perimeter |         10 |           0.00 |  NA |  NA |     0 |         0 |          0 |
+| mid\_cov       | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| mid\_cov       | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| mid\_cov       | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| mid\_spp       | boot    | interior  |          0 |           1.00 |   3 |   4 |     0 |         6 |          0 |
+| mid\_spp       | boot    | perimeter |          1 |           0.94 |   3 |   3 |     0 |         5 |          0 |
+| mid\_spp       | cgl     | control   |          0 |           1.00 |   3 |   3 |     0 |         7 |          0 |
+| mid\_spp       | crp     | control   |          2 |           0.93 |   3 |   3 |     0 |         9 |          0 |
+| mid\_spp       | cwb     | control   |          8 |           0.76 |   3 |   4 |     0 |         8 |          0 |
+| mid\_spp       | gl      | interior  |          5 |           0.89 |   3 |   4 |     0 |        15 |          0 |
+| mid\_spp       | gl      | perimeter |          2 |           0.94 |   3 |   4 |     0 |         9 |          0 |
+| mid\_spp       | rp      | interior  |          0 |           1.00 |   3 |   3 |     0 |         8 |          0 |
+| mid\_spp       | rp      | perimeter |          0 |           1.00 |   3 |   3 |     0 |         7 |          0 |
+| mid\_spp       | wedge   | interior  |          0 |           1.00 |   3 |   3 |     0 |         3 |          0 |
+| mid\_spp       | wedge   | perimeter |          0 |           1.00 |   3 |   4 |     0 |         3 |          0 |
+| upper\_cov     | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| upper\_cov     | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| upper\_cov     | cgl     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| upper\_cov     | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| upper\_cov     | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         5 |          0 |
+| upper\_cov     | gl      | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| upper\_cov     | gl      | perimeter |          1 |           0.97 |   1 |   1 |     0 |         3 |          0 |
+| upper\_cov     | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         4 |          0 |
+| upper\_cov     | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| upper\_cov     | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         5 |          0 |
+| upper\_cov     | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| vine\_cov      | boot    | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| vine\_cov      | boot    | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| vine\_cov      | cgl     | control   |          1 |           0.94 |   1 |   1 |     0 |         2 |          0 |
+| vine\_cov      | crp     | control   |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| vine\_cov      | cwb     | control   |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| vine\_cov      | gl      | interior  |          2 |           0.95 |   1 |   1 |     0 |         4 |          0 |
+| vine\_cov      | gl      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| vine\_cov      | rp      | interior  |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| vine\_cov      | rp      | perimeter |          0 |           1.00 |   1 |   1 |     0 |         2 |          0 |
+| vine\_cov      | wedge   | interior  |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| vine\_cov      | wedge   | perimeter |          0 |           1.00 |   1 |   1 |     0 |         3 |          0 |
+| vine\_spp      | boot    | interior  |         14 |           0.33 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | boot    | perimeter |         11 |           0.31 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | cgl     | control   |         14 |           0.18 |   4 |   4 |     0 |         2 |          0 |
+| vine\_spp      | crp     | control   |         21 |           0.28 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | cwb     | control   |         31 |           0.09 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | gl      | interior  |         29 |           0.34 |   4 |   4 |     0 |         3 |          0 |
+| vine\_spp      | gl      | perimeter |         34 |           0.03 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | rp      | interior  |          9 |           0.40 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | rp      | perimeter |         10 |           0.23 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | wedge   | interior  |          9 |           0.36 |   4 |   4 |     0 |         1 |          0 |
+| vine\_spp      | wedge   | perimeter |          6 |           0.40 |   4 |   4 |     0 |         1 |          0 |
 
 **Variable type: numeric**
 
@@ -321,17 +311,17 @@ Data summary
 | point          | rp      | perimeter |          0 |           1.00 |  886.00 |   3.89 |  880 |  883.00 |  886.0 |  889.00 |  892 | ▇▅▇▅▇ |
 | point          | wedge   | interior  |          0 |           1.00 |  376.50 |   4.18 |  370 |  373.25 |  376.5 |  379.75 |  383 | ▇▇▅▇▇ |
 | point          | wedge   | perimeter |          0 |           1.00 |  970.50 |   3.03 |  966 |  968.25 |  970.5 |  972.75 |  975 | ▇▇▇▇▇ |
-| upper-spp      | boot    | interior  |          2 |           0.90 |  399.68 | 187.07 |  316 |  316.00 |  316.0 |  318.00 |  951 | ▇▁▁▁▁ |
-| upper-spp      | boot    | perimeter |          2 |           0.88 |  442.57 | 219.06 |  316 |  316.00 |  317.0 |  477.75 |  833 | ▇▁▁▁▂ |
-| upper-spp      | cgl     | control   |          0 |           1.00 |  833.00 |   0.00 |  833 |  833.00 |  833.0 |  833.00 |  833 | ▁▁▇▁▁ |
-| upper-spp      | crp     | control   |         11 |           0.62 |  668.44 | 277.68 |  129 |  487.00 |  832.5 |  833.00 |  833 | ▂▁▁▁▇ |
-| upper-spp      | cwb     | control   |          3 |           0.91 |  341.65 | 113.90 |  316 |  318.00 |  318.0 |  318.00 |  951 | ▇▁▁▁▁ |
-| upper-spp      | gl      | interior  |         27 |           0.39 |  416.18 | 177.25 |  318 |  318.00 |  318.0 |  531.00 |  833 | ▇▁▂▁▁ |
-| upper-spp      | gl      | perimeter |         20 |           0.43 |  639.60 | 232.23 |  318 |  372.00 |  762.0 |  833.00 |  833 | ▅▁▁▁▇ |
-| upper-spp      | rp      | interior  |          7 |           0.53 |  671.38 | 282.06 |  129 |  651.00 |  832.0 |  832.25 |  833 | ▁▁▁▁▇ |
-| upper-spp      | rp      | perimeter |          6 |           0.54 |  685.57 | 251.78 |  316 |  575.50 |  833.0 |  833.00 |  833 | ▃▁▁▁▇ |
-| upper-spp      | wedge   | interior  |          1 |           0.93 |  350.15 |  80.27 |  316 |  316.00 |  318.0 |  318.00 |  531 | ▇▁▁▁▂ |
-| upper-spp      | wedge   | perimeter |          0 |           1.00 |  316.80 |   1.03 |  316 |  316.00 |  316.0 |  318.00 |  318 | ▇▁▁▁▅ |
+| upper\_spp     | boot    | interior  |          2 |           0.90 |  399.68 | 187.07 |  316 |  316.00 |  316.0 |  318.00 |  951 | ▇▁▁▁▁ |
+| upper\_spp     | boot    | perimeter |          2 |           0.88 |  442.57 | 219.06 |  316 |  316.00 |  317.0 |  477.75 |  833 | ▇▁▁▁▂ |
+| upper\_spp     | cgl     | control   |          0 |           1.00 |  833.00 |   0.00 |  833 |  833.00 |  833.0 |  833.00 |  833 | ▁▁▇▁▁ |
+| upper\_spp     | crp     | control   |         11 |           0.62 |  668.44 | 277.68 |  129 |  487.00 |  832.5 |  833.00 |  833 | ▂▁▁▁▇ |
+| upper\_spp     | cwb     | control   |          3 |           0.91 |  341.65 | 113.90 |  316 |  318.00 |  318.0 |  318.00 |  951 | ▇▁▁▁▁ |
+| upper\_spp     | gl      | interior  |         27 |           0.39 |  416.18 | 177.25 |  318 |  318.00 |  318.0 |  531.00 |  833 | ▇▁▂▁▁ |
+| upper\_spp     | gl      | perimeter |         20 |           0.43 |  639.60 | 232.23 |  318 |  372.00 |  762.0 |  833.00 |  833 | ▅▁▁▁▇ |
+| upper\_spp     | rp      | interior  |          7 |           0.53 |  671.38 | 282.06 |  129 |  651.00 |  832.0 |  832.25 |  833 | ▁▁▁▁▇ |
+| upper\_spp     | rp      | perimeter |          6 |           0.54 |  685.57 | 251.78 |  316 |  575.50 |  833.0 |  833.00 |  833 | ▃▁▁▁▇ |
+| upper\_spp     | wedge   | interior  |          1 |           0.93 |  350.15 |  80.27 |  316 |  316.00 |  318.0 |  318.00 |  531 | ▇▁▁▁▂ |
+| upper\_spp     | wedge   | perimeter |          0 |           1.00 |  316.80 |   1.03 |  316 |  316.00 |  316.0 |  318.00 |  318 | ▇▁▁▁▅ |
 | baf            | boot    | interior  |          0 |           1.00 |   10.00 |   0.00 |   10 |   10.00 |   10.0 |   10.00 |   10 | ▁▁▇▁▁ |
 | baf            | boot    | perimeter |          0 |           1.00 |   10.00 |   0.00 |   10 |   10.00 |   10.0 |   10.00 |   10 | ▁▁▇▁▁ |
 | baf            | cgl     | control   |          0 |           1.00 |   10.00 |   0.00 |   10 |   10.00 |   10.0 |   10.00 |   10 | ▁▁▇▁▁ |
@@ -365,6 +355,17 @@ Data summary
 | beech          | rp      | perimeter |         13 |           0.00 |     NaN |     NA |   NA |      NA |     NA |      NA |   NA |       |
 | beech          | wedge   | interior  |         12 |           0.14 |    1.50 |   0.71 |    1 |    1.25 |    1.5 |    1.75 |    2 | ▇▁▁▁▇ |
 | beech          | wedge   | perimeter |         10 |           0.00 |     NaN |     NA |   NA |      NA |     NA |      NA |   NA |       |
+| maple          | boot    | interior  |          3 |           0.86 |    3.28 |   1.32 |    1 |    2.00 |    3.0 |    4.00 |    6 | ▇▅▇▂▁ |
+| maple          | boot    | perimeter |          4 |           0.75 |    1.83 |   0.83 |    1 |    1.00 |    2.0 |    2.25 |    3 | ▇▁▆▁▅ |
+| maple          | cgl     | control   |         17 |           0.00 |     NaN |     NA |   NA |      NA |     NA |      NA |   NA |       |
+| maple          | crp     | control   |         27 |           0.07 |    1.00 |   0.00 |    1 |    1.00 |    1.0 |    1.00 |    1 | ▁▁▇▁▁ |
+| maple          | cwb     | control   |          2 |           0.94 |    3.59 |   1.74 |    1 |    2.00 |    3.5 |    5.00 |    7 | ▇▅▃▆▃ |
+| maple          | gl      | interior  |         28 |           0.36 |    1.19 |   0.40 |    1 |    1.00 |    1.0 |    1.00 |    2 | ▇▁▁▁▂ |
+| maple          | gl      | perimeter |         28 |           0.20 |    1.14 |   0.38 |    1 |    1.00 |    1.0 |    1.00 |    2 | ▇▁▁▁▁ |
+| maple          | rp      | interior  |         14 |           0.07 |    1.00 |     NA |    1 |    1.00 |    1.0 |    1.00 |    1 | ▁▁▇▁▁ |
+| maple          | rp      | perimeter |         12 |           0.08 |    1.00 |     NA |    1 |    1.00 |    1.0 |    1.00 |    1 | ▁▁▇▁▁ |
+| maple          | wedge   | interior  |          2 |           0.86 |    4.25 |   3.05 |    1 |    1.75 |    3.5 |    5.75 |   10 | ▇▆▃▃▂ |
+| maple          | wedge   | perimeter |          1 |           0.90 |    2.44 |   1.94 |    1 |    1.00 |    1.0 |    3.00 |    6 | ▇▃▁▂▂ |
 | birch          | boot    | interior  |         21 |           0.00 |     NaN |     NA |   NA |      NA |     NA |      NA |   NA |       |
 | birch          | boot    | perimeter |         15 |           0.06 |    1.00 |     NA |    1 |    1.00 |    1.0 |    1.00 |    1 | ▁▁▇▁▁ |
 | birch          | cgl     | control   |         17 |           0.00 |     NaN |     NA |   NA |      NA |     NA |      NA |   NA |       |
@@ -426,46 +427,46 @@ head(plot.data, n=10)
 ```
 
     ## # A tibble: 10 x 28
-    ##    harvest season date  location point disturb slash fern  herb  `low-cov`
-    ##    <chr>    <dbl> <chr> <chr>    <dbl> <chr>   <chr> <chr> <chr> <chr>    
-    ##  1 boot      2019 2020~ interior   349 l       p     a     m     h        
-    ##  2 boot      2019 2020~ interior   350 m       p     m     l     h        
-    ##  3 boot      2019 2020~ interior   351 a       m     a     p     m        
-    ##  4 boot      2019 2020~ interior   352 m       m     l     p     h        
-    ##  5 boot      2019 2020~ interior   353 p       m     m     m     m        
-    ##  6 boot      2019 2020~ interior   354 p       h     l     p     h        
-    ##  7 boot      2019 2020~ interior   355 p       p     a     p     h        
-    ##  8 boot      2019 2020~ interior   356 l       h     p     p     h        
-    ##  9 boot      2019 2020~ interior   357 a       h     h     p     m        
-    ## 10 boot      2019 2020~ interior   358 l       m     p     p     h        
-    ## # ... with 18 more variables: `low-spp` <chr>, `invasive-cov` <chr>,
-    ## #   `invasive-spp` <chr>, `mid-cov` <chr>, `mid-spp` <chr>, `upper-cov` <chr>,
-    ## #   `upper-spp` <dbl>, `vine-cov` <chr>, `vine-spp` <chr>, baf <dbl>,
-    ## #   oakhick <dbl>, beech <dbl>, maple <chr>, birch <dbl>, hdwd <dbl>,
-    ## #   conifer <dbl>, ba <dbl>, `seedling-numb` <dbl>
+    ##    harvest season date  location point disturb slash fern  herb  low_cov low_spp
+    ##    <chr>    <dbl> <chr> <chr>    <dbl> <chr>   <chr> <chr> <chr> <chr>   <chr>  
+    ##  1 boot      2019 2020~ interior   349 l       p     a     m     h       rubu   
+    ##  2 boot      2019 2020~ interior   350 m       p     m     l     h       rubu   
+    ##  3 boot      2019 2020~ interior   351 a       m     a     p     m       rubu   
+    ##  4 boot      2019 2020~ interior   352 m       m     l     p     h       rubu   
+    ##  5 boot      2019 2020~ interior   353 p       m     m     m     m       rubu   
+    ##  6 boot      2019 2020~ interior   354 p       h     l     p     h       rubu   
+    ##  7 boot      2019 2020~ interior   355 p       p     a     p     h       rubu   
+    ##  8 boot      2019 2020~ interior   356 l       h     p     p     h       rubu   
+    ##  9 boot      2019 2020~ interior   357 a       h     h     p     m       rubu   
+    ## 10 boot      2019 2020~ interior   358 l       m     p     p     h       samb   
+    ## # ... with 17 more variables: invasive_cov <chr>, invasive_spp <chr>,
+    ## #   mid_cov <chr>, mid_spp <chr>, upper_cov <chr>, upper_spp <dbl>,
+    ## #   vine_cov <chr>, vine_spp <chr>, baf <dbl>, oakhick <dbl>, beech <dbl>,
+    ## #   maple <dbl>, birch <dbl>, hdwd <dbl>, conifer <dbl>, ba <dbl>,
+    ## #   `seedling-numb` <dbl>
 
 ``` r
 tail(plot.data, n=10)
 ```
 
     ## # A tibble: 10 x 28
-    ##    harvest season date  location point disturb slash fern  herb  `low-cov`
-    ##    <chr>    <dbl> <chr> <chr>    <dbl> <chr>   <chr> <chr> <chr> <chr>    
-    ##  1 wedge     2019 2020~ perimet~   966 a       p     p     l     m        
-    ##  2 wedge     2019 2020~ perimet~   967 p       p     p     l     h        
-    ##  3 wedge     2019 2020~ perimet~   968 p       m     l     l     h        
-    ##  4 wedge     2019 2020~ perimet~   969 l       l     l     l     h        
-    ##  5 wedge     2019 2020~ perimet~   970 m       l     l     h     m        
-    ##  6 wedge     2019 2020~ perimet~   971 m       l     l     m     m        
-    ##  7 wedge     2019 2020~ perimet~   972 p       l     p     m     h        
-    ##  8 wedge     2019 2020~ perimet~   973 l       l     p     h     m        
-    ##  9 wedge     2019 2020~ perimet~   974 l       p     p     h     p        
-    ## 10 wedge     2019 2020~ perimet~   975 m       l     p     m     l        
-    ## # ... with 18 more variables: `low-spp` <chr>, `invasive-cov` <chr>,
-    ## #   `invasive-spp` <chr>, `mid-cov` <chr>, `mid-spp` <chr>, `upper-cov` <chr>,
-    ## #   `upper-spp` <dbl>, `vine-cov` <chr>, `vine-spp` <chr>, baf <dbl>,
-    ## #   oakhick <dbl>, beech <dbl>, maple <chr>, birch <dbl>, hdwd <dbl>,
-    ## #   conifer <dbl>, ba <dbl>, `seedling-numb` <dbl>
+    ##    harvest season date  location point disturb slash fern  herb  low_cov low_spp
+    ##    <chr>    <dbl> <chr> <chr>    <dbl> <chr>   <chr> <chr> <chr> <chr>   <chr>  
+    ##  1 wedge     2019 2020~ perimet~   966 a       p     p     l     m       rubu   
+    ##  2 wedge     2019 2020~ perimet~   967 p       p     p     l     h       rubu   
+    ##  3 wedge     2019 2020~ perimet~   968 p       m     l     l     h       rubu   
+    ##  4 wedge     2019 2020~ perimet~   969 l       l     l     l     h       rubu   
+    ##  5 wedge     2019 2020~ perimet~   970 m       l     l     h     m       rubu   
+    ##  6 wedge     2019 2020~ perimet~   971 m       l     l     m     m       rubu   
+    ##  7 wedge     2019 2020~ perimet~   972 p       l     p     m     h       rubu   
+    ##  8 wedge     2019 2020~ perimet~   973 l       l     p     h     m       rubu   
+    ##  9 wedge     2019 2020~ perimet~   974 l       p     p     h     p       rubu   
+    ## 10 wedge     2019 2020~ perimet~   975 m       l     p     m     l       rubu   
+    ## # ... with 17 more variables: invasive_cov <chr>, invasive_spp <chr>,
+    ## #   mid_cov <chr>, mid_spp <chr>, upper_cov <chr>, upper_spp <dbl>,
+    ## #   vine_cov <chr>, vine_spp <chr>, baf <dbl>, oakhick <dbl>, beech <dbl>,
+    ## #   maple <dbl>, birch <dbl>, hdwd <dbl>, conifer <dbl>, ba <dbl>,
+    ## #   `seedling-numb` <dbl>
 
 <br>
 
@@ -510,7 +511,10 @@ tail(plot.data, n=10)
 # Nina Thirkildsen suggested adding "dplyr::" before each verb. Including the package name
 # is a way to ensure that it is the package's version of the verb that is used, 
 # not a different package's verb.
-# *** the problem was loading too many libraries with conflicts. Currently just load tidyverse and skimr
+# 
+# UPDATE
+# *** the problem was loading too many libraries with conflicts. 
+# Currently just load tidyverse and skimr
 
 
 site <- plot.data %>% 
