@@ -178,8 +178,8 @@ table(ht.data$harvest) # display the values in the variable "harvest"
 ht.avg.gasline <- ht.data %>% 
   filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
           spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
-            spp == "762" | spp == "833" | spp == "951") %>% 
- #glimpse(ht.avg.gasline)
+            spp == "701" | spp == "762" | spp == "833" | spp == "951") %>% 
+ #glimpse(ht.avg.gasline), spp 701 = Ostrya
   
   
   filter(harvest == "GL" | harvest == "CGL") %>% 
