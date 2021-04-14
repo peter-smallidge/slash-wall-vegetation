@@ -26,19 +26,6 @@ library(dplyr)
 
 ```
 
-
-#### code to replace one character value with another character value
-```{r}
-library(dplyr)
-char_vec <- sample(c("a", "b", "c"), 10, replace = TRUE)
-print(char_vec)
-recode(char_vec, a = "Apple")
-char_vec <- recode(char_vec, a = "Apple", b = "Banana") %>% as.data.frame()
-print(char_vec)
-```
-
-
-
 ### read data from csv file, check variables and data structure
 
 <!-- note to self: in the "read_csv" code, after the file location the code
@@ -52,11 +39,8 @@ input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv",
 str(input.data)
 
 ht.data <- input.data %>% 
-  rename(ht.2019 = tot.ht)
+  rename(ht.2019 = tot.ht)  # (new name = old name)
 
-#ht.data %>% recode(spp, "318" = "SM", "531", "AB", "372" = "SB")
-
-#recode(y , "pear" = "apple", "banana" = "pineapple" )
 
 # in an earlier csv file there was an "S" and all should have been lower case. 
 # I changed the value in the original data file
@@ -64,16 +48,9 @@ ht.data <- input.data %>%
 
 
 table(ht.data$spp)
-
-
-
-
-# learn code to convert numeric values to character values , 316 = "RM", 318 = "SM", 356 = "SV" 
-
+table(ht.data$origin)
 
 glimpse(ht.data)
-
-
 
 skim(ht.data)
 #str(ht.data)  there are 1158 rows in original data frame
@@ -81,6 +58,32 @@ head(ht.data)
 #dim(ht.data)
 
 ```
+
+
+### Make the data tidy
+### Use Pivot
+```{r}
+
+# seedling heights were measured after the 2019 growing season
+# the height of the seedling at end of 2019 recorded as ht.2019
+# the growth increment for 2019 = inc.2019
+# the growth increment for 2019 = inc.2018
+
+ht.data2 <- ht.data %>% 
+  mutate(
+    ht.2018 = ht.2019 - inc.2019,
+    ht.2017 = ht.2018 - inc.2018
+   
+  )
+#   yr.original = 2017
+
+#seedling <- 
+#  pivot_longer(ht.data, c())
+  
+
+
+```
+
 
 ### Determine average total height at end of 2019
 
