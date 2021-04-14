@@ -58,17 +58,19 @@ ht.data <- input.data %>%
 
 #recode(y , "pear" = "apple", "banana" = "pineapple" )
 
-# in an earlier csv file there was an "S" and all should have been lower case.  The code for 
-# mutate that follows did not work. I changed the value in the original data file
-#ht.data %>% 
-#  mutate_if(spp=recode(spp, '531' = 'AB'))
+# in an earlier csv file there was an "S" and all should have been lower case. 
+# I changed the value in the original data file
+
+
 
 table(ht.data$spp)
 
-#df %>% mutate(result=recode(result, 'Win'='1', 'Loss'='0'))
+
+
 
 # learn code to convert numeric values to character values , 316 = "RM", 318 = "SM", 356 = "SV" 
-#  recode('531' = "AB")
+
+
 glimpse(ht.data)
 
 

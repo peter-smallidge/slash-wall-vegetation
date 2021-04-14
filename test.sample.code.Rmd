@@ -83,7 +83,7 @@ view(test)
 str(test)
 
 test2 <- test
-test2$species[test2$species == 318] <-  "sm"
+test2$species[test2$species == 318] <-  "sm" #s sm = sugar maple
 test2$location[test2$location == "p"] <-  "perimeter"
 view(test2)
 
