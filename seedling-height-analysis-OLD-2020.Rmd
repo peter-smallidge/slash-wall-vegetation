@@ -1,0 +1,245 @@
+---
+title: "seedling height analysis"
+author: "Peter Smallidge"
+date: "10/16/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Analysis of seedling heights 2018 & 2019
+
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(dplyr)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+```
+
+
+#### code to replace one character value with another character value
+```{r}
+library(dplyr)
+char_vec <- sample(c("a", "b", "c"), 10, replace = TRUE)
+print(char_vec)
+recode(char_vec, a = "Apple")
+char_vec <- recode(char_vec, a = "Apple", b = "Banana") %>% as.data.frame()
+print(char_vec)
+```
+
+
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted
+the file "cheat sheet data-import" has details -->
+
+
+```{r}
+input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv",
+                      col_types=cols(spp=col_character()))
+str(input.data)
+
+ht.data <- input.data %>% 
+  rename(ht.2019 = tot.ht)
+
+#ht.data %>% recode(spp, "318" = "SM", "531", "AB", "372" = "SB")
+
+#recode(y , "pear" = "apple", "banana" = "pineapple" )
+
+# in an earlier csv file there was an "S" and all should have been lower case. 
+# I changed the value in the original data file
+
+
+
+table(ht.data$spp)
+
+
+
+
+# learn code to convert numeric values to character values , 316 = "RM", 318 = "SM", 356 = "SV" 
+
+
+glimpse(ht.data)
+
+
+
+skim(ht.data)
+#str(ht.data)  there are 1158 rows in original data frame
+head(ht.data)
+#dim(ht.data)
+
+```
+
+### Determine average total height at end of 2019
+
+```{r}
+# determine average total height and annual increment by harvest, origin, and spp
+# 1. filter to retain priority species
+# 2. select numeric variable
+# 3. group by harvest, origin, and spp
+# 4. summarize
+ht.avg <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
+          spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
+            spp == "762" | spp == "833" | spp == "951") %>% 
+  select(harvest, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
+  group_by(harvest, origin, spp) %>% 
+  add_count(spp) %>% 
+  summarise(
+    ht.2019 = mean(ht.2019),
+    inc.2019 = mean(inc.2019),
+    n=n()
+  )
+  
+  
+
+(ht.avg)
+
+
+dim(ht.avg)
+  
+
+```
+
+### Calcuate Species Heights for Boot and Wedge Combined VS Control Plots
+
+```{r}
+# mean height values for select species in boot or wedge harvests vs. controls of boot/wedge
+# 1. import ht.data, all values
+# 2. filter beech plus desired species
+# 3. filter rows of data from boot, wedge or their control areas
+# 4. filter to retain interior or control plots
+# 5. select to retain focal variables
+# 6. group by location (interior vs. control) and by species
+# 7. count and summarize total height (ht.2019)
+
+glimpse(ht.data)
+tail(ht.data)
+table(ht.data$harvest) # display the values in the variable "harvest"
+
+ht.avg.boot.wedge <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
+          spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
+            spp == "762" | spp == "833" | spp == "951") %>% 
+  filter(harvest == "Boot" | harvest == "W" | harvest == "CWB") %>% 
+  #(ht.avg.boot.wedge)
+  #
+  
+  filter(location == "interior" | location == "control") %>% 
+  #(ht.avg.boot.wedge)
+  #
+
+  select(harvest, location, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
+  
+  group_by( location, spp) %>% 
+  add_count(spp) %>% 
+  summarise(
+    ht.2019 = mean(ht.2019),
+    inc.2019 = mean(inc.2019),
+    n=n()
+  )
+
+(ht.avg.boot.wedge)
+
+write.table(ht.avg.boot.wedge, "boot_wedge_ht.txt", sep="\t")
+
+```
+
+
+
+### Calcuate Species Heights for Gas Line Interior VS Control Plots
+
+```{r}
+
+# mean height values for select species in gas line harvests vs. controls of gas line
+
+# 1. import ht.data, all values
+# 2. filter beech plus desired species
+# 3. filter rows of data from gas line or their control areas
+# 4. filter to retain interior or control plots
+# 5. select to retain focal variables
+# 6. group by location (interior vs. control) and by species
+# 7. count and summarize total height (ht.2019)
+
+#glimpse(ht.data)
+#tail(ht.data)
+table(ht.data$harvest) # display the values in the variable "harvest"
+
+ht.avg.gasline <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
+          spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
+            spp == "701" | spp == "762" | spp == "833" | spp == "951") %>% 
+ #glimpse(ht.avg.gasline), spp 701 = Ostrya
+  
+  
+  filter(harvest == "GL" | harvest == "CGL") %>% 
+ #glimpse(ht.avg.gasline)
+  
+  
+  filter(location == "interior" | location == "control") %>% 
+# glimpse(ht.avg.gasline)
+  
+
+  select(harvest, location, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
+  
+  group_by( location, spp) %>% 
+  add_count(spp) %>% 
+  summarise(
+    ht.2019 = mean(ht.2019),
+    inc.2019 = mean(inc.2019),
+    n=n()
+  )
+
+#glimpse(ht.avg.gasline)
+
+write.table(ht.avg.gasline, "gasline_ht.txt", sep="\t")
+
+```
+
+
+
+
+
+
+
+
+### Visualize data relationships
+
+```{r}
+
+library(ggplot2)
+
+ht.data.com <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318"  | spp == "372" |
+           spp ==  "541"  |
+            spp == "762" | spp == "833" | spp == "951") 
+
+ggplot(data=ht.data.com, mapping = aes(x=basal.dia, y = ht.2019, size = spp)) +
+  geom_point(mapping = aes(size = spp), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  facet_wrap(~origin, nrow=1) +
+  theme_bw()
+
+
+```
+
+```{r}
+ht.data.com %>% 
+  filter(spp==531) %>% 
+  group_by(origin) %>% 
+  ggplot()+
+    geom_boxplot(mapping=aes(x=spp, y=ht.2019))
+```
+
