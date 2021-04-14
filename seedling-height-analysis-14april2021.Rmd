@@ -118,16 +118,16 @@ data2017 <- ht.data2 %>%
 
 seedling_orig <- bind_rows(data2019, data2018, data2017) %>% 
   select(-season) %>% 
-  mutate_at(vars(harvest, year, location, spp, origin), factor) %>%  #make these variables into factors
-  count(harvest)
-
-str(seedling)
+  mutate_at(vars(harvest, year, location, spp, origin),
+            list(factor)
+            )  #make these variables into factors
+str(seedling_orig)
 
 # recode a factor https://r4ds.had.co.nz/factors.html 
  
 seedling <- seedling_orig %>% 
  mutate(harvest = fct_recode(harvest,
-                             gas_line = "CGL",
+                             "gas_line" = "CGL",
                               "red-pine" = "CRP",
                               "wedge_boot" = "CWB",
                               "red-pine" = "RP",
@@ -137,7 +137,36 @@ seedling <- seedling_orig %>%
 ))
 
 levels(seedling$harvest)
+str(seedling)
 
+levels(seedling$spp)
+
+seedling <- seedling %>% 
+  mutate(spp = fct_recode(spp,
+                          "ab" = "531",
+                          "sm" = "318",
+                          "rm" = "316",
+                          "rp" = "125",
+                          "wp" = "129",
+                          "svb" = "356",
+                          "yb" = "371",
+                          "sb" = "372",
+                          "pb" = "375",
+                          "wa" = "541",
+                          "yp" = "621",
+                          "cu" = "651",
+                          "la" = "70",
+                          "asp" = "740",
+                          "bc" = "762",
+                          "wo" = "802",
+                          "co" = "832",
+                          "ro" = "833",
+                          "bl" = "901",
+                          "ba" = "951",
+                          ))
+
+levels(seedling$spp)
+str(seedling)
 ```
 Determine average height of seedlings by harvest, location
 ```{r}
