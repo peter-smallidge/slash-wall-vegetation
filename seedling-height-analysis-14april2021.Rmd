@@ -68,7 +68,7 @@ head(ht.data)
 
 
 ### Make the data tidy
-### Use separate data by year, then stack
+### Use separate data by year, then stack using "bind_rows"
 ```{r}
 
 # seedling heights were measured after the 2019 growing season
@@ -134,7 +134,9 @@ seedling <- seedling_orig %>%
                               "gas_line" = "GL",
                               "boot" = "Boot",
                               "wedge" = "W"
-))
+)) 
+# the "fct_recode is to create uniform names for the harvest sites which are differentiated by "location
+# for interior, perimeter, or control
 
 levels(seedling$harvest)
 str(seedling)
