@@ -34,18 +34,25 @@ the file "cheat sheet data-import" has details -->
 
 
 ```{r}
-input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv",
-                      col_types=cols(spp=col_character()))
-str(input.data)
+#input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv",
+#                      col_types=cols(spp=col_character()))
 
-ht.data <- input.data %>% 
+library(readr)
+height_data_2019 <- read_csv("height-data-2019.csv", 
+    col_types = cols(
+      season = col_integer(),
+      point = col_integer(),
+      spp = col_character(),
+      yr.curr = col_integer(),
+      yr.prev = col_integer()
+      ))
+view(height_data_2019)
+
+
+str(height_data_2019)
+
+ht.data <- height_data_2019 %>% 
   rename(ht.2019 = tot.ht)  # (new name = old name)
-
-
-# in an earlier csv file there was an "S" and all should have been lower case. 
-# I changed the value in the original data file
-
-
 
 table(ht.data$spp)
 table(ht.data$origin)
@@ -61,7 +68,7 @@ head(ht.data)
 
 
 ### Make the data tidy
-### Use Pivot
+### Use separate data by year, then stack
 ```{r}
 
 # seedling heights were measured after the 2019 growing season
@@ -72,17 +79,71 @@ head(ht.data)
 ht.data2 <- ht.data %>% 
   mutate(
     ht.2018 = ht.2019 - inc.2019,
-    ht.2017 = ht.2018 - inc.2018
-   
+    ht.2017 = ht.2018 - inc.2018,
+    yr.original = 2017
   )
-#   yr.original = 2017
+#   
 
-#seedling <- 
-#  pivot_longer(ht.data, c())
+head(ht.data2)
+
+data2019 <- ht.data2 %>% 
+  select(harvest, season, samp.date, location, point, spp, origin, basal.dia, ht.2019) %>% 
+  rename(
+    date = samp.date,
+    height = ht.2019,
+    year = season,
+    basal2019 = basal.dia
+  )
+str(data2019)
+
+data2018 <- ht.data2 %>% 
+  select(harvest, season, samp.date, location, point, spp, origin, basal.dia, ht.2018) %>% 
+  rename(
+    date = samp.date,
+    height = ht.2018,
+    basal2019 = basal.dia,
+    year = season
+  )
+    data2018$year = 2018
+  str(data2018)
   
+data2017 <- ht.data2 %>% 
+  select(harvest, season, samp.date, location, point, spp, origin, basal.dia, ht.2017, yr.original) %>% 
+  rename(
+    date = samp.date,
+    height = ht.2017,
+    basal2019 = basal.dia,
+    year = yr.original
+  )
 
+seedling_orig <- bind_rows(data2019, data2018, data2017) %>% 
+  select(-season) %>% 
+  mutate_at(vars(harvest, year, location, spp, origin), factor) %>%  #make these variables into factors
+  count(harvest)
+
+str(seedling)
+
+# recode a factor https://r4ds.had.co.nz/factors.html 
+ 
+seedling <- seedling_orig %>% 
+ mutate(harvest = fct_recode(harvest,
+                             gas_line = "CGL",
+                              "red-pine" = "CRP",
+                              "wedge_boot" = "CWB",
+                              "red-pine" = "RP",
+                              "gas_line" = "GL",
+                              "boot" = "Boot",
+                              "wedge" = "W"
+))
+
+levels(seedling$harvest)
 
 ```
+Determine average height of seedlings by harvest, location
+```{r}
+
+```
+
 
 
 ### Determine average total height at end of 2019
