@@ -30,7 +30,10 @@ library(dplyr)
 
 <!-- note to self: in the "read_csv" code, after the file location the code
 for 'col..." etc ensures that the specified column is adjusted
-the file "cheat sheet data-import" has details -->
+the file "cheat sheet data-import" has details 
+
+It is also possible to right-click a file name and import excel
+-->
 
 
 ```{r}
@@ -52,7 +55,7 @@ view(height_data_2019)
 str(height_data_2019)
 
 ht.data <- height_data_2019 %>% 
-  rename(ht.2019 = tot.ht)  # (new name = old name)
+  rename(ht.2019 = tot.ht)  #change variable names (new name = old name)
 
 table(ht.data$spp)
 table(ht.data$origin)
@@ -135,7 +138,7 @@ seedling <- seedling_orig %>%
                               "boot" = "Boot",
                               "wedge" = "W"
 )) 
-# the "fct_recode is to create uniform names for the harvest sites which are differentiated by "location
+# the "fct_recode is to create uniform names for the harvest sites which are differentiated by "location. "new value" = "old value"
 # for interior, perimeter, or control
 
 levels(seedling$harvest)
@@ -143,6 +146,8 @@ str(seedling)
 
 levels(seedling$spp)
 
+#recode the factor "species" so values are alpha not numeric
+#
 seedling <- seedling %>% 
   mutate(spp = fct_recode(spp,
                           "ab" = "531",
@@ -168,12 +173,47 @@ seedling <- seedling %>%
                           ))
 
 levels(seedling$spp)
-str(seedling)
+head(seedling)
 ```
 Determine average height of seedlings by harvest, location
 ```{r}
 
+ht.avg.interior <- seedling %>% 
+  select(harvest, year, location, spp, origin, basal2019, height) %>%
+  filter(year == "2019") %>% 
+  filter(location == "interior") %>% 
+  group_by(harvest) %>% 
+  #add_count(spp) %>% 
+  summarise(
+    avg_ht = mean(height, na.rm=TRUE),
+    n = n()  #mean(n, na.rm=TRUE)
+  )
+  
+head(ht.avg.interior)  
+
+ht.avg <- seedling %>%
+  select(harvest, year, location, spp, origin, basal2019, height) %>%
+  filter(year == "2019" | year == "2018") %>% 
+  group_by(harvest, location, origin, spp) %>% 
+  #add_count(spp) %>% 
+  summarise(
+    avg_ht = mean(height, na.rm=TRUE),
+    n = n()  #mean(n, na.rm=TRUE)
+  ) %>% 
+  filter(n > 9)
+  
+head(ht.avg) 
+
+ggplot(ht.avg.interior) +
+  geom_col(mapping = aes(spp, avg_ht))
+  
+
 ```
+<!--     
+
+comments
+  
+-->
 
 
 
