@@ -79,6 +79,7 @@ head(ht.data)
 # the growth increment for 2019 = inc.2019
 # the growth increment for 2019 = inc.2018
 
+# calculate seedling heights for 2017 and 2018
 ht.data2 <- ht.data %>% 
   mutate(
     ht.2018 = ht.2019 - inc.2019,
@@ -89,6 +90,7 @@ ht.data2 <- ht.data %>%
 
 head(ht.data2)
 
+# clean up variable names to allow for "bind_row"
 data2019 <- ht.data2 %>% 
   select(harvest, season, samp.date, location, point, spp, origin, basal.dia, ht.2019) %>% 
   rename(
@@ -141,10 +143,11 @@ seedling <- seedling_orig %>%
 # the "fct_recode is to create uniform names for the harvest sites which are differentiated by "location. "new value" = "old value"
 # for interior, perimeter, or control
 
-levels(seedling$harvest)
-str(seedling)
 
-levels(seedling$spp)
+# levels(seedling$harvest) # confirming factors recoded
+# str(seedling)
+# levels(seedling$spp) # obtain list of species number codes to recode as alpha
+
 
 #recode the factor "species" so values are alpha not numeric
 #
@@ -174,8 +177,24 @@ seedling <- seedling %>%
 
 levels(seedling$spp)
 head(seedling)
+
+# datafile "seedling" is now tidy
+# 
+# 
+
+seedling %>% 
+  write_csv(path = "tidy_seedling_heights_2017-2019.csv")
+
+write_csv(seedling, "tidy2_seedling_heights_2017-2019.csv")
+
+#both previous options work to write to an external
+#file
+
 ```
+
 Determine average height of seedlings by harvest, location
+
+
 ```{r}
 
 ht.avg.interior <- seedling %>% 
