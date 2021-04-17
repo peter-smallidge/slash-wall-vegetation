@@ -131,9 +131,9 @@ str(seedling_orig)
 seedling <- seedling_orig %>% 
  mutate(harvest = fct_recode(harvest,
                              "gas_line" = "CGL",
-                              "red-pine" = "CRP",
+                              "red_pine" = "CRP",
                               "wedge_boot" = "CWB",
-                              "red-pine" = "RP",
+                              "red_pine" = "RP",
                               "gas_line" = "GL",
                               "boot" = "Boot",
                               "wedge" = "W"
@@ -180,20 +180,19 @@ Determine average height of seedlings by harvest, location
 
 ht.avg.interior <- seedling %>% 
   select(harvest, year, location, spp, origin, basal2019, height) %>%
-  filter(year == "2019") %>% 
-  filter(location == "interior") %>% 
+  filter(year == "2019" & location == "interior") %>% 
   group_by(harvest) %>% 
-  #add_count(spp) %>% 
   summarise(
     avg_ht = mean(height, na.rm=TRUE),
     n = n()  #mean(n, na.rm=TRUE)
-  )
+  ) %>% 
+  filter(n>9)
   
 head(ht.avg.interior)  
 
 ht.avg <- seedling %>%
   select(harvest, year, location, spp, origin, basal2019, height) %>%
-  filter(year == "2019" | year == "2018") %>% 
+  filter(year == "2019") %>% 
   group_by(harvest, location, origin, spp) %>% 
   #add_count(spp) %>% 
   summarise(
@@ -202,9 +201,10 @@ ht.avg <- seedling %>%
   ) %>% 
   filter(n > 9)
   
-head(ht.avg) 
+head(ht.avg, n=12) 
+view(ht.avg)
 
-ggplot(ht.avg.interior) +
+ggplot(ht.avg) +
   geom_col(mapping = aes(spp, avg_ht))
   
 

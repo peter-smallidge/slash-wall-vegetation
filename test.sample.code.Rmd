@@ -41,35 +41,6 @@ test.df <- read_csv("commercial-per-acre-point.csv",
 ### test code to replace values 
 
 ```{r}
-library(tidyverse)
-data <- tribble(
-  ~X25, ~Other,
-  "a", NA,
-  "b", NA,
-  "Other", "c",
-  "Other", "d"
-)
-View(data)
-
-#data2 <- data %>% mutate(X25 = replace(X25, X25 == "Other", Other))
-#view(data2)
-
-#data3 <- data %>% 
-#  data$X25[data$X25 == a] <- "z"
-#view(data3)
-
-num_vec <- c(1:4, NA)
-num2 <- recode(num_vec, `2` = 20L, `4` = 40L)
-view(num2)
-
-
-# For factor values, use only named replacements
-# and supply default with levels()
-# code ....   factor_vec <- factor(c("a", "b", "c"))
-# code ....   recode(factor_vec, a = "Apple", .default = levels(factor_vec))
-#> [1] Apple b     c    
-#> Levels: Apple b c
-
 
 test <- tribble(
   ~plot, ~location, ~species,
@@ -83,18 +54,19 @@ view(test)
 str(test)
 
 test2 <- test
-test2$species[test2$species == 318] <-  "sm" #s sm = sugar maple
+test2$species[test2$species == 318] <-  "sm" # sm = sugar maple
 test2$location[test2$location == "p"] <-  "perimeter"
 view(test2)
 
 ## the following code doesn't work
-test3 <- test %>% 
-mutate (
-  species[species == 318] <-  "sm",
-  species == 316 <- "rm",
-  location[location == "p"] <-  "perimeter"
-)
-view(test3)
+## 
+#  test3 <- test %>% 
+#  mutate (
+#    species[species == 318] <-  "sm",
+#    species == 316 <- "rm",
+#    location[location == "p"] <-  "perimeter"
+#  )
+#  view(test3)
 
 
 
