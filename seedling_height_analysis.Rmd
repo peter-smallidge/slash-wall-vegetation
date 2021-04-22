@@ -1,0 +1,245 @@
+---
+title: "seedling height analysis"
+author: "Peter Smallidge"
+date: "4/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(skimr)
+```
+
+
+```{r}
+
+library(readr)
+heights01 <- read_csv("tidy_seedling_heights_2017-2019.csv",
+     col_types = cols(
+      harvest = col_factor(),
+      year = col_factor(),
+      location = col_factor(),
+      origin = col_factor(),
+      point = col_integer(),
+      spp = col_factor(),
+      basal2019 = col_number(),
+      height = col_number()
+     ))
+
+heights02 <- heights01 %>% 
+    drop_na(height) %>% 
+  select(!date)
+
+                     
+
+
+```
+
+
+Determine average height of seedlings by harvest, location
+
+
+```{r}
+
+ht.avg <- heights02 %>%
+  select(harvest, year, location, spp, origin, basal2019, height) %>%
+  group_by(harvest, location, origin, year, spp) %>% 
+  summarise(
+    avg_ht = mean(height, na.rm=TRUE),
+    sd_ht = sd(height, na.rm=TRUE),
+    n = n()  #mean(n, na.rm=TRUE)
+  ) %>% 
+  filter(n > 6)
+  
+head(ht.avg, n=12) 
+view(ht.avg)
+
+ggplot(ht.avg) +
+  geom_col(mapping = aes(spp, avg_ht))
+  
+
+```
+
+```{r, visualize data}
+
+ht.avg %>% 
+ggplot(aes(x=location, y = avg_ht, color=harvest)) +
+  geom_point()+
+  facet_grid(origin ~ species)
+```
+
+<!--     
+
+comments
+  
+-->
+
+
+
+### Determine average total height at end of 2019
+
+```{r}
+# determine average total height and annual increment by harvest, origin, and spp
+# 1. filter to retain priority species
+# 2. select numeric variable
+# 3. group by harvest, origin, and spp
+# 4. summarize
+ht.avg <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
+          spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
+            spp == "762" | spp == "833" | spp == "951") %>% 
+  select(harvest, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
+  group_by(harvest, origin, spp) %>% 
+  add_count(spp) %>% 
+  summarise(
+    ht.2019 = mean(ht.2019),
+    inc.2019 = mean(inc.2019),
+    n=n()
+  )
+  
+  
+
+(ht.avg)
+
+
+dim(ht.avg)
+  
+
+```
+
+### Calcuate Species Heights for Boot and Wedge Combined VS Control Plots
+
+```{r}
+# mean height values for select species in boot or wedge harvests vs. controls of boot/wedge
+# 1. import ht.data, all values
+# 2. filter beech plus desired species
+# 3. filter rows of data from boot, wedge or their control areas
+# 4. filter to retain interior or control plots
+# 5. select to retain focal variables
+# 6. group by location (interior vs. control) and by species
+# 7. count and summarize total height (ht.2019)
+
+glimpse(ht.data)
+tail(ht.data)
+table(ht.data$harvest) # display the values in the variable "harvest"
+
+ht.avg.boot.wedge <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
+          spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
+            spp == "762" | spp == "833" | spp == "951") %>% 
+  filter(harvest == "Boot" | harvest == "W" | harvest == "CWB") %>% 
+  #(ht.avg.boot.wedge)
+  #
+  
+  filter(location == "interior" | location == "control") %>% 
+  #(ht.avg.boot.wedge)
+  #
+
+  select(harvest, location, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
+  
+  group_by( location, spp) %>% 
+  add_count(spp) %>% 
+  summarise(
+    ht.2019 = mean(ht.2019),
+    inc.2019 = mean(inc.2019),
+    n=n()
+  )
+
+(ht.avg.boot.wedge)
+
+write.table(ht.avg.boot.wedge, "boot_wedge_ht.txt", sep="\t")
+
+```
+
+
+
+### Calcuate Species Heights for Gas Line Interior VS Control Plots
+
+```{r}
+
+# mean height values for select species in gas line harvests vs. controls of gas line
+
+# 1. import ht.data, all values
+# 2. filter beech plus desired species
+# 3. filter rows of data from gas line or their control areas
+# 4. filter to retain interior or control plots
+# 5. select to retain focal variables
+# 6. group by location (interior vs. control) and by species
+# 7. count and summarize total height (ht.2019)
+
+#glimpse(ht.data)
+#tail(ht.data)
+table(ht.data$harvest) # display the values in the variable "harvest"
+
+ht.avg.gasline <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318" | spp == "356" | spp == "372" |
+          spp == "375" |spp ==  "541" | spp ==  "621" | spp ==  "743" | spp ==  "761" |
+            spp == "701" | spp == "762" | spp == "833" | spp == "951") %>% 
+ #glimpse(ht.avg.gasline), spp 701 = Ostrya
+  
+  
+  filter(harvest == "GL" | harvest == "CGL") %>% 
+ #glimpse(ht.avg.gasline)
+  
+  
+  filter(location == "interior" | location == "control") %>% 
+# glimpse(ht.avg.gasline)
+  
+
+  select(harvest, location, origin, spp, ht.2019, inc.2019, inc.2018, basal.dia) %>% 
+  
+  group_by( location, spp) %>% 
+  add_count(spp) %>% 
+  summarise(
+    ht.2019 = mean(ht.2019),
+    inc.2019 = mean(inc.2019),
+    n=n()
+  )
+
+#glimpse(ht.avg.gasline)
+
+write.table(ht.avg.gasline, "gasline_ht.txt", sep="\t")
+
+```
+
+
+
+
+
+
+
+
+### Visualize data relationships
+
+```{r}
+
+library(ggplot2)
+
+ht.data.com <- ht.data %>% 
+  filter(spp == "531" |spp == "316" | spp == "318"  | spp == "372" |
+           spp ==  "541"  |
+            spp == "762" | spp == "833" | spp == "951") 
+
+ggplot(data=ht.data.com, mapping = aes(x=basal.dia, y = ht.2019, size = spp)) +
+  geom_point(mapping = aes(size = spp), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  facet_wrap(~origin, nrow=1) +
+  theme_bw()
+
+
+```
+
+```{r}
+ht.data.com %>% 
+  filter(spp==531) %>% 
+  group_by(origin) %>% 
+  ggplot()+
+    geom_boxplot(mapping=aes(x=spp, y=ht.2019))
+```
+

@@ -1,0 +1,191 @@
+---
+title: "seedling height input and formatting"
+author: "Peter Smallidge"
+date: "10/16/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Analysis of seedling heights 2018 & 2019
+
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+```
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted
+the file "cheat sheet data-import" has details 
+
+It is also possible to right-click a file name and import excel
+-->
+
+
+```{r}
+#input.data = read_csv("~/R/slash-wall-vegetation/height-data-2019.csv",
+#                      col_types=cols(spp=col_character()))
+
+library(readr)
+height_data_2019 <- read_csv("height-data-2019.csv", 
+    col_types = cols(
+      season = col_integer(),
+      point = col_integer(),
+      spp = col_character(),
+      yr.curr = col_integer(),
+      yr.prev = col_integer()
+      ))
+view(height_data_2019)
+
+
+ht.data <- height_data_2019 %>% 
+  rename(ht.2019 = tot.ht)  #change variable names (new name = old name)
+
+table(ht.data$spp)
+table(ht.data$origin)
+
+glimpse(ht.data)
+
+#skim(ht.data)
+#str(ht.data)  there are 1158 rows in original data frame
+#head(ht.data)
+#dim(ht.data)
+
+```
+
+
+### Make the data tidy
+### Use separate data by year, then stack using "bind_rows"
+```{r}
+
+# seedling heights were measured after the 2019 growing season
+# the height of the seedling at end of 2019 recorded as ht.2019
+# the growth increment for 2019 = inc.2019
+# the growth increment for 2019 = inc.2018
+
+# calculate seedling heights for 2017 and 2018
+ht.data2 <- ht.data %>% 
+  mutate(
+    ht.2018 = ht.2019 - inc.2019,
+    ht.2017 = ht.2018 - inc.2018,
+    yr.original = 2017
+  )
+#   
+
+head(ht.data2)
+
+# clean up variable names to allow for "bind_row"
+data2019 <- ht.data2 %>% 
+  select(harvest, season, samp.date, location, point, spp, origin, basal.dia, ht.2019) %>% 
+  rename(
+    date = samp.date,
+    height = ht.2019,
+    year = season,
+    basal2019 = basal.dia
+  )
+#str(data2019)
+
+data2018 <- ht.data2 %>% 
+  select(harvest, season, samp.date, location, point, spp, origin, basal.dia, ht.2018) %>% 
+  rename(
+    date = samp.date,
+    height = ht.2018,
+    basal2019 = basal.dia,
+    year = season
+  )
+    data2018$year = 2018
+#  str(data2018)
+  
+data2017 <- ht.data2 %>% 
+  select(harvest, season, samp.date, location, point, spp, origin, basal.dia, ht.2017, yr.original) %>% 
+  rename(
+    date = samp.date,
+    height = ht.2017,
+    basal2019 = basal.dia,
+    year = yr.original
+  )
+
+seedling_orig <- bind_rows(data2019, data2018, data2017) %>% 
+  select(-season) %>% 
+  mutate_at(vars(harvest, year, location, spp, origin),
+            list(factor)
+            )  #make these variables into factors
+str(seedling_orig)
+
+# recode a factor https://r4ds.had.co.nz/factors.html 
+ 
+seedling <- seedling_orig %>% 
+ mutate(harvest = fct_recode(harvest,
+                             "gas_line" = "CGL",
+                              "red_pine" = "CRP",
+                              "sta_rd" = "CWB",
+                              "red_pine" = "RP",
+                              "gas_line" = "GL",
+                              "sta_rd" = "Boot",
+                              "sta_rd" = "W"
+)) 
+# the "fct_recode is to create uniform names for the harvest sites which are differentiated by "location. "new value" = "old value"
+# for interior, perimeter, or control
+
+
+# levels(seedling$harvest) # confirming factors recoded
+# str(seedling)
+# levels(seedling$spp) # obtain list of species number codes to recode as alpha
+
+
+#recode the factor "species" so values are alpha not numeric
+#
+seedling <- seedling %>% 
+  mutate(spp = fct_recode(spp,
+                          "ab" = "531",
+                          "sm" = "318",
+                          "rm" = "316",
+                          "rp" = "125",
+                          "wp" = "129",
+                          "svb" = "356",
+                          "yb" = "371",
+                          "sb" = "372",
+                          "pb" = "375",
+                          "wa" = "541",
+                          "yp" = "621",
+                          "cu" = "651",
+                          "la" = "70",
+                          "asp" = "740",
+                          "bc" = "762",
+                          "wo" = "802",
+                          "co" = "832",
+                          "ro" = "833",
+                          "bl" = "901",
+                          "ba" = "951",
+                          ))
+
+levels(seedling$spp)
+#head(seedling)
+
+# datafile "seedling" is now tidy
+# 
+# 
+
+seedling %>% 
+  write_csv(path = "tidy_seedling_heights_2017-2019.csv")
+
+write_csv(seedling, "tidy2_seedling_heights_2017-2019.csv")
+
+#both previous options work to write to an external
+#file
+
+```
+
