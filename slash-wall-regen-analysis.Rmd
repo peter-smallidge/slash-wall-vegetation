@@ -30,7 +30,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(skimr)        ## install.packages("skimr")
-library(dplyr)
 #
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
@@ -50,23 +49,26 @@ library(dplyr)
 
 ### read data from csv file, check variables and data structure
 
-<!-- note to self: in the "read_csv" code, after the file location the code
-for 'col..." etc ensures that the specified column is adjusted to correct data type
-the file "cheat sheet data-import" has details -->
+<!-- 
+comment
+ -->
 
 
 ```{r}
-# Seedling data, located in the same folder as this 
-# the initial read of the data revealed that some columns were incorrectly
-# recognized when inputted. the code for "col_types=" was added in a second pass
-# of "read_csv" to clarify the desired data type.
 
 input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
                       col_types=cols(spp=col_character(), 
                                      sup.seed03=col_number(),
                                      sup.sapl=col_number(),
-                                     point=col_character()))
-str(input.data)
+                                     point=col_character())) %>% 
+  filter(spp != "ush") %>% 
+  mutate_at(vars(harvest, point, location, spp, origin),
+            list(factor)
+  )
+
+
+  
+#str(input.data)
 
 # Plot data
 # 
@@ -81,20 +83,27 @@ plot.data <- read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv",
                                               hdwd=col_number(),
                                               conifer=col_number(),
                                               ba=col_number()
-                                              ))
-str(plot.data) # there are 248 plots in 2019 data
+                                              )) %>% 
+  mutate_at(
+    vars(harvest, location:vine_spp),
+    list(factor)
+  ) %>% 
+  mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) #old = new
+
+view(plot.data)
+
+#str(plot.data) # there are 248 plots in 2019 data
 
  
 
 regen.data <- input.data %>% 
   select(-other) %>%  # removes the column for "other"
-  filter(!spp == "ush") %>%   #removes the row where species = "ush"
   replace(is.na(.), 0) %>% 
   arrange(harvest, location, point, spp) %>% 
   print(n=15)
 
 #str(regen.data)
-unique(regen.data$point)  # n=242 points with seedlings from 2019 field data
+#unique(regen.data$point)  # n=242 points with seedlings from 2019 field data
 
 #check to ensure no unexpected values
   table(regen.data$spp)
@@ -103,10 +112,9 @@ unique(regen.data$point)  # n=242 points with seedlings from 2019 field data
   table(regen.data$radius.other)
 
 #glimpse(regen.data)
-
-skim(regen.data)
+#skim(regen.data)
 #str(regen.data)  there are xxxx rows in original data frame
-head(regen.data)
+#head(regen.data)
 #dim(regen.data)
 
 ```
@@ -197,7 +205,7 @@ regen.per.acre %>%
 # 2. calculate density
 
 diversity.per.acre_point <- regen.per.acre %>% 
-  filter(spp %in% c("001", "29", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
+  filter(spp %in% c("001", "129", "261", "316", "318", "356", "372", "375", "500", "541", "621", "743",
                     "746", "762", "802", "832", "833", "90", "920", "951")) %>% 
 
     group_by(harvest, location, point) %>% 
