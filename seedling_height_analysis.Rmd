@@ -68,10 +68,52 @@ ggplot(ht.avg) +
 
 ```{r, visualize data}
 
+dir.create("figures")
+
 ht.avg %>% 
+  filter(spp == "ab" | spp =="wa")
+
+
+ht.avg %>% 
+  filter(spp == "ab" | spp == "wa" | spp == "sb" | spp == "rm" | spp == "ro" | spp == "sm") %>% 
+  filter(year == "2019") %>% 
 ggplot(aes(x=location, y = avg_ht, color=harvest)) +
   geom_point()+
-  facet_grid(origin ~ species)
+  facet_grid(origin ~ spp)
+
+avid_summ %>% 
+  filter(species != "bc" & harvest != "sta_rd") %>% 
+ggplot(aes(x=inside_slash, y = avg_ht, color=year)) +
+  geom_point()+
+  facet_grid(inside_fence ~ species)
+
+#ggplot(data = annual, mapping = aes(x = bai, y = ssc)) +
+#  geom_point(mapping = aes(color = year, size = dbh), method = lm, se = FALSE, shape = 1) +
+#  geom_smooth() +
+#  theme_bw()
+
+
+# Vigor by Crown class (2017 vs. 2019)and by year
+#col04 <- annual %>%
+#  filter(year > 2017) %>% 
+#  mutate(year_c = as.character(year)) %>% 
+#  select(rbai, strata.post, year_c) %>% 
+#  group_by(year_c, strata.post) %>% 
+#  summarize(rbai = mean(rbai)) %>% 
+#  ggplot() +
+#  geom_col(aes(x=year_c, y = rbai, fill = strata.post), position = "dodge2") +
+#  theme_classic() +
+#  labs(
+#    x = "Year and Post-Harvest Crown Class",
+#    y = "Tree Vigor (rBAI as % of 2017 Basal Area)",
+#    title = "Tree Vigor Response to Crown Class and Thinning",
+#    subtitle = "Harvest completed August 2018, col04, tidy-sap-syrup"
+#  )
+# set_palette(col04, "uchicago")
+ 
+#  ggsave("figures/column-rBAI-year-crownclass2019.jpg")
+
+
 ```
 
 <!--     
