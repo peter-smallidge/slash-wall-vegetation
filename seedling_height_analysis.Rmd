@@ -192,9 +192,6 @@ comments
 
 
 
-### Determine average total height at end of 2019
-
-
 
 ### Visualize data relationships
 
