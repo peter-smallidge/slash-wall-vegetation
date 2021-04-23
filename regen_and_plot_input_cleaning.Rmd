@@ -94,10 +94,22 @@ plot.data <- read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv",
                                               ba=col_number()
                                               )) %>% 
   mutate_at(
-    vars(harvest, location:vine_spp),
+    vars(harvest, season, location:vine_spp),
     list(factor)
   ) %>% 
-  mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) #old = new
+  rename("year" = "season") %>% 
+  mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) %>%  #old = new
+
+   mutate(harvest = fct_recode(harvest,
+                             "gas_line" = "cgl",
+                              "red_pine" = "crp",
+                              "sta_rd" = "cwb",
+                              "red_pine" = "rp",
+                              "gas_line" = "gl",
+                              "boot" = "boot",
+                              "wedge" = "wedge"
+   ))
+
 
 view(plot.data)
 
@@ -151,7 +163,7 @@ view(input.data2)
 
 
 ###data manipulations - per acre calculations, spp names
-```{r}
+```{r, regen per acre at points - calculations}
 regen.per.acre <- regen.data %>% 
     rename("harvest" = "harvest.x", "location" = "location.x") %>% 
   
@@ -345,11 +357,16 @@ view(other)
 ```
 
 
-```
 
-###Write tidy data
-```{r}
+###Write tidy data 
+```{r, tidy regen and plot data}
 
+tidy_regen_point <- 
+  bind_rows(comm, diverse, interfere, other)
+ 
+write_csv(tidy_regen_point, "tidy_regen_point_2019.csv")
+
+write_csv(tidy_plot_2019.csv)
 ```
 
 
