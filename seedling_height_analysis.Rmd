@@ -57,12 +57,9 @@ ht.avg <- heights02 %>%
   ) %>% 
   filter(n > 6)
   
-head(ht.avg, n=12) 
+#head(ht.avg, n=12) 
 view(ht.avg)
 
-ggplot(ht.avg) +
-  geom_col(mapping = aes(spp, avg_ht))
-  
 
 ```
 
@@ -81,16 +78,53 @@ ggplot(aes(x=location, y = avg_ht, color=harvest)) +
   geom_point()+
   facet_grid(origin ~ spp)
 
-avid_summ %>% 
-  filter(species != "bc" & harvest != "sta_rd") %>% 
-ggplot(aes(x=inside_slash, y = avg_ht, color=year)) +
-  geom_point()+
-  facet_grid(inside_fence ~ species)
 
 #ggplot(data = annual, mapping = aes(x = bai, y = ssc)) +
 #  geom_point(mapping = aes(color = year, size = dbh), method = lm, se = FALSE, shape = 1) +
 #  geom_smooth() +
 #  theme_bw()
+
+test_of_graph <- ht.avg %>% 
+  filter(spp == "ab" | spp == "wa" | spp == "sb" | spp == "rm" | spp == "ro" | spp == "sm") %>% 
+  filter(year == "2019") %>% 
+  filter(harvest == "gas_line") %>% 
+  group_by(spp) %>% 
+  summarize(avg_ht = mean(avg_ht)) 
+
+view(test_of_graph)
+
+FIG_x <- ht.avg %>% 
+  filter(spp == "ab" | spp == "wa" | spp == "sb" | spp == "rm" | spp == "ro" | spp == "sm") %>% 
+  filter(year == "2019") %>% 
+  filter(harvest == "gas_line" & location == "interior") %>% 
+  ggplot()+
+  geom_col(aes(x=spp, y=avg_ht, fill = origin), position = "dodge2") +
+  theme_classic() +
+  labs(
+    x= "species and origin",
+    y = "seedling height (inches)",
+    title = "Gas Line Interior",
+    subtitle = "2019 Seedling Heights, FIG_x, seedling_height_analysis.Rmd"
+  ) 
+set_palette(FIG_x, "uchicago")
+
+FIG_x2 <- ht.avg %>% 
+  filter(spp == "ab" | spp == "wa" | spp == "sb" | 
+           spp == "rm" | spp == "ro" | spp == "sm") %>% 
+  filter(year == "2019") %>% 
+  filter(harvest == "gas_line" ) %>% 
+  group_by(spp) %>%  #uses mean of origin, thus unweighted by stem count
+  summarize(avg_ht = mean(avg_ht)) %>% 
+  ggplot()+
+  geom_col(aes(x=spp, y=avg_ht, fill = origin), position = "dodge2") +
+  theme_classic() +
+  labs(
+    x= "species of all origin",
+    y = "seedling height (inches)",
+    title = "Gas Line Averaged Origin",
+    subtitle = "2019 Seedling Heights, FIG_x, seedling_height_analysis.Rmd"
+  ) 
+
 
 
 # Vigor by Crown class (2017 vs. 2019)and by year

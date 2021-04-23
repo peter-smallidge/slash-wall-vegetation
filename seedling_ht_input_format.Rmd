@@ -136,7 +136,13 @@ seedling <- seedling_orig %>%
                               "gas_line" = "GL",
                               "sta_rd" = "Boot",
                               "sta_rd" = "W"
-)) 
+)) %>% 
+  mutate(origin = fct_recode(origin,
+                             "root" = "r",
+                             "stump" = "t",
+                             "singl/unk" = "s"
+))
+
 # the "fct_recode is to create uniform names for the harvest sites which are differentiated by "location. "new value" = "old value"
 # for interior, perimeter, or control
 
