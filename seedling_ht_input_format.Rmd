@@ -48,7 +48,7 @@ height_data_2019 <- read_csv("height-data-2019.csv",
       yr.curr = col_integer(),
       yr.prev = col_integer()
       ))
-view(height_data_2019)
+#view(height_data_2019)
 
 
 ht.data <- height_data_2019 %>% 
@@ -57,7 +57,7 @@ ht.data <- height_data_2019 %>%
 table(ht.data$spp)
 table(ht.data$origin)
 
-glimpse(ht.data)
+#glimpse(ht.data)
 
 #skim(ht.data)
 #str(ht.data)  there are 1158 rows in original data frame
@@ -185,10 +185,10 @@ levels(seedling$spp)
 # 
 # 
 
-seedling %>% 
-  write_csv(path = "tidy_seedling_heights_2017-2019.csv")
+ 
+  write_csv(seedling, "tidy_seedling_heights_2017-2019.csv")
 
-write_csv(seedling, "tidy2_seedling_heights_2017-2019.csv")
+#write_csv(seedling, "tidy2_seedling_heights_2017-2019.csv")
 
 #both previous options work to write to an external
 #file

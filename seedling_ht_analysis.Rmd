@@ -1,0 +1,54 @@
+---
+title: "seedling_ht_analysis"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Initialize libraries
+```{r}
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readr)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+
+```
+
+
+###Input Data
+```{r, input data}
+
+tidy_heights <- read_csv("tidy_seedling_heights_2017-2019.csv") %>% 
+  select(!c(date)) %>% 
+  mutate_at(vars(harvest, year, point, location, spp, origin),
+            list(factor)
+  )
+
+
+```
+
+
+###Group Means
+```{r, group means}
+
+height_summ <- tidy_heights %>% 
+  group_by(harvest, location,year, spp, origin) %>% 
+  summarise(
+    ht_avg = mean(height),
+    n = n()
+  ) %>% 
+  filter(n>5) %>% 
+  filter(!c(year =="2017"))
+
+view(height_summ)
+```
+
