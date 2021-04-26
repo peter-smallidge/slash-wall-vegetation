@@ -31,8 +31,15 @@ tidy_heights <- read_csv("tidy_seedling_heights_2017-2019.csv") %>%
   select(!c(date)) %>% 
   mutate_at(vars(harvest, year, point, location, spp, origin),
             list(factor)
-  )
+  ) %>% 
+  mutate(ht_class = cut(height, breaks=c(0, 30, 50, 150),labels=c("short","medium", "tall")))
 
+#mutate a new factor variable = ht_class, using continuous variable "height"
+#into two levels of 0-30 and 30-50 labeled: short and tall
+#or into three levels of 0-30, 30-50, and 50-150
+#the number of labels is one less than the number of breaks
+
+view(tidy_heights)
 
 ```
 
@@ -46,9 +53,99 @@ height_summ <- tidy_heights %>%
     ht_avg = mean(height),
     n = n()
   ) %>% 
-  filter(n>5) %>% 
+  filter(n>0) %>% 
   filter(!c(year =="2017"))
 
 view(height_summ)
 ```
+
+###Filter to common species and collapse vegetative vs. unk origin
+```{r}
+
+#only spp common to origins, locations and harvests were included
+#removed yb, co, bc, ba
+#beech was primary data for origin=root, so collapsed root & stump to vegetative
+height_common <- tidy_heights %>% 
+  filter(year == "2019") %>% 
+  filter(spp %in% c("ab", "ro", "sm", "rm", "wa", "sb") #uncommon spp removed
+) %>% 
+  mutate(
+    originx2 = recode(origin, "root" = "sprout", "stump" = "sprout")
+  )
+
+#Fig=height_graph01
+  height_graph <- ggplot(data=height_common, aes(x = spp, y = height, color = location)) +
+    geom_point() +
+    facet_grid (originx2~harvest)+
+      theme_classic() +
+  labs(
+    x= "species and location",
+    y = "seedling height (inches)",
+    title = "All Harvests - all origin unweighted",
+    subtitle = "2019 Seedling Heights, FIG=height_graph01, seedling_ht_analysis.Rmd"
+  ) 
+
+
+height_graph
+
+ggsave("figures/height_graph.jpg")
+
+
+```
+
+
+```{r}
+
+ht_2019_mod <- lm(log(height)~spp*harvest + spp*originx2 + spp*location, data=height_common)
+
+hist(residuals(ht_2019_mod)) #tests for normal distribution
+plot(predict(ht_2019_mod), residuals(ht_2019_mod)) #tests heteroscedasticity, thus log
+
+library(emmeans)
+emmeans(ht_2019_mod, ~spp+harvest+originx2+location, type="response")
+#this calculates the mean and SE for all factor combinations, type=...reverse transformed
+
+
+emmip(ht_2019_mod, location ~ spp | harvest + originx2, CIs = TRUE)
+#plots the data from emmeans to help visualize interactions
+# emmip(model name, color ~, xaxis | panel1 + panel2
+
+
+emmeans(ht_2019_mod, pairwise ~ spp | harvest * location * originx2, type = "response")
+#calculates the contrasts
+#assess if spp (height) matters as a function of harvest*location*originx2
+
+
+
+
+```
+
+
+```{r}
+emmeans(ht_2019_mod, pairwise ~ location | harvest * spp * originx2, type = "response")
+
+emmip(ht_2019_mod, harvest ~ spp | location + originx2, CIs = TRUE)
+# emmip = estimated marginal means interaction plot
+# emmip(model name, color ~, xaxis | panel1 + panel2
+# emmip(ht_2019_mod, harvest ~ spp | location + originx2, CIs = TRUE)
+
+```
+
+
+```{r}
+emmip(ht_2019_mod, harvest ~ location | spp + originx2, CIs = TRUE)
+#plots the data from emmeans to help visualize interactions
+# emmip(model name, color ~, xaxis | panel1 + panel2
+
+
+```
+
+
+
+
+
+
+
+
+
 
