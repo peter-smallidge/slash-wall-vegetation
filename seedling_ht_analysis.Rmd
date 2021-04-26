@@ -41,7 +41,7 @@ tidy_heights <- read_csv("tidy_seedling_heights_2017-2019.csv") %>%
 ```{r, group means}
 
 height_summ <- tidy_heights %>% 
-  group_by(harvest, location,year, spp, origin) %>% 
+  group_by(harvest, location,origin, spp, year) %>% 
   summarise(
     ht_avg = mean(height),
     n = n()
