@@ -129,7 +129,7 @@ str(seedling_orig)
  
 seedling <- seedling_orig %>% 
  mutate(harvest = fct_recode(harvest,
-                             "gas_line" = "CGL",
+                             "gas_line" = "CGL",  #new name = old name, "harvest" is a factor
                               "red_pine" = "CRP",
                               "sta_rd" = "CWB",
                               "red_pine" = "RP",
