@@ -91,7 +91,7 @@ plot.data <- read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv",
   mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) #old = new
 
 view(plot.data)
-
+unique(plot.data$location) #check to see if there are unusual data values for each factor
 #str(plot.data) # there are 248 plots in 2019 data
 
  
