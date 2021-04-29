@@ -98,7 +98,7 @@ view(plot.data)
 
 regen.data <- input.data %>% 
   select(-other) %>%  # removes the column for "other"
-  replace(is.na(.), 0) %>% 
+  replace(is.na(.), 0) %>%  # makes values = "na" equal to zero
   arrange(harvest, location, point, spp) %>% 
   print(n=15)
 
