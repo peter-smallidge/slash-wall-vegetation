@@ -30,6 +30,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(skimr)        ## install.packages("skimr")
+library(readxl)
 #
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
@@ -81,22 +82,21 @@ input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
 ###Input Plot Data
 ```{r, input plot data}
 
-plot.data <- read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv",
-                              col_types = cols(point=col_character(),
-                                              upper_spp=col_character(),
-                                               baf=col_number(),
-                                              oakhick=col_number(),
-                                              beech=col_number(),
-                                              maple=col_number(),
-                                              birch=col_number(),
-                                              hdwd=col_number(),
-                                              conifer=col_number(),
-                                              ba=col_number()
-                                              )) %>% 
+plot.data <- read_excel("plot-data-2019.xlsx", 
+    col_types = c("text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "numeric", 
+        "text", "text", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric")) %>% 
   mutate_at(
-    vars(harvest, season, location:vine_spp),
+    vars(harvest, season, location, point, disturb, slash, fern,
+         herb, low_cov, low_spp, inv_cov, inv_spp, mid_cov, mid_spp,
+         upper_cov, upper_spp, vine_cov, vine_spp),
     list(factor)
-  ) %>% 
+           ) %>% 
   rename("year" = "season") %>% 
   mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) %>%  #old = new
 
@@ -127,7 +127,7 @@ point.count <-  plot.data %>% # create variable for total plots for denominator 
   arrange(point) %>% 
   select(harvest, location, point, count) 
 
-
+# for each point, the value of "count" = 1
 ```
 
 
