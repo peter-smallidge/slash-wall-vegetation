@@ -39,6 +39,7 @@ test.df <- read_csv("commercial-per-acre-point.csv",
   
 ```
 ### test code to replace values 
+#### better to use fct_recode within mutate. See filename = "seedling_ht_input_format"
 
 ```{r}
 
@@ -58,15 +59,6 @@ test2$species[test2$species == 318] <-  "sm" # sm = sugar maple
 test2$location[test2$location == "p"] <-  "perimeter"
 view(test2)
 
-## the following code doesn't work
-## 
-#  test3 <- test %>% 
-#  mutate (
-#    species[species == 318] <-  "sm",
-#    species == 316 <- "rm",
-#    location[location == "p"] <-  "perimeter"
-#  )
-#  view(test3)
 
 
 

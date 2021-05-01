@@ -41,11 +41,7 @@ library(readxl)
 # 
 # 
 
-
-
 ```
-
-
 
 
 ### read data from csv file, check variables and data structure
@@ -79,7 +75,7 @@ input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
 ```
 
 
-###Input Plot Data
+###Input Plot Data 
 ```{r, input plot data}
 
 plot.data <- read_excel("plot-data-2019.xlsx", 
@@ -111,14 +107,14 @@ plot.data <- read_excel("plot-data-2019.xlsx",
    ))
 
 
-view(plot.data)
+#view(plot.data)
 
 
 ```
 
 
-###Count Number of Points
-```{r, count number of points}
+###Count Number of Sample Points
+```{r, count number of sample points}
 
 point.count <-  plot.data %>% # create variable for total plots for denominator of average density
   group_by(harvest, location, point) %>% 
@@ -132,9 +128,9 @@ point.count <-  plot.data %>% # create variable for total plots for denominator 
 
 
 ###Create plots for regen with no observations
-```{r}
+```{r, filling out empty sample points}
 
-#there are 248 plots, but 242 regen points. 6 are excluded because
+#There are 248 plots, but 242 regen points that had observations in 2019. 6 are excluded because
 #of no data. The missing points would cause an error for calculation
 #of the number of stems per acre as an average of points.
 #
@@ -157,12 +153,12 @@ regen.data <- full_join(point.count, input.data, by = "point") %>%
 #all other = numeric
 
 
-view(input.data2)
+#view(regen.data)
 
 ```
 
 
-###data manipulations - per acre calculations, spp names
+###data manipulations - per acre calculations & spp names
 ```{r, regen per acre at points - calculations}
 regen.per.acre <- regen.data %>% 
     rename("harvest" = "harvest.x", "location" = "location.x") %>% 
@@ -181,7 +177,8 @@ regen.per.acre <- regen.data %>%
   
    mutate_at(vars(year),
             list(factor)) %>% 
-  
+  #following code calculates the number of seedlings per acre
+  #by species for each height class. Not yet tidy.
   mutate(
     suppressed = sup_short + sup_med + sup_tall,
     exposed = exp_short + exp_med + exp_tall,
@@ -248,7 +245,7 @@ regen.per.acre <- regen.data %>%
                           "unk" = "999"
                           ))
 
-view(regen.per.acre)
+#view(regen.per.acre)
 
 
 ```
@@ -280,7 +277,7 @@ comm <- regen.per.acre %>%
    mutate_at(vars(size),
             list(factor))
 
-view(comm)
+#view(comm)
   
 ```
 
@@ -306,7 +303,7 @@ diverse <- regen.per.acre %>%
    mutate_at(vars(size),
             list(factor))
 
-view(diverse)
+#view(diverse)
 
 ```
 
@@ -330,7 +327,7 @@ interfere <- regen.per.acre %>%
    mutate_at(vars(size),
             list(factor))
 
-view(interfere)
+#view(interfere)
 ```
 
 ###making data tidy - other species
@@ -353,20 +350,118 @@ other <- regen.per.acre %>%
    mutate_at(vars(size),
             list(factor))
 
-view(other)
+#view(other)
 ```
 
+  filter(spp %in% c("ab", "ro", "sm", "rm", "wa", "sb") #uncommon spp removed
 
 
-###Write tidy data 
-```{r, tidy regen and plot data}
+###Write tidy data assign stocking label to each point
+```{r, tidy regen and plot data, assign stocking label to each point}
 
 tidy_regen_point <- 
-  bind_rows(comm, diverse, interfere, other)
+  bind_rows(comm, diverse, interfere, other) %>% 
+  mutate(
+    comm_stock = "no",
+    pre_comm_stocking = "no",
+    diver_stock = "no",
+    pre_diver_stock = "no"
+  )
+
+#for stocking breaks, assess heights for deer impact = 0 or 1
+#for deer impact=1, there should be 15 stems less than 5 ft per 6 ft plot = 5775
+#for deer impact=2, there should be 30 stems less than 5 ft per 6 ft plot = 11550
+#sapling stocking is 2 per plot = 770
+comm_stocking <- tidy_regen_point %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    comm_per_acre = sum(stems.per.acre)
+  ) %>% 
+  mutate(comm_stock = cut(comm_per_acre, breaks=c(0, 770, 1000000),labels=c("no","stocked")))
+
+pre_comm_stocking <- tidy_regen_point %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_short")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    pre_comm_per_acre = sum(stems.per.acre)
+  ) %>% 
+  mutate(pre_comm_stock = 
+           cut(pre_comm_per_acre, breaks=c(0, 5775, 11550, 1000000),labels=c("no","almost", "stocked")))
+
+diver_stocking <- tidy_regen_point %>% 
+  filter(type %in% c("diversity")) %>% 
+  filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    diver_per_acre = sum(stems.per.acre)
+  ) %>% 
+  mutate(diver_stock = cut(diver_per_acre, breaks=c(0, 770, 1000000),labels=c("no","stocked")))
+
+pre_diver_stocking <- tidy_regen_point %>% 
+  filter(type %in% c("diversity")) %>% 
+  filter(size %in% c("exp_short")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    pre_diver_per_acre = sum(stems.per.acre)
+  ) %>% 
+  mutate(pre_diver_stock = 
+           cut(pre_diver_per_acre, breaks=c(0, 5775, 11550, 1000000),labels=c("no","almost", "stocked")))
+
+
+interfere_stocking <- tidy_regen_point %>% 
+  filter(type %in% c("interfering")) %>% 
+  filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    interfere_per_acre = sum(stems.per.acre)
+  ) %>% 
+  mutate(interfere_stock = cut(interfere_per_acre, breaks=c(0, 770, 1000000),labels=c("no","stocked")))
+
+pre_interfere_stocking <- tidy_regen_point %>% 
+  filter(type %in% c("interfering")) %>% 
+  filter(size %in% c("exp_short")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    pre_interfere_per_acre = sum(stems.per.acre)
+  ) %>% 
+  mutate(pre_interfere_stock = 
+           cut(pre_interfere_per_acre, 
+               breaks=c(0, 5775, 11550, 1000000),labels=c("no","almost", "stocked")))
+
  
 write_csv(tidy_regen_point, "tidy_regen_point_2019.csv")
 
-write_csv(plot.data, "tidy_plot_2019.csv")
+
+plot.data_01 <- 
+  left_join(plot.data, comm_stocking,     by = "point") %>% 
+  select(!c(harvest.y, location.y))
+
+plot.data_02 <- 
+  left_join(plot.data_01, pre_comm_stocking,     by = "point") %>% 
+  select(!c(harvest, location))
+
+plot.data_03 <- 
+  left_join(plot.data_02, diver_stocking,     by = "point") %>% 
+  select(!c(harvest, location))
+
+plot.data_04 <- 
+  left_join(plot.data_03, pre_diver_stocking,     by = "point") %>% 
+   select(!c(harvest, location))
+ 
+plot.data_05 <- 
+  left_join(plot.data_04, interfere_stocking,     by = "point") %>% 
+   select(!c(harvest.y, location.y))
+
+plot.data_full <- 
+  left_join(plot.data_04, pre_interfere_stocking,     by = "point") %>% 
+   select(!c(harvest.y, location.y)) %>% 
+  rename("harvest" = "harvest.x", "location" = "location.x") %>% 
+  arrange(harvest, location, point)
+  
+write_csv(plot.data_full, "tidy_plot_2019.csv")
 ```
 
 
