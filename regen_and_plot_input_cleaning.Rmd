@@ -160,6 +160,12 @@ regen.data <- full_join(point.count, input.data, by = "point") %>%
 
 ###data manipulations - per acre calculations & spp names
 ```{r, regen per acre at points - calculations}
+#
+#height classes: 
+#   01 = 12" to 4.5ft, 
+#   02 = 4.5 ft to 9ft
+#   03 = 9 ft. to 1" dbh
+
 regen.per.acre <- regen.data %>% 
     rename("harvest" = "harvest.x", "location" = "location.x") %>% 
   
@@ -251,7 +257,7 @@ regen.per.acre <- regen.data %>%
 ```
 
 
-###making data tidy - comm
+###making data tidy - comm/regen
 ```{r, making data tidy}
 # commercial regeneration species
 # 316 318 372 541 621 762  802 832 833 951 
@@ -281,7 +287,7 @@ comm <- regen.per.acre %>%
   
 ```
 
-###making data tidy - diverse
+###making data tidy - diverse/regen
 ```{r, making data tidy diverse}
 
 # desirable diversity species (no interfering, but includes Populus, paper birch, not pin cherry)
@@ -290,7 +296,12 @@ comm <- regen.per.acre %>%
 diverse <- regen.per.acre %>% 
   
   filter(spp %in% c("svb", "pb", "gb", "haw", "asp", "bta", "qa",
-                    "wi")) %>% 
+                    "wi"
+                    
+                    )) %>% 
+  # does not include commercial spp to avoid overestimating total stems
+  # per acre
+  
   mutate(
     type = as.factor("diversity")
   ) %>% 
@@ -307,7 +318,7 @@ diverse <- regen.per.acre %>%
 
 ```
 
-###making data tidy - interfering species
+###making data tidy - interfering species/regen
 ```{r, tidy for interfering species}
 
 # interfering species
@@ -353,8 +364,7 @@ other <- regen.per.acre %>%
 #view(other)
 ```
 
-  filter(spp %in% c("ab", "ro", "sm", "rm", "wa", "sb") #uncommon spp removed
-
+ 
 
 ###Write tidy data assign stocking label to each point
 ```{r, tidy regen and plot data, assign stocking label to each point}
@@ -368,10 +378,11 @@ tidy_regen_point <-
     pre_diver_stock = "no"
   )
 
-#for stocking breaks, assess heights for deer impact = 0 or 1
-#for deer impact=1, there should be 15 stems less than 5 ft per 6 ft plot = 5775
-#for deer impact=2, there should be 30 stems less than 5 ft per 6 ft plot = 11550
+#for stocking breaks, assess heights assuming deer impact = 1 or 2
+#for deer impact=1, there should be 15 stems less than 5 ft per 6 ft plot = 5775/ac
+#for deer impact=2, there should be 30 stems less than 5 ft per 6 ft plot = 11550/ac
 #sapling stocking is 2 per plot = 770
+#
 comm_stocking <- tidy_regen_point %>% 
   filter(type %in% c("commercial")) %>% 
   filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
@@ -452,20 +463,59 @@ plot.data_04 <-
    select(!c(harvest, location))
  
 plot.data_05 <- 
-  left_join(plot.data_04, interfere_stocking,     by = "point") %>% 
-   select(!c(harvest.y, location.y))
+  left_join(plot.data_04, interfere_stocking,     by = "point") #%>% 
+  #rename("harvest" = "harvest.x", "location" = "location.x") 
 
 plot.data_full <- 
-  left_join(plot.data_04, pre_interfere_stocking,     by = "point") %>% 
-   select(!c(harvest.y, location.y)) %>% 
-  rename("harvest" = "harvest.x", "location" = "location.x") %>% 
+  left_join(plot.data_05, pre_interfere_stocking,     by = "point") %>% 
+   select(!c(harvest.x.x, location.x.x, harvest.y, location.y)) %>% 
+  rename("harvest" = "harvest.x", "location" = "location.x", "seedling_numb" = "seedling-numb") %>% 
   arrange(harvest, location, point)
   
-write_csv(plot.data_full, "tidy_plot_2019.csv")
+write_csv(plot.data_full, "untidy_plot_2019.csv")
 ```
 
 
 
 
+###Make Plot Data Tidy
+```{r}
+
+plot.data_tidy <- plot.data_full %>% 
+  
+  select(!c(baf, oakhick, beech, maple, birch, hdwd, conifer,
+            low_spp, inv_spp, mid_spp, upper_spp, vine_spp)) %>% 
+  
+  pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                  comm_stock, pre_comm_stock, diver_stock,
+                  pre_diver_stock,  interfere_stock, pre_interfere_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val") %>% 
+  
+  replace_na(list("attrib_val" = "no", comm_per_acre = 0, pre_comm_per_acre = 0,
+                  diver_per_acre = 0, pre_diver_per_acre = 0, interfere_per_acre = 0,
+                  pre_interfere_per_acre = 0))
 
 
+
+
+
+
+```
+
+
+
+<!-- 
+ includes factor and number variables...can't blend via "pivot_longer"
+ pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                 ba, seedling_numb, comm_per_acre, comm_stock,
+                 pre_comm_per_acre, pre_comm_stock,diver_per_acre, diver_stock,
+                 pre_diver_per_acre, pre_diver_stock, interfere_per_acre, interfere_stock,
+                 pre_interfere_per_acre, pre_interfere_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val")
+-->
