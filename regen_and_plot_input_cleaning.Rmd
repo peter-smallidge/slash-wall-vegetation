@@ -370,13 +370,8 @@ other <- regen.per.acre %>%
 ```{r, tidy regen and plot data, assign stocking label to each point}
 
 tidy_regen_point <- 
-  bind_rows(comm, diverse, interfere, other) %>% 
-  mutate(
-    comm_stock = "no",
-    pre_comm_stocking = "no",
-    diver_stock = "no",
-    pre_diver_stock = "no"
-  )
+  bind_rows(comm, diverse, interfere, other)
+ 
 
 #for stocking breaks, assess heights assuming deer impact = 1 or 2
 #for deer impact=1, there should be 15 stems less than 5 ft per 6 ft plot = 5775/ac
@@ -498,7 +493,7 @@ plot.data_tidy <- plot.data_full %>%
                   diver_per_acre = 0, pre_diver_per_acre = 0, interfere_per_acre = 0,
                   pre_interfere_per_acre = 0))
 
-
+write_csv(plot.data_tidy, "tidy_plot_2019.csv")
 
 
 

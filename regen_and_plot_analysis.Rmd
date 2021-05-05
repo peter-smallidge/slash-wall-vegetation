@@ -1,0 +1,87 @@
+---
+title: "regen and plot analysis"
+author: "Peter Smallidge"
+date: "5/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Initialize Libraries
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readxl)
+library(readr)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+```
+
+
+### read data from csv file, check variables and data structure
+
+```{r, data input}
+
+plot_tidy <- read_csv("tidy_plot_2019.csv") %>% 
+  mutate_at(vars(harvest, year, point, location, plot_attrib, attrib_val),
+            list(factor))
+
+plot_untidy <- read_csv("untidy_plot_2019.csv") %>% 
+  mutate_at(vars(harvest, year, point, location, 
+                 disturb, slash, fern, herb, low_cov, low_spp,
+                 mid_cov, mid_spp, upper_cov, upper_spp, vine_cov, vine_spp,
+                 comm_stock, pre_comm_stock, diver_stock, pre_diver_stock,
+                 interfere_stock, pre_interfere_stock),
+            list(factor)) %>% 
+  replace_na(list("comm_stock" = "no"))
+  
+
+
+
+#need to check the variables "_stock" some missing or miss-named
+regen_tidy <- read_csv("tidy_regen_point_2019.csv")   #%>% 
+  mutate_at(vars(harvest, location, point, spp, origin, year, type, size),
+             list(factor))
+  
+  
+
+
+```
+```{r}
+
+table(plot_untidy$comm_stock, plot_untidy$low_cov,useNA = "ifany")
+table(plot_untidy$comm_stock, plot_untidy$mid_cov,useNA = "ifany")
+table(plot_untidy$comm_stock, plot_untidy$upper_cov,useNA = "ifany")
+table(plot_untidy$comm_stock, plot_untidy$disturb,useNA = "ifany")
+table(plot_untidy$comm_stock, plot_untidy$slash,useNA = "ifany")
+table(plot_untidy$comm_stock, plot_untidy$fern,useNA = "ifany")
+table(plot_untidy$comm_stock, plot_untidy$herb,useNA = "ifany")
+table(plot_untidy$comm_stock, plot_untidy$inv_cov,useNA = "ifany")
+
+
+
+
+```
+
+```{r}
+
+prop.table(table(plot_untidy$comm_stock, plot_untidy$mid_cov,useNA = "ifany"),margin=2)
+
+prop.table(table(plot_untidy$comm_stock, plot_untidy$harvest, plot_untidy$location
+                 ,useNA = "ifany"),margin=c(2,3))
+
+#margin 2 is sum of second variable
+
+```
+

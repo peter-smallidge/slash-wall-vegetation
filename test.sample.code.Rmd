@@ -138,6 +138,20 @@ for(pnt in plot_list){   # alternatively for(i in 1:20)
 
 ```
 
-
-
-### 
+pivot to tidy, replace missing values for multiple variables
+plot.data_tidy <- plot.data_full %>% 
+  
+  select(!c(baf, oakhick, beech, maple, birch, hdwd, conifer,
+            low_spp, inv_spp, mid_spp, upper_spp, vine_spp)) %>% 
+  
+  pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                  comm_stock, pre_comm_stock, diver_stock,
+                  pre_diver_stock,  interfere_stock, pre_interfere_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val") %>% 
+  
+  replace_na(list("attrib_val" = "no", comm_per_acre = 0, pre_comm_per_acre = 0,
+                  diver_per_acre = 0, pre_diver_per_acre = 0, interfere_per_acre = 0,
+                  pre_interfere_per_acre = 0))
