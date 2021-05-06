@@ -296,10 +296,11 @@ comm <- regen.per.acre %>%
 diverse <- regen.per.acre %>% 
   
   filter(spp %in% c("svb", "pb", "gb", "haw", "asp", "bta", "qa",
-                    "wi"
-                    
+                    "wi",
+                    "wp", "he", "rm", "sm","yb", "sb", "wa", "yp",
+                     "bc", "wo", "co", "ro", "ba", "bl", "rp", "cu"
                     )) %>% 
-  # does not include commercial spp to avoid overestimating total stems
+  # includes commercial spp.  avoid summation that would overestimat total stems
   # per acre
   
   mutate(
