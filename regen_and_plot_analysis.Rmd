@@ -59,7 +59,7 @@ regen_tidy <- read_csv("tidy_regen_point_2019.csv")   #%>%
 
 ```
 ```{r}
-# the table function (base R) provides the count of occurences of two 
+# the table function (base R) provides the count of occurrences of two 
 # categorical (factor) variables. In the first example the number of 
 # plots that had commercial stocking (no vs. stocked) among each level
 # of ratings of low % cover (absent, present, low, medium, high)
@@ -86,6 +86,27 @@ prop.table(table(plot_untidy$comm_stock, plot_untidy$harvest, plot_untidy$locati
                  ,useNA = "ifany"),margin=c(2,3))
 
 #margin 2 is sum of second variable, and "3" is sum of third variable
+
+```
+
+
+
+
+```{r}
+
+
+
+test <- mtcars
+
+test01 <- plot_tidy %>% 
+  group_by(harvest, location, plot_attrib, attrib_val) %>% 
+  summarise(n = n()) %>% 
+  mutate(freq = n / sum(n))
+
+res <- m_mtcars %>%
+  group_by(am, variable, value) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
 
 ```
 

@@ -19,4 +19,4 @@ write.table(site, "site_BA_means.txt", sep="\t")
 In the future this might be used to also document harvest x location.
 
 
-The file "regen_and_plot_input_cleaning" works with the plot data and the regen data. The plot data are made tidy and include a categorization of the plot as stocked or unstocked based on varying levels of seedling counts per acre for commercial, diversity, and interfering species for stems 4.5 ft to 9 ft. Plus the same for these as 12" to 4.5ft.
+The file "regen_and_plot_input_cleaning" works with the plot data and the regen data. The plot data are made tidy and include a categorization of the plot as stocked or unstocked based on varying levels of seedling counts per acre for commercial, diversity, and interfering species for stems 4.5 ft to 9 ft. Plus the same for these as 12" to 4.5ft. Note that type=diverse includes commercial and diversity species and should not be summed per acre and added with commercial per acre.
