@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=FALSE}
-
+install.packages("reshape")
 library(tidyverse)
 library(skimr)        ## install.packages("skimr")
 #library(dplyr)
@@ -53,6 +53,8 @@ test <- tribble(
 )
 view(test)
 str(test)
+
+# look at regen_and_plot_input_cleaning for other examples to conver a numeric to alpha code
 
 test2 <- test
 test2$species[test2$species == 318] <-  "sm" # sm = sugar maple
@@ -155,3 +157,19 @@ plot.data_tidy <- plot.data_full %>%
   replace_na(list("attrib_val" = "no", comm_per_acre = 0, pre_comm_per_acre = 0,
                   diver_per_acre = 0, pre_diver_per_acre = 0, interfere_per_acre = 0,
                   pre_interfere_per_acre = 0))
+                  
+
+
+```{r}
+library(reshape2)
+library(dplyr)
+
+m_mtcars <- melt(mtcars,measure.vars=c("gear","carb","cyl")) #seemingly pivot_long
+
+res <- m_mtcars %>%
+  group_by(am, variable, value) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+```
+                  
+                  

@@ -401,6 +401,7 @@ comm_stocking <- tidy_regen_point %>%
   summarize(
     comm_per_acre = sum(stems.per.acre)
   ) %>% 
+  filter(comm_per_acre >769) %>% 
   mutate(comm_stock = cut(comm_per_acre, breaks=c(0, 770, 1000000),labels=c("comm_not","comm_stkd")))
 
 pre_comm_stocking <- tidy_regen_point %>% 
@@ -410,8 +411,11 @@ pre_comm_stocking <- tidy_regen_point %>%
   summarize(
     pre_comm_per_acre = sum(stems.per.acre)
   ) %>% 
-  mutate(pre_comm_stock = 
-           cut(pre_comm_per_acre, breaks=c(0, 5775, 11550, 1000000),labels=c("pre_comm_not","pre_comm_deer1", "pre_comm_deer2")))
+  filter(pre_comm_per_acre>5774) %>% 
+  mutate(pre_comm_stock =  cut(pre_comm_per_acre, 
+                               breaks=c(0, 5775, 11550, 1000000),
+                               labels=c("pre_comm_not","pre_comm_deer1", "pre_comm_deer2")))
+
 
 diver_stocking <- tidy_regen_point %>% 
   filter(type %in% c("diversity")) %>% 
@@ -420,6 +424,8 @@ diver_stocking <- tidy_regen_point %>%
   summarize(
     diver_per_acre = sum(stems.per.acre)
   ) %>% 
+  filter(diver_per_acre > 769) %>% 
+  #mutate(diver_stock = "div_stkd")
   mutate(diver_stock = cut(diver_per_acre, breaks=c(0, 770, 1000000),labels=c("div_not","div_stkd")))
 
 pre_diver_stocking <- tidy_regen_point %>% 
@@ -429,6 +435,7 @@ pre_diver_stocking <- tidy_regen_point %>%
   summarize(
     pre_diver_per_acre = sum(stems.per.acre)
   ) %>% 
+  filter(pre_diver_per_acre > 5774) %>% 
   mutate(pre_diver_stock = 
            cut(pre_diver_per_acre, breaks=c(0, 5775, 11550, 1000000),labels=c("pre_div_not","pre_diver_deer1", "pre_diver_deer2")))
 
@@ -445,8 +452,10 @@ interfere_stocking <- tidy_regen_point %>%
   summarize(
     interfere_per_acre = sum(stems.per.acre)
   ) %>% 
-  filter(interfere_per_acre > 2309) %>% 
-  mutate(interfere_stock = cut(interfere_per_acre, breaks=c(0, 2310, 1000000),labels=c("intf_not","intf_stkd")))
+  filter(interfere_per_acre > 2310) %>% 
+  mutate(interfere_stock = "inft_stkd") %>% 
+  mutate_at(vars(interfere_stock), list (factor))
+#  mutate(interfere_stock = cut(interfere_per_acre, breaks=c(0, 2310, #1000000),labels=c("intf_not","intf_stkd")))
 
 fern_stocking <- plot.data %>%
   select(harvest, location, point, fern) %>% 
@@ -476,31 +485,34 @@ all_interference <-
 
 plot.data_01 <- 
   left_join(plot.data, comm_stocking,     by = "point") %>% 
-  select(!c(harvest.y, location.y))
+  select(!c(harvest.y, location.y)) %>% 
+  rename("harvest" = "harvest.x", "location" = "location.x") 
 
 plot.data_02 <- 
   left_join(plot.data_01, pre_comm_stocking,     by = "point") %>% 
-  select(!c(harvest, location))
+  select(!c(harvest.y, location.y)) %>% 
+  rename("harvest" = "harvest.x", "location" = "location.x") 
 
 plot.data_03 <- 
   left_join(plot.data_02, diver_stocking,     by = "point") %>% 
-  select(!c(harvest, location))
+  rename("harvest" = "harvest.x", "location" = "location.x") 
 
 plot.data_04 <- 
   left_join(plot.data_03, pre_diver_stocking,     by = "point") %>% 
-   select(!c(harvest, location))
+  rename("harvest" = "harvest.x", "location" = "location.x") %>% 
+  select(!c("harvest.y", "harvest.y.y", "location.y", "location.y.y"))
  
 plot.data_05 <- 
   left_join(plot.data_04, interfere_stocking,     by = "point") %>% 
-  select(!c("harvest", "location")) %>%  
+  select(!c(harvest.y, location.y)) %>%  
   rename("harvest" = "harvest.x", "location" = "location.x") 
 
 plot.data_partial <- 
   left_join(plot.data_05, all_interference,     by = "point") %>% 
-  select(!c(interfere_stock.y, interfere_per_acre.y,)) %>% 
-  select(!c(oakhick, beech, maple, birch, hdwd, conifer)) %>% 
   rename( "seedling_numb" = "seedling-numb", "interf_woody_stock"="interfere_stock.x", 
-          "interf_woody_per_acre" = "interfere_per_acre.x") 
+          "interf_woody_per_acre" = "interfere_per_acre.x") %>% 
+select(!c(interfere_stock.y, interfere_per_acre.y)) %>% 
+  select(!c(oakhick, beech, maple, birch, hdwd, conifer)) 
 
 plot.data_full <- 
   left_join(plot.data_partial, winner_stocking,   by = "point" )%>% 

@@ -39,10 +39,11 @@ plot_tidy <- read_csv("tidy_plot_2019.csv") %>%
 
 plot_untidy <- read_csv("untidy_plot_2019.csv") %>% 
   mutate_at(vars(harvest, year, point, location, 
-                 disturb, slash, fern, herb, low_cov, low_spp,
-                 mid_cov, mid_spp, upper_cov, upper_spp, vine_cov, vine_spp,
-                 comm_stock, pre_comm_stock, diver_stock, pre_diver_stock,
-                 interfere_stock, pre_interfere_stock),
+                 disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                  comm_stock, pre_comm_stock, diver_stock,
+                  pre_diver_stock,  interf_woody_stock, fern_stock, all_intf,
+                 winner_stock),
             list(factor)) %>% 
   replace_na(list("comm_stock" = "no"))
   
@@ -50,7 +51,10 @@ plot_untidy <- read_csv("untidy_plot_2019.csv") %>%
 
 
 #need to check the variables "_stock" some missing or miss-named
-regen_tidy <- read_csv("tidy_regen_point_2019.csv")   #%>% 
+#note that type = diverse includes commercial and diversity spp
+#
+
+regen_tidy <- read_csv("tidy_regen_point_2019.csv")   %>% 
   mutate_at(vars(harvest, location, point, spp, origin, year, type, size),
              list(factor))
   
@@ -91,22 +95,51 @@ prop.table(table(plot_untidy$comm_stock, plot_untidy$harvest, plot_untidy$locati
 
 
 
-
+###Frequency Table Plot Attributs_5
 ```{r}
 
 
-
-test <- mtcars
-
-test01 <- plot_tidy %>% 
+freq_plot_attrib_5 <- plot_tidy %>% 
+  filter(plot_attrib %in% c(
+    "winner_stock", "comm_stock", "pre_comm_stock", "diver_stock",
+    "pre_diver_stock", "interf_woody_stock","fern_stock", 
+    "all_intr")
+  ) %>% 
   group_by(harvest, location, plot_attrib, attrib_val) %>% 
   summarise(n = n()) %>% 
-  mutate(freq = n / sum(n))
+  mutate(freq = n / sum(n)) %>% 
+  arrange(harvest, plot_attrib, location,  attrib_val)
 
-res <- m_mtcars %>%
-  group_by(am, variable, value) %>%
-  summarise (n = n()) %>%
-  mutate(freq = n / sum(n))
+write_csv(freq_plot_attrib_5, "freq_plot_attrib_5.csv")
+
+
+
 
 ```
+
+###Frequency Table Plot Attributs_4
+```{r}
+
+
+freq_plot_attrib_4 <- plot_tidy %>% 
+  mutate(harvest = fct_recode(harvest,
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge")) %>% 
+  filter(plot_attrib %in% c(
+    "winner_stock", "comm_stock", "pre_comm_stock", "diver_stock",
+    "pre_diver_stock", "interf_woody_stock","fern_stock", 
+    "all_intr")
+  ) %>% 
+  group_by(harvest, location, plot_attrib, attrib_val) %>% 
+  summarise(n = n()) %>% 
+  mutate(freq = n / sum(n)) %>% 
+  arrange(harvest, plot_attrib, location,  attrib_val)
+
+write_csv(freq_plot_attrib_4, "freq_plot_attrib_4.csv")
+
+
+
+
+```
+
 
