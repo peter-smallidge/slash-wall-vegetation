@@ -37,6 +37,7 @@ plot_tidy <- read_csv("tidy_plot_2019.csv") %>%
   mutate_at(vars(harvest, year, point, location, plot_attrib, attrib_val),
             list(factor))
 
+
 plot_untidy <- read_csv("untidy_plot_2019.csv") %>% 
   mutate_at(vars(harvest, year, point, location, 
                  disturb, slash, fern, herb, 
@@ -46,7 +47,17 @@ plot_untidy <- read_csv("untidy_plot_2019.csv") %>%
                  winner_stock),
             list(factor)) %>% 
   replace_na(list("comm_stock" = "no"))
+
   
+# NOTE - plot_untidy...
+# pre_comm_stock and pre_diver_stock have 3 levels. Use this code to lump to 2.
+# 
+#   mutate(pre_comm_stock = fct_recode(pre_comm_stock,
+#                              "stocked" = "pre_comm_deer_1",
+#                              "stocked" = "pre_comm_deer_2")) 
+#                              
+#                              pre_diver_deer_1
+#                              pre_diver_deer_2
 
 
 
@@ -62,6 +73,8 @@ regen_tidy <- read_csv("tidy_regen_point_2019.csv")   %>%
 
 
 ```
+
+
 ```{r}
 # the table function (base R) provides the count of occurrences of two 
 # categorical (factor) variables. In the first example the number of 
@@ -95,7 +108,7 @@ prop.table(table(plot_untidy$comm_stock, plot_untidy$harvest, plot_untidy$locati
 
 
 
-###Frequency Table Plot Attributs_5
+###Frequency Table Plot Attributs_5  (gas line, red pine, boot, wedge, controls)
 ```{r}
 
 
@@ -117,7 +130,7 @@ write_csv(freq_plot_attrib_5, "freq_plot_attrib_5.csv")
 
 ```
 
-###Frequency Table Plot Attributs_4
+###Frequency Table Plot Attributs_4 sites (gas line, red pine, station road, controls)
 ```{r}
 
 

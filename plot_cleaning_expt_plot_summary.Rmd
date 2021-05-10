@@ -1,0 +1,91 @@
+---
+title: "plot_cleaning_expt_plot_summary"
+author: "Peter Smallidge"
+date: "5/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Initialize Libraries
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readxl)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+```
+
+###Input Regen Data
+```{r, input regen data}
+
+cleaning_data <- read_csv("~/R/slash-wall-vegetation/tidy_regen_point_2019.csv") %>% 
+  mutate_at(vars(harvest, point, location, spp, origin),
+            list(factor)) %>% 
+  filter(!point %in% c("864", "866", "810"))
+
+```
+
+
+```{r}
+
+#df "regen.per.acre" originates in file "regen_and_plot_input_cleanind"
+#
+comm <- regen.per.acre %>% 
+  
+  filter(spp %in% c("wp", "he", "rm", "sm","yb", "sb", "wa", "yp",
+                     "bc", "wo", "co", "ro", "ba", "bl", "rp", "cu"
+                    )) %>% 
+  mutate(
+    type = as.factor("commercial")) %>% 
+    group_by(harvest, location, point, type, spp) %>% 
+  summarize(
+    sup_short = sum(sup_short),
+    sup_med = sum(sup_med),
+    sup_tall = sum(sup_tall),
+    sup_sapl = sum(sup_sapl),
+    exp_short = sum(exp_short),
+    exp_med = sum(exp_med), 
+    exp_tall = sum(exp_tall),
+    exp_sapl = sum(exp_sapl)
+  )
+
+write_csv(comm, "stem_per_acre_comm_spp_2019.csv")
+  
+```
+
+
+```{r}
+
+all_spp_summary <- regen.per.acre %>% 
+  group_by(harvest, location, point, spp) %>% 
+  summarize(
+    sup_short = sum(sup_short),
+    sup_med = sum(sup_med),
+    sup_tall = sum(sup_tall),
+    sup_sapl = sum(sup_sapl),
+    exp_short = sum(exp_short),
+    exp_med = sum(exp_med), 
+    exp_tall = sum(exp_tall),
+    exp_sapl = sum(exp_sapl)
+    
+  )
+
+write_csv(all_spp_summary, "stem_per_acre_all_spp_2019.csv")
+
+
+```
+
+
+

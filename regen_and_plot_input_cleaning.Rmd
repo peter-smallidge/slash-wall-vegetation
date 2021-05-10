@@ -64,8 +64,10 @@ input.data <- read_csv("~/R/slash-wall-vegetation/regen-data-2019.csv",
                                      point=col_character())) %>% 
   filter(spp != "ush") %>% 
   mutate_at(vars(harvest, point, location, spp, origin),
-            list(factor)
-  )
+            list(factor)) %>% 
+  filter(!point %in% c("864", "866", "810"))
+
+  
 
 
   
@@ -93,7 +95,8 @@ plot.data <- read_excel("plot-data-2019.xlsx",
          upper_cov, upper_spp, vine_cov, vine_spp),
     list(factor)
            ) %>% 
-  rename("year" = "season") %>% 
+   filter(!point %in% c("864", "866", "810")) %>% 
+   rename("year" = "season") %>% 
   mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) %>%  #old = new
 
    mutate(harvest = fct_recode(harvest,
@@ -130,7 +133,8 @@ point.count <-  plot.data %>% # create variable for total plots for denominator 
 ###Create plots for regen with no observations
 ```{r, filling out empty sample points}
 
-#There are 248 plots, but 242 regen points that had observations in 2019. 6 are excluded because
+#There are 248 (245, excluding gas line points) plots, 
+#but 242 regen points that had observations in 2019. 6 are excluded because
 #of no data. The missing points would cause an error for calculation
 #of the number of stems per acre as an average of points.
 #

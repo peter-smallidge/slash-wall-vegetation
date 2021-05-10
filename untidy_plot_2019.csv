@@ -81,9 +81,7 @@ gas_line,interior,860,2019,2020.04.22,m,l,p,m,l,rubu,a,NA,p,999,p,318,a,NA,10,10
 gas_line,interior,861,2019,2020.04.23,p,l,p,l,h,rubu,a,NA,p,740,p,318,a,NA,10,0,NA,1155.4768968283274,comm_stkd,NA,NA,1540.63586243777,div_stkd,NA,NA,NA,NA,NA,NA,0,NA
 gas_line,interior,862,2019,2020.04.06,m,h,m,l,h,rubu,a,NA,l,951,a,NA,a,NA,10,0,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,intf_stkd,all_intf,NA,NA
 gas_line,interior,863,2019,2020.04.06,m,l,l,l,m,rubu,a,NA,p,999,a,NA,a,NA,10,0,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-gas_line,interior,864,2019,2020.04.06,a,m,a,m,l,rubu,a,NA,m,531,l,531,a,NA,10,40,NA,NA,NA,NA,NA,NA,NA,NA,NA,49172.336400527034,inft_stkd,NA,all_intf,0,NA
 gas_line,interior,865,2019,2020.04.06,p,p,p,m,h,rubu,a,NA,p,761,a,NA,l,buck,10,0,NA,1540.63586243777,comm_stkd,NA,NA,1925.7948280472124,div_stkd,NA,NA,NA,NA,NA,NA,1155.4768968283274,win_02
-gas_line,interior,866,2019,2020.04.06,a,a,a,p,l,rubu,a,NA,p,531,l,531,a,NA,10,20,NA,12325.08689950216,comm_stkd,NA,NA,12325.08689950216,div_stkd,NA,NA,64093.94053422171,inft_stkd,NA,all_intf,1540.63586243777,win_02
 gas_line,interior,867,2019,2020.04.20,m,l,p,l,m,rubu,a,NA,p,372,a,NA,a,NA,10,0,NA,NA,NA,NA,NA,NA,NA,NA,NA,6847.333020454791,inft_stkd,NA,all_intf,385.1589656094425,win_01
 gas_line,interior,868,2019,2020.04.20,m,h,l,m,h,rubu,a,NA,l,356,a,NA,a,NA,10,0,NA,2696.1127592660973,comm_stkd,NA,NA,2696.1127592660973,div_stkd,NA,NA,NA,NA,NA,NA,1540.63586243777,win_02
 gas_line,interior,869,2019,2020.04.22,m,m,m,m,h,rubu,a,NA,l,rhus,p,531,p,viti,10,10,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,intf_stkd,all_intf,1155.4768968283274,win_02
@@ -106,7 +104,6 @@ gas_line,perimeter,806,2019,2020.04.15,m,p,l,p,m,rubu,a,NA,l,761,a,NA,a,NA,10,0,
 gas_line,perimeter,807,2019,2020.04.15,m,p,l,l,m,rubu,p,NA,l,761,a,NA,a,NA,10,0,NA,NA,NA,NA,NA,770.317931218885,div_stkd,NA,NA,6362.297186480591,inft_stkd,NA,all_intf,0,NA
 gas_line,perimeter,808,2019,2020.04.15,p,p,p,l,m,rubu,a,NA,l,372,p,318,a,NA,10,10,NA,6162.54344975108,comm_stkd,NA,NA,6162.54344975108,div_stkd,NA,NA,13066.989158313041,inft_stkd,NA,all_intf,1540.63586243777,win_02
 gas_line,perimeter,809,2019,2020.04.15,p,p,p,m,m,rhus,p,loni,l,761,p,318,a,NA,10,20,NA,NA,NA,NA,NA,NA,NA,NA,NA,5249.5844699098525,inft_stkd,NA,all_intf,0,NA
-gas_line,perimeter,810,2019,2020.04.15,a,p,a,p,p,rubu,a,NA,l,531,l,372,a,NA,10,10,NA,7318.0203465794075,comm_stkd,NA,NA,8088.3382777982915,div_stkd,NA,NA,7375.133034686576,inft_stkd,NA,all_intf,385.1589656094425,win_01
 gas_line,perimeter,811,2019,2020.04.15,p,p,a,p,p,rubu,a,NA,p,740,p,833,a,NA,10,10,NA,20798.584142909895,comm_stkd,NA,NA,21183.74310851934,div_stkd,NA,NA,47360.76694869417,inft_stkd,NA,all_intf,1540.63586243777,win_02
 gas_line,perimeter,812,2019,2020.04.15,l,l,p,l,l,rubu,a,NA,l,740,a,NA,a,NA,10,10,NA,4236.748621703868,comm_stkd,NA,NA,4621.90758731331,div_stkd,NA,NA,15335.17877171211,inft_stkd,NA,all_intf,770.317931218885,win_02
 gas_line,perimeter,813,2019,2020.04.15,l,p,l,l,m,rubu,a,NA,p,951,p,541,a,NA,10,10,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,385.1589656094425,win_01
