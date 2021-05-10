@@ -1,7 +1,7 @@
 ---
-title: "regen and plot analysis"
+title: "recursive analysis - classification tree"
 author: "Peter Smallidge"
-date: "5/4/2021"
+date: "5/10/2021"
 output: html_document
 ---
 
@@ -16,6 +16,8 @@ library(tidyverse)
 library(skimr)        ## install.packages("skimr")
 library(readxl)
 library(readr)
+#install.packages("randomForest")
+library(randomForest)
 #
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
@@ -39,25 +41,37 @@ plot_tidy <- read_csv("tidy_plot_2019.csv") %>%
 
 
 plot_untidy <- read_csv("untidy_plot_2019.csv") %>% 
-  mutate_at(vars(harvest, year, point, location, 
-                 disturb, slash, fern, herb, 
-                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+   mutate(
+    comm_stock=replace_na(comm_stock, "not"),
+    pre_comm_stock = replace_na(pre_comm_stock, "not"),
+    diver_stock = replace_na(diver_stock, "not"),
+    pre_diver_stock = replace_na(pre_diver_stock, "not"),
+    interf_woody_stock = replace_na(interf_woody_stock, "not")
+    ) %>% 
+ select(!date) %>% 
+#  mutate_if(is.character, as.factor) %>% 
+
+   mutate_at(vars(harvest, year, point, location,
                   comm_stock, pre_comm_stock, diver_stock,
                   pre_diver_stock,  interf_woody_stock, fern_stock, all_intf,
                  winner_stock),
             list(factor)) %>% 
-  replace_na(list("comm_stock" = "no"))
-
+      replace_na(list(comm_per_acre = 0, pre_comm_per_acre = 0,
+                    diver_per_acre = 0, interf_woody_per_acre = 0,
+                    win_comm_per_acre = 0
+                  )) %>% 
   
-# NOTE - plot_untidy...
-# pre_comm_stock and pre_diver_stock have 3 levels. Use this code to lump to 2.
-# 
-#   mutate(pre_comm_stock = fct_recode(pre_comm_stock,
-#                              "stocked" = "pre_comm_deer_1",
-#                              "stocked" = "pre_comm_deer_2")) 
-#                              
-#                              pre_diver_deer_1
-#                              pre_diver_deer_2
+ #change from three levels of the factor to two levels 
+mutate(pre_comm_stock = fct_recode(pre_comm_stock,
+                              "stocked" = "pre_comm_deer1",
+                              "stocked" = "pre_comm_deer2")) %>%  
+
+mutate(pre_diver_stock = fct_recode(pre_diver_stock,
+                              "stocked" = "pre_diver_deer1",
+                              "stocked" = "pre_diver_deer2")) %>% 
+ 
+  mutate(disturb = recode(disturb, a = "0",
+                         p = "2.5", l = "17.5", m = "50", h = "85"))
 
 
 
@@ -66,9 +80,43 @@ regen_tidy <- read_csv("tidy_regen_point_2019.csv")   %>%
   mutate_at(vars(harvest, location, point, spp, origin, year, type, size),
              list(factor))
   
-  
-
 
 ```
 
+
+
+
+####Random Forest
+```{r}
+
+randfor_comm <- randomForest(
+  comm_stock ~ harvest + location + disturb + fern + slash + herb +
+    low_cov + mid_cov + upper_cov + vine_cov +
+  , data = plot_untidy, ntree=25, na.action=na.exclude,
+  importance=TRUE
+)
+
+# randomForest - calls the function
+# prediction of variable "comm_stock"
+# uses variables harvest...ba
+# dataframe is "plot_untidy"
+# create 25 trees
+# for values = na, exclude from analysis
+# use "importance=TRUE to include importance values for each variable
+
+randfor_comm #row label is true, column is how predicted. class error is the misclassification error
+
+
+
+treesize(randfor_comm) # number of splits
+
+getTree(randfor_comm, k=1, labelVar=TRUE)
+
+plot_untidy$pred_val <- predict(randfor_comm, type="response")
+plot_untidy$pred_prob <- predict(randfor_comm, type="prob") #avg probabl
+
+randfor_comm$importance
+importance(randfor_comm) # importance / stand error
+
+```
 

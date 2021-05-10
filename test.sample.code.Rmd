@@ -38,6 +38,14 @@ test.df <- read_csv("commercial-per-acre-point.csv",
   print(test.df, n=20)
   
 ```
+
+exclude columns with select
+ select(!date)
+
+exclude rows with filter
+   filter(!point %in% c("864", "866", "810")) 
+
+
 ### test code to replace values 
 #### better to use fct_recode within mutate. See filename = "seedling_ht_input_format"
 
@@ -61,7 +69,10 @@ test2$species[test2$species == 318] <-  "sm" # sm = sugar maple
 test2$location[test2$location == "p"] <-  "perimeter"
 view(test2)
 
-
+change values of a character variable from current = "new"
+mutate(disturb = recode(disturb, a = "0",
+                         p = "2.5", l = "17.5", m = "50", h = "85"))
+)
 
 
 ```
@@ -171,5 +182,18 @@ res <- m_mtcars %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 ```
-                  
+  
+  
+  ###change variable to factor
+    mutate_if(is.character, as.factor)
+
+  
+    mutate_at(vars(harvest, year, point, location, 
+                 disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                  comm_stock, pre_comm_stock, diver_stock,
+                  pre_diver_stock,  interf_woody_stock, fern_stock, all_intf,
+                 winner_stock),
+            list(factor)) %>% 
+
                   
