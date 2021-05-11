@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(skimr)        ## install.packages("skimr")
 library(readxl)
+library(readr)
 #
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
@@ -35,14 +36,19 @@ cleaning_data <- read_csv("~/R/slash-wall-vegetation/tidy_regen_point_2019.csv")
             list(factor)) %>% 
   filter(!point %in% c("864", "866", "810"))
 
+untidy_regen <- read_csv("untidy_regen_point_2019.csv")
+  mutate_at(vars(harvest, point, location, spp, origin),
+            list(factor)) %>% 
+  filter(!point %in% c("864", "866", "810"))
+
 ```
 
 
 ```{r}
 
-#df "regen.per.acre" originates in file "regen_and_plot_input_cleanind"
+#df "untidy_regen_point_2019.csv" originates in file "regen_and_plot_input_cleaning"
 #
-comm <- regen.per.acre %>% 
+comm <- untidy_regen %>% 
   
   filter(spp %in% c("wp", "he", "rm", "sm","yb", "sb", "wa", "yp",
                      "bc", "wo", "co", "ro", "ba", "bl", "rp", "cu"
@@ -62,6 +68,35 @@ comm <- regen.per.acre %>%
   )
 
 write_csv(comm, "stem_per_acre_comm_spp_2019.csv")
+  
+```
+
+
+```{r}
+
+#df "untidy_regen_point_2019.csv" originates in file "regen_and_plot_input_cleaning"
+#
+comm_single <- untidy_regen %>% 
+  
+  filter(spp %in% c("wp", "he", "rm", "sm","yb", "sb", "wa", "yp",
+                     "bc", "wo", "co", "ro", "ba", "bl", "rp", "cu"
+                    )) %>% 
+  filter(origin %in% c("singl/unk")) %>% 
+  mutate(
+    type = as.factor("commercial")) %>% 
+    group_by(harvest, location, point, spp) %>% 
+  summarize(
+    sup_short = sum(sup_short),
+    sup_med = sum(sup_med),
+    sup_tall = sum(sup_tall),
+    sup_sapl = sum(sup_sapl),
+    exp_short = sum(exp_short),
+    exp_med = sum(exp_med), 
+    exp_tall = sum(exp_tall),
+    exp_sapl = sum(exp_sapl)
+  )
+
+write_csv(comm_single, "stem_per_acre_comm_spp_2019_SINGLE.csv")
   
 ```
 

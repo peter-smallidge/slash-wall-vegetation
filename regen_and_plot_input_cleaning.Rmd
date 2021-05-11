@@ -257,6 +257,8 @@ regen.per.acre <- regen.data %>%
 
 #view(regen.per.acre)
 
+write_csv(regen.per.acre, "untidy_regen_point_2019.csv")
+
 
 ```
 
