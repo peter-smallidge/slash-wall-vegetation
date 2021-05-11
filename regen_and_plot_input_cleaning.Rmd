@@ -1,5 +1,5 @@
 ---
-title: "Regneration Analysis"
+title: "Regen and Plot Input of Data and Cleaning/Tidy"
 author: "Peter Smallidge"
 date: "10/17/2020"
 output: github_document

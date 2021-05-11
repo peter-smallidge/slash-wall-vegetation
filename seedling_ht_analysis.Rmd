@@ -137,7 +137,7 @@ emmip(ht_2019_mod, harvest ~ spp | location + originx2, CIs = TRUE)
 ```{r}
 emmip(ht_2019_mod, harvest ~ location | spp + originx2, CIs = TRUE)
 #plots the data from emmeans to help visualize interactions
-# emmip(model name, color ~, xaxis | panel1 + panel2
+# emmip(model name, color ~, xaxis | row_panel1 + column_panel2
 
 
 ```
