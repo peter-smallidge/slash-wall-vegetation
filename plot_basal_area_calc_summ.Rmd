@@ -60,8 +60,8 @@ plot.data %>%
   plot.data$harvest[plot.data$harvest == "gl"] <- "gas_line"
 
 
-head(plot.data, n=10)
-tail(plot.data, n=10)
+#head(plot.data, n=10)
+#tail(plot.data, n=10)
 
 
 #test2 <- test
@@ -128,8 +128,9 @@ site <- plot.data %>%
   summarize(basal_area = mean(ba)) %>% 
   arrange(harvest, location)
   
-site
-write.table(site, "site_BA_means.txt", sep="\t")
+#site
+#write.table(site, "site_BA_means.txt", sep="\t")
+write_csv(site, "site_BA_means.csv")
 
 
 ```

@@ -29,6 +29,9 @@ library(readr)
 
 tidy_heights <- read_csv("tidy_seedling_heights_2017-2019.csv") %>% 
   select(!c(date)) %>% 
+  mutate(
+    ht_cm = height *2.54
+  ) %>% 
   mutate_at(vars(harvest, year, point, location, spp, origin),
             list(factor)
   ) %>% 
@@ -51,15 +54,130 @@ tidy_heights <- read_csv("tidy_seedling_heights_2017-2019.csv") %>%
 ```{r, group means}
 
 height_summ <- tidy_heights %>% 
-  group_by(harvest, location,origin, spp, year) %>% 
+    filter(spp %in% 
+             c("ab", "eh", "ro", "sm", "rm", "wa", "sb")) %>% #uncommon spp removed
+    droplevels() %>%  #removes the factor levels excluded by the filter
+    rename("ht" = "height") %>% 
+  mutate(
+    originx2 = recode(origin, "root" = "sprout", "stump" = "sprout"),
+    ht_cm = ht * 2.54
+  ) %>% 
+  group_by(harvest, location,originx2, spp, year) %>% 
   summarise(
-    ht_avg = mean(height),
+    ht_avg = mean(ht),
+    ht_cm_avg = mean(ht_cm),
     n = n()
   ) %>% 
   filter(n>0) %>% 
   filter(!c(year =="2017"))
 
+write_csv(height_summ, "heights_seedlings_summary_2018_2019.csv")
+
+height_summ_subset2019 <- height_summ %>% 
+  filter(year %in% c("2019")) %>% 
+  droplevels() %>%
+  group_by(location, originx2, spp) %>% 
+  summarise(
+    ht_avg = mean(ht_avg),
+    ht_cm_avg = mean(ht_cm_avg),
+    n = sum(n)
+  )
+
+height_summ_subset2018 <- height_summ %>% 
+  filter(year %in% c("2018")) %>% 
+  droplevels() %>%
+  group_by(location, originx2, spp) %>% 
+  summarise(
+    ht_avg = mean(ht_avg),
+    ht_cm_avg = mean(ht_cm_avg),
+    n = sum(n)
+  )
+  
+write_csv(height_summ_subset2018, "heights_seedlings_summ_subset_2018.csv")
+write_csv(height_summ_subset2019, "heights_seedlings_summ_subset_2019.csv")
+
 ```
+
+### calculate average heights and average annual growth
+#### stems not selected randomly. Selected as free to grow
+```{r}
+
+heights <- full_join(height_summ_subset2018, height_summ_subset2019, 
+                     by = c("location", "originx2", "spp")) %>% 
+  rename("ht_in18" = "ht_avg.x", "ht_in19" = "ht_avg.y",
+         "ht_cm18" = "ht_cm_avg.x", "ht_cm19" = "ht_cm_avg.y") %>% 
+  mutate(
+  grow_in = ht_in19 - ht_in18,
+  grow_cm = ht_cm19 - ht_cm18
+) %>% 
+  arrange(spp, originx2, location)
+
+write_csv(heights, "heights_growth_seedlings_2018_2019.csv")
+```
+
+
+
+### calculate average height differences between bee and other by year (table 8 of mss)
+```{r}
+wide_2018_cm <- height_summ_subset2018 %>% 
+  pivot_wider(names_from = spp, values_from = ht_cm_avg) %>% 
+  select(location, originx2, ab, rm, ro, sb, sm, wa) %>% 
+  replace_na(list(ab = 0, rm = 0, ro = 0, sb = 0, sm = 0, wa = 0)) %>% 
+  group_by(location, originx2) %>% 
+  summarise(
+    ab_cm_2018 = sum(ab),
+    rm_cm_2018 = sum(rm),
+    ro_cm_2018 = sum(ro),
+    sb_cm_2018 = sum(sb),
+    sm_cm_2018 = sum(sm),
+    wa_cm_2018 = sum(wa),
+    
+  )
+
+wide_2019_cm <- height_summ_subset2019 %>% 
+  pivot_wider(names_from = spp, values_from = ht_cm_avg) %>% 
+  select(location, originx2, ab, rm, ro, sb, sm, wa) %>% 
+  replace_na(list(ab = 0, rm = 0, ro = 0, sb = 0, sm = 0, wa = 0)) %>% 
+  group_by(location, originx2) %>% 
+  summarise(
+    ab_cm_2019 = sum(ab),
+    rm_cm_2019 = sum(rm),
+    ro_cm_2019 = sum(ro),
+    sb_cm_2019 = sum(sb),
+    sm_cm_2019 = sum(sm),
+    wa_cm_2019 = sum(wa),
+    
+  )
+
+wide_hts <- full_join(wide_2018_cm, wide_2019_cm, by = c("location", "originx2")) %>% 
+  mutate(
+  ab_rm_18 = ab_cm_2018 - rm_cm_2018,
+  ab_ro_18 = ab_cm_2018 - ro_cm_2018,
+  ab_sb_18 = ab_cm_2018 - sb_cm_2018,
+  ab_sm_18 = ab_cm_2018 - sm_cm_2018,
+  ab_wa_18 = ab_cm_2018 - wa_cm_2018,
+  
+  ab_rm_19 = ab_cm_2019 - rm_cm_2019,
+  ab_ro_19 = ab_cm_2019 - ro_cm_2019,
+  ab_sb_19 = ab_cm_2019 - sb_cm_2019,
+  ab_sm_19 = ab_cm_2019 - sm_cm_2019,
+  ab_wa_19 = ab_cm_2019 - wa_cm_2019,
+) %>% 
+  mutate(
+    avg_be_other18 = (ab_rm_18 + ab_ro_18 + ab_sb_18 + ab_sm_18 + ab_wa_18)/5,
+    avg_be_other19 = (ab_rm_19 + ab_ro_19 + ab_sb_19 + ab_sm_19 + ab_wa_19)/5,
+    annual_change =  avg_be_other18 - avg_be_other19
+  ) %>% 
+  select(location, originx2,ab_cm_2018, rm_cm_2018, ro_cm_2018, sb_cm_2018, sm_cm_2018, wa_cm_2019,
+         ab_cm_2019, rm_cm_2019, ro_cm_2019, sb_cm_2019, sm_cm_2019, wa_cm_2019,
+         avg_be_other18, avg_be_other19, annual_change
+         ) %>% 
+  arrange(originx2, location)
+
+write_csv(wide_hts, "seedling_hts_average_differences.csv")
+
+```
+
 
 ###Filter to common species and collapse vegetative vs. unk origin
 ```{r}
@@ -68,29 +186,30 @@ height_summ <- tidy_heights %>%
 #removed yb, co, bc, ba
 #beech was primary data for origin=root, so collapsed root & stump to vegetative
 height_common <- tidy_heights %>% 
-  filter(year == "2019") %>% 
-  filter(spp %in% c("ab", "ro", "sm", "rm", "wa", "sb") #uncommon spp removed
+   rename("ht" = "height") %>% 
+ filter(year %in% c("2018", "2019")) %>% 
+  filter(spp %in% c("ab", "eh", "ro", "sm", "rm", "wa", "sb") #uncommon spp removed
 ) %>% 
   mutate(
     originx2 = recode(origin, "root" = "sprout", "stump" = "sprout")
   )
 
 #Fig=height_graph01
-  height_graph <- ggplot(data=height_common, aes(x = spp, y = height, color = location)) +
+  height_graph <- ggplot(data=height_common, aes(x = spp, y = ht_cm, color = location)) +
     geom_point() +
     facet_grid (originx2~harvest)+
       theme_classic() +
   labs(
     x= "species and location",
-    y = "seedling height (inches)",
+    y = "seedling height (cm)",
     title = "All Harvests - all origin unweighted",
-    subtitle = "2019 Seedling Heights, FIG=height_graph01, seedling_ht_analysis.Rmd"
+    subtitle = "2018 & 2019 Seedling Heights, FIG=height_graph01, seedling_ht_analysis.Rmd"
   ) 
 
 
 height_graph
 
-ggsave("figures/height_graph.jpg")
+ggsave("figures/seedling_height_graph.jpg")
 
 
 ```
@@ -98,24 +217,24 @@ ggsave("figures/height_graph.jpg")
 
 ```{r}
 
-ht_2019_mod <- lm(log(height)~spp*harvest + spp*originx2 + spp*location, data=height_common)
+ht_2018_2019_mod <- lm(ht_cm~spp*harvest + spp*originx2 + spp*location + spp*year, data=height_common)
 
-hist(residuals(ht_2019_mod)) #tests for normal distribution
-plot(predict(ht_2019_mod), residuals(ht_2019_mod)) #tests heteroscedasticity, thus log
+hist(residuals(ht_2018_2019_mod)) #tests for normal distribution
+plot(predict(ht_2018_2019_mod), residuals(ht_2018_2019_mod)) #tests heteroscedasticity, thus log
 
 library(emmeans)
-emmeans(ht_2019_mod, ~spp+harvest+originx2+location, type="response")
+emmeans(ht_2018_2019_mod, ~spp+harvest+originx2+location+year, type="response")
 #this calculates the mean and SE for all factor combinations, type=...reverse transformed
 
 
-emmip(ht_2019_mod, location ~ spp | harvest + originx2, CIs = TRUE)
+emmip(ht_2018_2019_mod, year ~ spp | harvest + location, CIs = TRUE)
 #plots the data from emmeans to help visualize interactions
 # emmip(model name, color ~, xaxis | panel1 + panel2
 
 
-emmeans(ht_2019_mod, pairwise ~ spp | harvest * location * originx2, type = "response")
+emmeans(ht_2018_2019_mod, pairwise ~ spp | harvest * location * originx2 * year, type = "response")
 #calculates the contrasts
-#assess if spp (height) matters as a function of harvest*location*originx2
+#assess if spp (height) matters as a function of harvest*location*originx2*year
 
 
 

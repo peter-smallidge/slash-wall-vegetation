@@ -1,0 +1,12 @@
+harvest,location,basal_area
+boot,interior,34.76190476190476
+boot,perimeter,23.75
+gas_line,control,30.58823529411765
+gas_line,interior,7.5
+gas_line,perimeter,8
+red-pine,control,18.275862068965516
+red-pine,interior,8
+red-pine,perimeter,1.5384615384615385
+wedge,interior,39.285714285714285
+wedge,perimeter,22
+wedge_boot,control,38.529411764705884
