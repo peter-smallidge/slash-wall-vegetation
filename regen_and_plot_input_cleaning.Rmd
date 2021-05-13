@@ -388,6 +388,48 @@ write_csv(tidy_regen_point, "tidy_regen_point_2019.csv")
 #for deer impact=2, there should be 30 stems less than 5 ft per 6 ft plot = 11550/ac
 #sapling stocking is 2 per plot = 770
 #
+#The basis for stocking thresholds is from SILVAH ne-gtr-96.
+#prescription stocking thresholds are described on print-page-40, document page 46.
+#post-harvest assessment of stocking is described on print-page-74, document page 80
+#the SILVAH guidelines do not differentiate between overtopped and exposed (free to grow) seedlings.
+# p74  post-harvest assessment at 2 years.
+# on 6ft radius plots ~"stocked successfully if 
+# (i) "silvah01" 25 stems/plot [=9625/ac, 23774/ha],
+# (ii) "silvah02" 5 stem > 3 ft tall [1925/ac, 4755/ha], -or- 
+# (iii) "silvah03" 2 stems > 5 ft [770/ac, 1901/ha].
+# Once 70% of plots have (iii) stocking, the stand is considered regenerated.
+
+
+silvah01 <- tidy_regen_point %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_short", "exp_med", "exp_tall")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    silvah01_per_acre = (sum(stems.per.acre))
+  ) %>% 
+  mutate(silvah25 = cut(silvah01_per_acre, breaks=c(0,9625,9000000000),
+    labels=c("not", "stocked25")))
+
+silvah02 <- tidy_regen_point %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("sup_med", "exp_med", "exp_tall")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    silvah02_per_acre = (sum(stems.per.acre))
+  ) %>% 
+  mutate(silvah5 = cut(silvah02_per_acre, breaks=c(0,1925,9000000000),
+    labels=c("not", "stocked5")))
+
+silvah03 <- tidy_regen_point %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_med", "exp_tall")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    silvah03_per_acre = (sum(stems.per.acre))
+  ) %>% 
+  mutate(silvah2 = cut(silvah03_per_acre, breaks=c(0,1925,9000000000),
+    labels=c("not", "stocked2")))
+
 
 winner_stocking <- tidy_regen_point %>% 
   filter(type %in% c("commercial")) %>% 
@@ -396,8 +438,8 @@ winner_stocking <- tidy_regen_point %>%
   summarize(
     win_comm_per_acre = sum(stems.per.acre)
   ) %>% 
-  mutate(winner_stock = cut(win_comm_per_acre, breaks=c(0,385,770,1000000), 
-                            labels=c("fail", "win_01", "win_02")
+  mutate(winner_stock = cut(win_comm_per_acre, breaks=c(0,770,9000000), 
+                            labels=c("not", "winner")
                             ))
 
 comm_stocking <- tidy_regen_point %>% 
@@ -447,6 +489,8 @@ pre_diver_stocking <- tidy_regen_point %>%
 
 
 #according to SILVAH ne_gtr96, p.46,table 5
+# (this is for prescriptions, pre-harvest. No guidance on post harvest INTF thresholds)
+# 
 #a plot (radius 6 ft) has interference if number of stems less than 12" is 12 or > 12" is 6
 #or fern covers more than 30% of the plot ("m" or "h")
 #12*385 = 4620 (these weren't recorded); 6 *385 = 2310

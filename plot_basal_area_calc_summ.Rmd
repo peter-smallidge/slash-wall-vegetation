@@ -124,8 +124,12 @@ plot.data %>%
 site <- plot.data %>% 
  #filter(location =="interior" | location=="control") %>% 
   select(harvest, location, ba) %>% 
+  mutate(harvest = recode(
+    harvest, "boot" = "sta_rd", "wedge" = "sta_rd", "wedge_boot" = "sta_rd")) %>% 
   group_by(harvest, location) %>% 
-  summarize(basal_area = mean(ba)) %>% 
+  summarize(ba_sqft = mean(ba)) %>% 
+  mutate(
+    ba_sqha = ba_sqft * 0.22956) %>% 
   arrange(harvest, location)
   
 #site
@@ -134,7 +138,7 @@ write_csv(site, "site_BA_means.csv")
 
 
 ```
-
+mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) %>%  #old = new
 
 
 ```{r}

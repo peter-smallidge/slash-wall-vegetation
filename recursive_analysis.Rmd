@@ -27,6 +27,7 @@ library(randomForest)
 # RMD comment = <!-- comment -->
 # 
 # 
+# link shared by Erika https://shiring.github.io/machine_learning/2017/03/16/rf_plot_ggraph 
 
 ```
 
@@ -41,6 +42,7 @@ plot_tidy <- read_csv("tidy_plot_2019.csv") %>%
 
 
 plot_untidy <- read_csv("untidy_plot_2019.csv") %>% 
+      # replace missing values before changing variables to factors.
    mutate(
     comm_stock=replace_na(comm_stock, "not"),
     pre_comm_stock = replace_na(pre_comm_stock, "not"),

@@ -1,0 +1,310 @@
+---
+title: "determine_silvah_stocking_levels"
+author: "Peter Smallidge"
+date: "5/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+###Initialize Libraries
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readxl)
+library(readr)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+```
+
+
+
+###Write tidy data assign stocking label to each point
+```{r, tidy regen and plot data, assign stocking label to each point}
+
+stem_counts <- read_csv("tidy_regen_point_2019.csv") %>% 
+  mutate_at(vars(harvest, point, location, spp, origin, type, size),
+            list(factor)) %>% 
+  mutate(harvest = fct_recode(harvest,
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge")) %>% 
+  droplevels() #drops unused levels of a factor
+  
+plot_data <- read_csv("untidy_plot_2019.csv") %>% 
+  select("harvest", "location", "point", "year", "disturb", "slash", "fern", "herb",
+         "low_cov", "inv_cov", "mid_cov", "upper_cov","vine_cov", "ba", "seedling_numb") %>% 
+  mutate_at(vars(harvest, location, point, disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov),
+            list(factor))
+
+        # replace missing values before changing variables to factors.
+   mutate(
+    comm_stock=replace_na(comm_stock, "not"),
+    pre_comm_stock = replace_na(pre_comm_stock, "not"),
+    diver_stock = replace_na(diver_stock, "not"),
+    pre_diver_stock = replace_na(pre_diver_stock, "not"),
+    interf_woody_stock = replace_na(interf_woody_stock, "not")
+    ) %>% 
+
+  d <- forcats::fct_explicit_na(d, "0")
+  
+
+#for stocking breaks, assess heights assuming deer impact = 1 or 2
+#for deer impact=1, there should be 15 stems less than 5 ft per 6 ft plot = 5775/ac
+#for deer impact=2, there should be 30 stems less than 5 ft per 6 ft plot = 11550/ac
+#sapling stocking is 2 per plot = 770
+#
+#The basis for stocking thresholds is from SILVAH ne-gtr-96.
+#prescription stocking thresholds are described on print-page-40, document page 46.
+#post-harvest assessment of stocking is described on print-page-74, document page 80
+#the SILVAH guidelines do not differentiate between overtopped and exposed (free to grow) seedlings.
+# p74  post-harvest assessment at 2 years.
+# on 6ft radius plots ~"stocked successfully if 
+# (i) "silvah01" 25 stems/plot [=9625/ac, 23774/ha],
+# (ii) "silvah02" 5 stem > 3 ft tall [1925/ac, 4755/ha], -or- 
+# (iii) "silvah03" 2 stems > 5 ft [770/ac, 1901/ha].
+# Once 70% of plots have (iii) stocking, the stand is considered regenerated.
+
+
+silvah01 <- stem_counts %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_short", "exp_med", "exp_tall")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    silvah01_per_acre = (sum(stems.per.acre))
+  ) %>% 
+  filter(silvah01_per_acre > 9624) %>% 
+   mutate(silvah25 = cut(silvah01_per_acre, breaks=c(0,9625,9000000000),
+    labels=c("not", "stocked25"))) 
+
+silvah02 <- stem_counts %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("sup_med", "exp_med", "exp_tall")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    silvah02_per_acre = (sum(stems.per.acre))
+  ) %>% 
+  mutate(silvah5 = cut(silvah02_per_acre, breaks=c(0,1925,9000000000),
+    labels=c("not", "stocked5")))
+
+silvah03 <- stem_counts %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_med", "exp_tall")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    silvah03_per_acre = (sum(stems.per.acre))
+  ) %>% 
+  mutate(silvah2 = cut(silvah03_per_acre, breaks=c(0,1925,9000000000),
+    labels=c("not", "stocked2")))
+
+silvah01div <- stem_counts %>% 
+  filter(type %in% c("commercial", "diversity")) %>% 
+  filter(size %in% c("exp_short", "exp_med", "exp_tall")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    silvah01div_per_acre = (sum(stems.per.acre))
+  ) %>% 
+  mutate(silvah25div = cut(silvah01div_per_acre, breaks=c(0,9625,9000000000),
+    labels=c("not", "stocked25div")))
+
+
+
+
+#according to SILVAH ne_gtr96, p.46,table 5
+# (this is for prescriptions, pre-harvest. No guidance on post harvest INTF thresholds)
+# 
+#a plot (radius 6 ft) has interference if number of stems less than 12" is 12 or > 12" is 6
+#or fern covers more than 30% of the plot ("m" or "h")
+#12*385 = 4620 (these weren't recorded); 6 *385 = 2310
+
+interfere_stocking <- stem_counts %>% 
+  filter(type %in% c("interfering")) %>% 
+  filter(size %in% c("total")) %>%  #recovers sum of stem count for all exposed height classes per plot
+  group_by(harvest, location, point) %>% 
+  summarize(
+    interfere_per_acre = sum(stems.per.acre)
+  ) %>% 
+  filter(interfere_per_acre > 2310) %>% 
+  mutate(interfere_stock = "inft_stkd") %>% 
+  mutate_at(vars(interfere_stock), list (factor))
+#  mutate(interfere_stock = cut(interfere_per_acre, breaks=c(0, 2310, #1000000),labels=c("intf_not","intf_stkd")))
+
+fern_stocking <- plot.data %>%
+  select(harvest, location, point, fern) %>% 
+  filter(fern %in% c("m", "h")) %>% 
+  group_by(harvest, location, point) %>% 
+  mutate(fern_stock = "intf_stkd"
+          ) %>% 
+  mutate_at(vars(fern_stock),
+            list(factor)
+  )
+
+
+all_interference <- 
+  full_join(interfere_stocking, fern_stocking, by = "point") %>% 
+  select(!c(harvest.y, location.y)) %>% 
+  mutate(
+      all_intf = "all_intf"
+  ) %>% 
+  mutate_at(vars(all_intf), list(factor)) %>% 
+  rename("harvest" = "harvest.x", "location" = "location.x") %>% 
+  arrange(point) %>% 
+  select(c(point, interfere_per_acre, interfere_stock, fern_stock, all_intf))
+#
+#join the plots
+#
+
+plot.data_01 <- 
+  left_join(plot_data, silvah01,     by = c("harvest", "location", "point"))
+
+plot.data_02 <- 
+  left_join(plot.data_01, silvah02,     by = c("harvest", "location", "point"))
+
+plot.data_03 <- 
+  left_join(plot.data_02, silvah03,     by = c("harvest", "location", "point"))
+
+plot.data_04 <- 
+  left_join(plot.data_03, silvah01div,     by = c("harvest", "location", "point"))
+
+plot.data_05 <- 
+  left_join(plot.data_04, interfere_stocking,     by = "point") %>% 
+  select(!c(harvest.y, location.y)) %>%  
+  rename("harvest" = "harvest.x", "location" = "location.x") 
+
+plot.data_partial <- 
+  left_join(plot.data_05, all_interference,     by = "point") %>% 
+  rename( "seedling_numb" = "seedling-numb", "interf_woody_stock"="interfere_stock.x", 
+          "interf_woody_per_acre" = "interfere_per_acre.x") %>% 
+select(!c(interfere_stock.y, interfere_per_acre.y)) %>% 
+  select(!c(oakhick, beech, maple, birch, hdwd, conifer)) 
+
+plot.data_full <- 
+  left_join(plot.data_partial, winner_stocking,   by = "point" )%>% 
+  select(!c(harvest.y, location.y)) %>% 
+  rename("harvest" = "harvest.x", "location" = "location.x") %>% 
+  arrange(harvest, location, point) %>% 
+select(harvest, location, point,everything() )
+
+
+
+
+  
+write_csv(plot.data_full, "untidy_plot_2019.csv")
+```
+
+
+
+
+###Make Plot Data Tidy
+```{r}
+
+plot.data_tidy <- plot.data_full %>% 
+  
+  select(!c(baf,
+            low_spp, inv_spp, mid_spp, upper_spp, vine_spp)) %>% 
+  
+  pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                  comm_stock, pre_comm_stock, diver_stock,
+                  pre_diver_stock,  interf_woody_stock, fern_stock, all_intf,
+                 winner_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val") %>% 
+  
+  replace_na(list("attrib_val" = "no", comm_per_acre = 0, pre_comm_per_acre = 0,
+                  diver_per_acre = 0, pre_diver_per_acre = 0, interfere_per_acre = 0,
+                  pre_interfere_per_acre = 0))
+
+write_csv(plot.data_tidy, "tidy_plot_2019.csv")
+
+
+
+
+```
+
+
+
+<!-- 
+ includes factor and number variables...can't blend via "pivot_longer"
+ pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                 ba, seedling_numb, comm_per_acre, comm_stock,
+                 pre_comm_per_acre, pre_comm_stock,diver_per_acre, diver_stock,
+                 pre_diver_per_acre, pre_diver_stock, interfere_per_acre, interfere_stock,
+                 pre_interfere_per_acre, pre_interfere_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val")
+               
+               
+ winner_stocking <- stem_counts %>% 
+            
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("winners")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    win_comm_per_acre = sum(stems.per.acre)
+  ) %>% 
+  mutate(winner_stock = cut(win_comm_per_acre, breaks=c(0,770,9000000), 
+                            labels=c("not", "winner")
+                            ))
+
+comm_stocking <- stem_counts %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    comm_per_acre = sum(stems.per.acre)
+  ) %>% 
+  filter(comm_per_acre >769) %>% 
+  mutate(comm_stock = cut(comm_per_acre, breaks=c(0, 770, 1000000),labels=c("comm_not","comm_stkd")))
+
+pre_comm_stocking <- stem_counts %>% 
+  filter(type %in% c("commercial")) %>% 
+  filter(size %in% c("exp_short")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    pre_comm_per_acre = sum(stems.per.acre)
+  ) %>% 
+  filter(pre_comm_per_acre>5774) %>% 
+  mutate(pre_comm_stock =  cut(pre_comm_per_acre, 
+                               breaks=c(0, 5775, 11550, 1000000),
+                               labels=c("pre_comm_not","pre_comm_deer1", "pre_comm_deer2")))
+
+
+diver_stocking <- stem_counts %>% 
+  filter(type %in% c("diversity")) %>% 
+  filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    diver_per_acre = sum(stems.per.acre)
+  ) %>% 
+  filter(diver_per_acre > 769) %>% 
+  #mutate(diver_stock = "div_stkd")
+  mutate(diver_stock = cut(diver_per_acre, breaks=c(0, 770, 1000000),labels=c("div_not","div_stkd")))
+
+pre_diver_stocking <- stem_counts %>% 
+  filter(type %in% c("diversity")) %>% 
+  filter(size %in% c("exp_short")) %>% 
+  group_by(harvest, location, point) %>% 
+  summarize(
+    pre_diver_per_acre = sum(stems.per.acre)
+  ) %>% 
+  filter(pre_diver_per_acre > 5774) %>% 
+  mutate(pre_diver_stock = 
+           cut(pre_diver_per_acre, breaks=c(0, 5775, 11550, 1000000),labels=c("pre_div_not","pre_diver_deer1", "pre_diver_deer2")))
+               
+-->
