@@ -19,7 +19,8 @@ library(readxl)
 library(readr)
 library(ggplot2) # - part of tidyverse
 library(ggpubr)
-
+#install.packages("viridis")
+library(viridis)
 
 #
 # ALT plus hypen = <- (within chunk)
@@ -61,8 +62,10 @@ col01_slash <- stocking %>%
     subtitle = "Arnot Forest, col01_slash, GH, veg_plot_graph"
   ) 
 
+
   
-set_palette(col01_slash, palette = c("#00AFBB", "#E7B800", "#FC4E07"))  #"uchicago"
+set_palette(col01_slash, palette = c(RdGy))  
+#"uchicago"  ("#00AFBB", "#E7B800", "#FC4E07") ("#440154FF", "#21908CFF" , "#FDE725FF")
   ggsave("figures/freq_plots_stocked_commercial.jpg")
   
   

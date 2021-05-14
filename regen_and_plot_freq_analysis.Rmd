@@ -34,6 +34,13 @@ library(readr)
 ```{r, data input}
 
 plot_tidy <- read_csv("tidy_plot_2019.csv") %>% 
+        # replace missing values before changing variables to factors.
+   mutate(
+    attrib_val=replace_na(attrib_val, "not")
+    ) %>% 
+
+  
+  
   mutate_at(vars(harvest, year, point, location, plot_attrib, attrib_val),
             list(factor))
 
@@ -133,19 +140,19 @@ write_csv(freq_plot_attrib_5, "freq_plot_attrib_5.csv")
 ###Frequency Table Plot Attributs_4 sites (gas line, red pine, station road, controls)
 ```{r}
 
-
+# frequency table of stocking indicies
+# 
 freq_plot_attrib_4 <- plot_tidy %>% 
   mutate(harvest = fct_recode(harvest,
                               "sta_rd" = "boot",
                               "sta_rd" = "wedge")) %>% 
   filter(plot_attrib %in% c(
-    "winner_stock", "comm_stock", "pre_comm_stock", "diver_stock",
-    "pre_diver_stock", "interf_woody_stock","fern_stock", 
-    "all_intr")
+   "silvah25", "silvah5", "silvah2", "div_stock", "woody_stock"
+    )
   ) %>% 
   group_by(harvest, location, plot_attrib, attrib_val) %>% 
   summarise(n = n()) %>% 
-  mutate(freq = n / sum(n)) %>% 
+  mutate(freq = (n / sum(n)) * 100) %>% 
   arrange(harvest, plot_attrib, location,  attrib_val)
 
 write_csv(freq_plot_attrib_4, "freq_plot_attrib_4.csv")
