@@ -32,6 +32,7 @@ library(readr)
 ### read data from csv file, check variables and data structure
 
 ```{r, data input}
+# "tidy_plot_2019.csv" created in file "silvah_stocking_levels_assigned.Rmd"
 
 plot_tidy <- read_csv("tidy_plot_2019.csv") %>% 
         # replace missing values before changing variables to factors.
@@ -39,38 +40,38 @@ plot_tidy <- read_csv("tidy_plot_2019.csv") %>%
     attrib_val=replace_na(attrib_val, "not")
     ) %>% 
 
-  
-  
   mutate_at(vars(harvest, year, point, location, plot_attrib, attrib_val),
             list(factor))
 
 
-plot_untidy <- read_csv("untidy_plot_2019.csv") %>% 
+plot_untidy <- read_csv("untidy_plot_2019_stocking.csv") %>% 
+       # replace missing values before changing variables character to factors.
+    mutate(
+    silvah25=replace_na(silvah25, "not"),
+    silvah5 = replace_na(silvah5, "not"),
+    silvah2 = replace_na(silvah2, "not"),
+    div_stock = replace_na(div_stock, "not"),
+    woody_stock = replace_na(woody_stock, "not"),
+    fern_stock = replace_na(fern_stock, "not"),
+    all_intf = replace_na(all_intf, "not")
+    ) %>% 
+  
+  mutate(
+    silvah01_per_acre = replace_na(silvah01_per_acre, 0),
+    silvah02_per_acre = replace_na(silvah02_per_acre, 0),
+    silvah03_per_acre = replace_na(silvah03_per_acre, 0),
+    silvah01div_per_acre = replace_na(silvah01div_per_acre, 0),
+    interfere_per_acre = replace_na(interfere_per_acre, 0),
+ )
+
   mutate_at(vars(harvest, year, point, location, 
                  disturb, slash, fern, herb, 
                  low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
-                  comm_stock, pre_comm_stock, diver_stock,
-                  pre_diver_stock,  interf_woody_stock, fern_stock, all_intf,
-                 winner_stock),
-            list(factor)) %>% 
-  replace_na(list("comm_stock" = "no"))
+                 silvah25, silvah5, silvah2, div_stock, woody_stock,
+                 fern_stock, all_intf),
+            list(factor)) 
 
   
-# NOTE - plot_untidy...
-# pre_comm_stock and pre_diver_stock have 3 levels. Use this code to lump to 2.
-# 
-#   mutate(pre_comm_stock = fct_recode(pre_comm_stock,
-#                              "stocked" = "pre_comm_deer_1",
-#                              "stocked" = "pre_comm_deer_2")) 
-#                              
-#                              pre_diver_deer_1
-#                              pre_diver_deer_2
-
-
-
-#need to check the variables "_stock" some missing or miss-named
-#note that type = diverse includes commercial and diversity spp
-#
 
 regen_tidy <- read_csv("tidy_regen_point_2019.csv")   %>% 
   mutate_at(vars(harvest, location, point, spp, origin, year, type, size),
@@ -81,8 +82,8 @@ regen_tidy <- read_csv("tidy_regen_point_2019.csv")   %>%
 
 ```
 
-
-```{r}
+### base R table functions, see dyplr below
+```{r base R table functions}
 # the table function (base R) provides the count of occurrences of two 
 # categorical (factor) variables. In the first example the number of 
 # plots that had commercial stocking (no vs. stocked) among each level
@@ -102,7 +103,8 @@ table(plot_untidy$comm_stock, plot_untidy$inv_cov,useNA = "ifany")
 
 ```
 
-```{r}
+### base R proportion table functions, see dyplr below
+```{r base R proportion table functions}
 
 prop.table(table(plot_untidy$comm_stock, plot_untidy$mid_cov,useNA = "ifany"),margin=2)
 
@@ -137,12 +139,12 @@ write_csv(freq_plot_attrib_5, "freq_plot_attrib_5.csv")
 
 ```
 
-###Frequency Table Plot Attributs_4 sites (gas line, red pine, station road, controls)
+###Frequency Stocking Attributs_4 sites (gas line, red pine, station road, controls)
 ```{r}
 
 # frequency table of stocking indicies
 # 
-freq_plot_attrib_4 <- plot_tidy %>% 
+freq_stocking_attrib_4 <- plot_tidy %>% 
   mutate(harvest = fct_recode(harvest,
                               "sta_rd" = "boot",
                               "sta_rd" = "wedge")) %>% 
@@ -153,11 +155,32 @@ freq_plot_attrib_4 <- plot_tidy %>%
   group_by(harvest, location, plot_attrib, attrib_val) %>% 
   summarise(n = n()) %>% 
   mutate(freq = (n / sum(n)) * 100) %>% 
-  arrange(harvest, plot_attrib, location,  attrib_val)
+  arrange(harvest , plot_attrib, location,  attrib_val)
 
-write_csv(freq_plot_attrib_4, "freq_plot_attrib_4.csv")
+write_csv(freq_stocking_attrib_4, "freq_stocking_attrib_4.csv")
 
 
+```
+
+###Frequency % Cover Attributs_4 sites (gas line, red pine, station road, controls)
+```{r}
+
+# frequency table of stocking indicies
+# 
+freq_cover <- plot_tidy %>% 
+  mutate(harvest = fct_recode(harvest,
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge")) %>% 
+  filter(plot_attrib %in% c(
+   "disturb", "slash", "fern", "herb", "low_cov", "inv_cov", "mid_cov", "upper_cov", "vine_cov"
+    )
+  ) %>% 
+  group_by(harvest, location, plot_attrib, attrib_val) %>% 
+  summarise(n = n()) %>% 
+  mutate(freq = (n / sum(n)) * 100) %>% 
+  arrange(harvest , plot_attrib, location,  attrib_val)
+
+write_csv(freq_cover, "freq_cover_attrib_4.csv")
 
 
 ```

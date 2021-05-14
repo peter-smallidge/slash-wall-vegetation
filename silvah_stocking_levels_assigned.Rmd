@@ -56,6 +56,8 @@ plot_data <- read_csv("untidy_plot_2019.csv") %>%
 
 ### set stocking levels for silvah thresholds
 ```{r SILVAH stocking thresholds}
+# guide for pre-harvest assessment and prescription
+#
 #for stocking breaks, assess heights assuming deer impact = 1 or 2
 #for deer impact=1, there should be 15 stems less than 5 ft per 6 ft plot = 5775/ac
 #for deer impact=2, there should be 30 stems less than 5 ft per 6 ft plot = 11550/ac
@@ -65,6 +67,7 @@ plot_data <- read_csv("untidy_plot_2019.csv") %>%
 #prescription stocking thresholds are described on print-page-40, document page 46.
 #post-harvest assessment of stocking is described on print-page-74, document page 80
 #the SILVAH guidelines do not differentiate between overtopped and exposed (free to grow) seedlings.
+#
 # p74  post-harvest assessment at 2 years.
 # on 6ft radius plots ~"stocked successfully if 
 # (i) "silvah01" 25 stems/plot [=9625/ac, 23774/ha],
@@ -157,8 +160,8 @@ diver_stocking <- div_join2 %>%
 
 ```
 
-
-```{r}
+### Interference Stocking Thresholds for Woody, fern, All
+```{r Interference Stocking Thresholds for Woody, fern, All}
 #according to SILVAH ne_gtr96, p.46,table 5
 # (this is for prescriptions, pre-harvest. No guidance on post harvest INTF thresholds)
 # 
@@ -228,12 +231,42 @@ plot.data_03 <-
 plot.data_04 <- 
   left_join(plot.data_03, diver_stocking,     by = c("harvest", "location", "point"))
 
-plot.data_full <- 
+plot.data_partial <- 
   left_join(plot.data_04, all_interference,      by = c("harvest", "location", "point")) %>%  
   arrange(harvest, location, point) %>% 
   select(harvest, location, point, everything() )
 
-write_csv(plot.data_full, "untidy_plot_2019.csv")
+plot.data_full <- plot.data_partial %>% 
+  #remove missing from character variables  
+  mutate(  
+    silvah25=replace_na(silvah25, "not"),
+    silvah5 = replace_na(silvah5, "not"),
+    silvah2 = replace_na(silvah2, "not"),
+    div_stock = replace_na(div_stock, "not"),
+    woody_stock = replace_na(woody_stock, "not"),
+    fern_stock = replace_na(fern_stock, "not"),
+    all_intf = replace_na(all_intf, "not")
+    ) %>% 
+  
+  # remove missing from numeric variables
+  mutate(
+    silvah01_per_acre = replace_na(silvah01_per_acre, 0),
+    silvah02_per_acre = replace_na(silvah02_per_acre, 0),
+    silvah03_per_acre = replace_na(silvah03_per_acre, 0),
+    silvah01div_per_acre = replace_na(silvah01div_per_acre, 0),
+    interfere_per_acre = replace_na(interfere_per_acre, 0),
+ ) %>% 
+
+  #change character to factor
+  mutate_at(vars(harvest, year, point, location, 
+                 disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                 silvah25, silvah5, silvah2, div_stock, woody_stock,
+                 fern_stock, all_intf),
+            list(factor)) 
+
+
+write_csv(plot.data_full, "untidy_plot_2019_stocking.csv")
 ```
 
 
@@ -242,7 +275,7 @@ write_csv(plot.data_full, "untidy_plot_2019.csv")
 ###Make Plot Data Tidy
 ```{r}
 
-plot.data_tidy <-  read_csv("untidy_plot_2019.csv") %>% 
+plot.data_tidy <-  read_csv("untidy_plot_2019_stocking.csv") %>% 
   
   pivot_longer(c(disturb, slash, fern, herb, 
                  low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
@@ -256,83 +289,7 @@ plot.data_tidy <-  read_csv("untidy_plot_2019.csv") %>%
 
 write_csv(plot.data_tidy, "tidy_plot_2019.csv")
 
-#, 
-#                 silvah01_per_acre = 0, silvah02_per_acre = 0,silvah03_per_acre = 0,
- #                  silva01div_per_acre = 0, interfere_per_acre = 0
 
 
 ```
 
-
-
-<!-- 
- includes factor and number variables...can't blend via "pivot_longer"
- pivot_longer(c(disturb, slash, fern, herb, 
-                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
-                 ba, seedling_numb, comm_per_acre, comm_stock,
-                 pre_comm_per_acre, pre_comm_stock,diver_per_acre, diver_stock,
-                 pre_diver_per_acre, pre_diver_stock, interfere_per_acre, interfere_stock,
-                 pre_interfere_per_acre, pre_interfere_stock
-                 ),
-               names_to = "plot_attrib",
-               values_to = "attrib_val")
-               
-               
- winner_stocking <- stem_counts %>% 
-            
-  filter(type %in% c("commercial")) %>% 
-  filter(size %in% c("winners")) %>% 
-  group_by(harvest, location, point) %>% 
-  summarize(
-    win_comm_per_acre = sum(stems.per.acre)
-  ) %>% 
-  mutate(winner_stock = cut(win_comm_per_acre, breaks=c(0,770,9000000), 
-                            labels=c("not", "winner")
-                            ))
-
-comm_stocking <- stem_counts %>% 
-  filter(type %in% c("commercial")) %>% 
-  filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
-  group_by(harvest, location, point) %>% 
-  summarize(
-    comm_per_acre = sum(stems.per.acre)
-  ) %>% 
-  filter(comm_per_acre >769) %>% 
-  mutate(comm_stock = cut(comm_per_acre, breaks=c(0, 770, 1000000),labels=c("comm_not","comm_stkd")))
-
-pre_comm_stocking <- stem_counts %>% 
-  filter(type %in% c("commercial")) %>% 
-  filter(size %in% c("exp_short")) %>% 
-  group_by(harvest, location, point) %>% 
-  summarize(
-    pre_comm_per_acre = sum(stems.per.acre)
-  ) %>% 
-  filter(pre_comm_per_acre>5774) %>% 
-  mutate(pre_comm_stock =  cut(pre_comm_per_acre, 
-                               breaks=c(0, 5775, 11550, 1000000),
-                               labels=c("pre_comm_not","pre_comm_deer1", "pre_comm_deer2")))
-
-
-diver_stocking <- stem_counts %>% 
-  filter(type %in% c("diversity")) %>% 
-  filter(size %in% c("exp_med", "exp_tall", "exp_sapl")) %>% 
-  group_by(harvest, location, point) %>% 
-  summarize(
-    diver_per_acre = sum(stems.per.acre)
-  ) %>% 
-  filter(diver_per_acre > 769) %>% 
-  #mutate(diver_stock = "div_stkd")
-  mutate(diver_stock = cut(diver_per_acre, breaks=c(0, 770, 1000000),labels=c("div_not","div_stkd")))
-
-pre_diver_stocking <- stem_counts %>% 
-  filter(type %in% c("diversity")) %>% 
-  filter(size %in% c("exp_short")) %>% 
-  group_by(harvest, location, point) %>% 
-  summarize(
-    pre_diver_per_acre = sum(stems.per.acre)
-  ) %>% 
-  filter(pre_diver_per_acre > 5774) %>% 
-  mutate(pre_diver_stock = 
-           cut(pre_diver_per_acre, breaks=c(0, 5775, 11550, 1000000),labels=c("pre_div_not","pre_diver_deer1", "pre_diver_deer2")))
-               
--->
