@@ -1,0 +1,95 @@
+---
+title: "regen_tabular_analysis"
+author: "Peter Smallidge"
+date: "5/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+###Initialize libraries
+```{r}
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readr)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+
+```
+
+
+###Input Data
+```{r, input data}
+
+
+regen01 <-  read_csv("tidy_regen_point_2019.csv") %>% 
+ mutate_at(vars(harvest, location, point, spp, origin, year, type, size),
+            list(factor)) %>% 
+  filter(!point %in% c("864", "866", "810")) %>%  #remove untreated gas line plots
+  rename("stems_per_acre" = "stems.per.acre") %>% 
+  mutate(
+      stems_per_ha = 2.47 * stems_per_acre
+    ) %>% 
+   mutate(harvest = fct_recode(harvest,
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge")) %>% 
+  mutate(origin = fct_recode(origin,
+                             "sprout" = "root",
+                             "sprout" = "stump")) %>%  
+  filter(!origin %in% c("none")) %>% 
+  
+  filter(!type %in% c("diversity"))%>% #remove all diversity spp, remove comm, then row_bind
+  
+  droplevels() %>%
+  arrange(harvest, location, point, spp, size, origin)
+
+regen_diversity <- read_csv("tidy_regen_point_2019.csv") %>% 
+  rename("stems_per_acre" = "stems.per.acre") %>% 
+  mutate_at(vars(harvest, location, point, spp, origin, year, type, size),
+            list(factor)) %>% 
+   mutate(
+      stems_per_ha = 2.47 * stems_per_acre
+    ) %>% 
+   mutate(harvest = fct_recode(harvest,
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge")) %>% 
+  mutate(origin = fct_recode(origin,
+                             "sprout" = "root",
+                             "sprout" = "stump")) %>%  
+  filter(type %in% c("diversity")) %>% 
+  filter(!spp %in% c(
+    "wp", "he", "rm", "sm","yb", "sb", "wa", "yp",
+                     "bc", "wo", "co", "ro", "ba", "bl", "rp", "cu"
+  ))
+
+regen_no_dupl <- bind_rows(regen01, regen_diversity) %>% 
+  filter(!size %in% c("total", "winners")) %>% 
+  droplevels()
+table(regen02$harvest)```
+
+
+###Group Means
+```{r, group means}
+
+regen02 <- regen_no_dupl %>% 
+  group_by(harvest, location,size,spp) %>% 
+  droplevels() %>% 
+  summarise(
+    total_acre = sum(stems_per_acre),
+    total_hectare = sum(stems_per_ha),
+    n = n()
+  ) %>% 
+  arrange(desc(harvest), total_acre, location )
+
+table(regen02$harvest)write_csv(regen02, "stem_density_spp_size.csv")
+
+```
