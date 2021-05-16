@@ -73,8 +73,11 @@ regen_diversity <- read_csv("tidy_regen_point_2019.csv") %>%
 
 regen_no_dupl <- bind_rows(regen01, regen_diversity) %>% 
   filter(!size %in% c("total", "winners")) %>% 
+  filter(!size %in% c("exposed", "suppressed")) %>% 
   droplevels()
-table(regen02$harvest)```
+
+
+```
 
 
 ###Group Means
@@ -88,7 +91,7 @@ regen02 <- regen_no_dupl %>%
     total_hectare = sum(stems_per_ha),
     n = n()
   ) %>% 
-  arrange(desc(harvest), total_acre, location )
+  arrange(desc(harvest), location )
 
 table(regen02$harvest)write_csv(regen02, "stem_density_spp_size.csv")
 
