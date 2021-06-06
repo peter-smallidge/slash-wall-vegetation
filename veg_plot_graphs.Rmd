@@ -66,7 +66,8 @@ col01_slash <- stocking %>%
   
 set_palette(col01_slash, palette = c(RdGy))  
 #"uchicago"  ("#00AFBB", "#E7B800", "#FC4E07") ("#440154FF", "#21908CFF" , "#FDE725FF")
-  ggsave("figures/freq_plots_stocked_commercial.jpg")
+
+ggsave("figures/freq_plots_stocked_commercial.jpg")
   
   
 

@@ -70,7 +70,7 @@ plot_data <- read_csv("untidy_plot_2019.csv") %>%
 #
 # p74  post-harvest assessment at 2 years.
 # on 6ft radius plots ~"stocked successfully if 
-# (i) "silvah01" 25 stems/plot [=9625/ac, 23774/ha],
+# (i) "silvah01" 25 stems/plot > 12 inches [=9625/ac, 23774/ha],
 # (ii) "silvah02" 5 stem > 3 ft tall [1925/ac, 4755/ha], -or- 
 # (iii) "silvah03" 2 stems > 5 ft [770/ac, 1901/ha].
 # Once 70% of plots have (iii) stocking, the stand is considered regenerated.
