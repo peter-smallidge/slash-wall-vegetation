@@ -10,7 +10,7 @@ first file to run
       write_csv(plot.data, "tidy_plot_2019.csv")
     
     
-The file "seedling_ht_analysis.Rmd" reads this file "tidy_seedling_heights_2017-2019.csv". The data are the heights of exposed seedlings in regen plots to assess the potential for American beech to dominate following harvest. The original file is "seedling_ht_input_format.Rmd"  An OLD file is "seedling_height_analysis.Rmd" that could be deleted or ignored.
+The file "seedling_ht_analysis.Rmd" reads the file "tidy_seedling_heights_2017-2019.csv". The data are the heights of exposed seedlings in regen plots to assess the potential for American beech to dominate following harvest. The original file is "seedling_ht_input_format.Rmd"  An OLD file is "seedling_height_analysis.Rmd" that could be deleted or ignored.
 
 
 
@@ -19,7 +19,7 @@ write.table(site, "site_BA_means.txt", sep="\t")
 In the future this might be used to also document harvest x location.
 
 
-The file "regen_and_plot_input_cleaning" works with the plot data and the regen data. The plot data are made tidy and include a categorization of the plot as stocked or unstocked based on varying levels of seedling counts per acre for commercial, diversity, and interfering species for stems 4.5 ft to 9 ft. Plus the same for these as 12" to 4.5ft. Note that type=diverse includes commercial and diversity species and should not be summed per acre and added with commercial per acre.
+The file "regen_and_plot_input_cleaning" analyzes with the plot data and the regen data. The plot data are made tidy and include a categorization of the plot as stocked or unstocked based on varying levels of seedling counts per acre for commercial, diversity, and interfering species for stems 4.5 ft to 9 ft. Plus the same for these as 12" to 4.5ft. Note that type=diverse includes commercial and diversity species and should not be summed per acre and added with commercial per acre.
 
 
 Three field plots in the gas line harvest were located in areas that were not

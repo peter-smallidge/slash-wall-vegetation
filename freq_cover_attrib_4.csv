@@ -1,289 +1,286 @@
-,,,,,,,,,Harvest,Plot Location,Number of Plots,disturbed,fern (% cover),herbaceous (% cover),Invasive,Plant Heights 0 2 m,Plant Heights 2 to 10 m,Plant Heights > 10 m,Vines
-,,,,,,,,,Gas Line,control,,,,,,,,,
-,,,,,,,,,,interior,,,,,,,,,
-harvest,location,plot_attrib,attrib_val,% Cover,n,freq,,,,perimeter,,,,,,,,,
-gas_line,control,disturb,absent,0%,6,35.29411765,,,Red Pine,control,,,,,,,,,
-gas_line,control,disturb,present,0 - 5%,3,17.64705882,,,,interior,,,,,,,,,
-gas_line,control,disturb,low,5 - 30%,8,47.05882353,,,,perimeter,,,,,,,,,
-gas_line,control,fern,absent,0%,1,5.882352941,,,Station Road,control,,,,,,,,,
-gas_line,control,fern,present,0 - 5%,12,70.58823529,,,,interior,,,,,,,,,
-gas_line,control,fern,medium,30 - 70%,1,5.882352941,,,,perimeter,,,,,,,,,
-gas_line,control,fern,low,5 - 30%,3,17.64705882,,,,,,,,,,,,,
-gas_line,control,herb,high,> 70%,2,11.76470588,,,,,,,,,,,,,
-gas_line,control,herb,present,0 - 5%,2,11.76470588,,,,,,,,,,,,,
-gas_line,control,herb,medium,30 - 70%,9,52.94117647,,,,,,,,,,,,,
-gas_line,control,herb,low,5 - 30%,4,23.52941176,,,,,,,,,,,,,
-gas_line,control,inv_cov,absent,0%,17,100,,,,,,,,,,,,,
-gas_line,control,low_cov,high,> 70%,1,5.882352941,,,,,,,,,,,,,
-gas_line,control,low_cov,medium,30 - 70%,12,70.58823529,,,,,,,,,,,,,
-gas_line,control,low_cov,low,5 - 30%,4,23.52941176,,,,,,,,,,,,,
-gas_line,control,mid_cov,present,0 - 5%,7,41.17647059,,,,,,,,,,,,,
-gas_line,control,mid_cov,medium,30 - 70%,2,11.76470588,,,,,,,,,,,,,
-gas_line,control,mid_cov,low,5 - 30%,8,47.05882353,,,,,,,,,,,,,
-gas_line,control,slash,high,> 70%,2,11.76470588,,,,,,,,,,,,,
-gas_line,control,slash,medium,30 - 70%,9,52.94117647,,,,,,,,,,,,,
-gas_line,control,slash,low,5 - 30%,6,35.29411765,,,,,,,,,,,,,
-gas_line,control,upper_cov,high,> 70%,2,11.76470588,,,,,,,,,,,,,
-gas_line,control,upper_cov,present,0 - 5%,3,17.64705882,,,,,,,,,,,,,
-gas_line,control,upper_cov,medium,30 - 70%,6,35.29411765,,,,,,,,,,,,,
-gas_line,control,upper_cov,low,5 - 30%,6,35.29411765,,,,,,,,,,,,,
-gas_line,control,vine_cov,absent,0%,13,76.47058824,,,,,,,,,,,,,
-gas_line,control,vine_cov,present,0 - 5%,3,17.64705882,,,,,,,,,,,,,
-gas_line,control,vine_cov,not,n.d.,1,5.882352941,,,,,,,,,,,,,
-gas_line,interior,disturb,absent,0%,3,7.142857143,,,,,,,,,,,,,
-gas_line,interior,disturb,high,> 70%,1,2.380952381,,,,,,,,,,,,,
-gas_line,interior,disturb,present,0 - 5%,7,16.66666667,,,,,,,,,,,,,
-gas_line,interior,disturb,medium,30 - 70%,16,38.0952381,,,,,,,,,,,,,
-gas_line,interior,disturb,low,5 - 30%,15,35.71428571,,,,,,,,,,,,,
-gas_line,interior,fern,absent,0%,8,19.04761905,,,,,,,,,,,,,
-gas_line,interior,fern,present,0 - 5%,15,35.71428571,,,,,,,,,,,,,
-gas_line,interior,fern,medium,30 - 70%,9,21.42857143,,,,,,,,,,,,,
-gas_line,interior,fern,low,5 - 30%,10,23.80952381,,,,,,,,,,,,,
-gas_line,interior,herb,high,> 70%,7,16.66666667,,,,,,,,,,,,,
-gas_line,interior,herb,medium,30 - 70%,16,38.0952381,,,,,,,,,,,,,
-gas_line,interior,herb,low,5 - 30%,19,45.23809524,,,,,,,,,,,,,
-gas_line,interior,inv_cov,absent,0%,41,97.61904762,,,,,,,,,,,,,
-gas_line,interior,inv_cov,present,0 - 5%,1,2.380952381,,,,,,,,,,,,,
-gas_line,interior,low_cov,high,> 70%,14,33.33333333,,,,,,,,,,,,,
-gas_line,interior,low_cov,present,0 - 5%,2,4.761904762,,,,,,,,,,,,,
-gas_line,interior,low_cov,medium,30 - 70%,19,45.23809524,,,,,,,,,,,,,
-gas_line,interior,low_cov,low,5 - 30%,7,16.66666667,,,,,,,,,,,,,
-gas_line,interior,mid_cov,absent,0%,5,11.9047619,,,,,,,,,,,,,
-gas_line,interior,mid_cov,present,0 - 5%,24,57.14285714,,,,,,,,,,,,,
-gas_line,interior,mid_cov,medium,30 - 70%,1,2.380952381,,,,,,,,,,,,,
-gas_line,interior,mid_cov,low,5 - 30%,12,28.57142857,,,,,,,,,,,,,
-gas_line,interior,slash,high,> 70%,2,4.761904762,,,,,,,,,,,,,
-gas_line,interior,slash,present,0 - 5%,4,9.523809524,,,,,,,,,,,,,
-gas_line,interior,slash,medium,30 - 70%,16,38.0952381,,,,,,,,,,,,,
-gas_line,interior,slash,low,5 - 30%,20,47.61904762,,,,,,,,,,,,,
-gas_line,interior,upper_cov,absent,0%,27,64.28571429,,,,,,,,,,,,,
-gas_line,interior,upper_cov,present,0 - 5%,13,30.95238095,,,,,,,,,,,,,
-gas_line,interior,upper_cov,low,5 - 30%,2,4.761904762,,,,,,,,,,,,,
-gas_line,interior,vine_cov,absent,0%,25,59.52380952,,,,,,,,,,,,,
-gas_line,interior,vine_cov,present,0 - 5%,4,9.523809524,,,,,,,,,,,,,
-gas_line,interior,vine_cov,medium,30 - 70%,6,14.28571429,,,,,,,,,,,,,
-gas_line,interior,vine_cov,low,5 - 30%,5,11.9047619,,,,,,,,,,,,,
-gas_line,interior,vine_cov,not,n.d.,2,4.761904762,,,,,,,,,,,,,
-gas_line,perimeter,disturb,absent,0%,1,2.941176471,,,,,,,,,,,,,
-gas_line,perimeter,disturb,high,> 70%,4,11.76470588,,,,,,,,,,,,,
-gas_line,perimeter,disturb,present,0 - 5%,12,35.29411765,,,,,,,,,,,,,
-gas_line,perimeter,disturb,medium,30 - 70%,10,29.41176471,,,,,,,,,,,,,
-gas_line,perimeter,disturb,low,5 - 30%,7,20.58823529,,,,,,,,,,,,,
-gas_line,perimeter,fern,absent,0%,10,29.41176471,,,,,,,,,,,,,
-gas_line,perimeter,fern,present,0 - 5%,7,20.58823529,,,,,,,,,,,,,
-gas_line,perimeter,fern,medium,30 - 70%,2,5.882352941,,,,,,,,,,,,,
-gas_line,perimeter,fern,low,5 - 30%,7,20.58823529,,,,,,,,,,,,,
-gas_line,perimeter,fern,not,n.d.,8,23.52941176,,,,,,,,,,,,,
-gas_line,perimeter,herb,high,> 70%,11,32.35294118,,,,,,,,,,,,,
-gas_line,perimeter,herb,present,0 - 5%,3,8.823529412,,,,,,,,,,,,,
-gas_line,perimeter,herb,medium,30 - 70%,10,29.41176471,,,,,,,,,,,,,
-gas_line,perimeter,herb,low,5 - 30%,10,29.41176471,,,,,,,,,,,,,
-gas_line,perimeter,inv_cov,absent,0%,28,82.35294118,,,,,,,,,,,,,
-gas_line,perimeter,inv_cov,present,0 - 5%,6,17.64705882,,,,,,,,,,,,,
-gas_line,perimeter,low_cov,high,> 70%,2,5.882352941,,,,,,,,,,,,,
-gas_line,perimeter,low_cov,present,0 - 5%,2,5.882352941,,,,,,,,,,,,,
-gas_line,perimeter,low_cov,medium,30 - 70%,22,64.70588235,,,,,,,,,,,,,
-gas_line,perimeter,low_cov,low,5 - 30%,8,23.52941176,,,,,,,,,,,,,
-gas_line,perimeter,mid_cov,absent,0%,1,2.941176471,,,,,,,,,,,,,
-gas_line,perimeter,mid_cov,present,0 - 5%,17,50,,,,,,,,,,,,,
-gas_line,perimeter,mid_cov,medium,30 - 70%,3,8.823529412,,,,,,,,,,,,,
-gas_line,perimeter,mid_cov,low,5 - 30%,13,38.23529412,,,,,,,,,,,,,
-gas_line,perimeter,slash,present,0 - 5%,21,61.76470588,,,,,,,,,,,,,
-gas_line,perimeter,slash,medium,30 - 70%,3,8.823529412,,,,,,,,,,,,,
-gas_line,perimeter,slash,low,5 - 30%,10,29.41176471,,,,,,,,,,,,,
-gas_line,perimeter,upper_cov,absent,0%,20,58.82352941,,,,,,,,,,,,,
-gas_line,perimeter,upper_cov,present,0 - 5%,11,32.35294118,,,,,,,,,,,,,
-gas_line,perimeter,upper_cov,low,5 - 30%,3,8.823529412,,,,,,,,,,,,,
-gas_line,perimeter,vine_cov,absent,0%,33,97.05882353,,,,,,,,,,,,,
-gas_line,perimeter,vine_cov,present,0 - 5%,1,2.941176471,,,,,,,,,,,,,
-red_pine,control,disturb,absent,0%,3,10.34482759,,,,,,,,,,,,,
-red_pine,control,disturb,present,0 - 5%,3,10.34482759,,,,,,,,,,,,,
-red_pine,control,disturb,medium,30 - 70%,15,51.72413793,,,,,,,,,,,,,
-red_pine,control,disturb,low,5 - 30%,8,27.5862069,,,,,,,,,,,,,
-red_pine,control,fern,absent,0%,7,24.13793103,,,,,,,,,,,,,
-red_pine,control,fern,present,0 - 5%,14,48.27586207,,,,,,,,,,,,,
-red_pine,control,fern,medium,30 - 70%,2,6.896551724,,,,,,,,,,,,,
-red_pine,control,fern,low,5 - 30%,6,20.68965517,,,,,,,,,,,,,
-red_pine,control,herb,high,> 70%,9,31.03448276,,,,,,,,,,,,,
-red_pine,control,herb,present,0 - 5%,2,6.896551724,,,,,,,,,,,,,
-red_pine,control,herb,medium,30 - 70%,10,34.48275862,,,,,,,,,,,,,
-red_pine,control,herb,low,5 - 30%,8,27.5862069,,,,,,,,,,,,,
-red_pine,control,inv_cov,absent,0%,22,75.86206897,,,,,,,,,,,,,
-red_pine,control,inv_cov,present,0 - 5%,7,24.13793103,,,,,,,,,,,,,
-red_pine,control,low_cov,present,0 - 5%,5,17.24137931,,,,,,,,,,,,,
-red_pine,control,low_cov,medium,30 - 70%,14,48.27586207,,,,,,,,,,,,,
-red_pine,control,low_cov,low,5 - 30%,10,34.48275862,,,,,,,,,,,,,
-red_pine,control,mid_cov,absent,0%,2,6.896551724,,,,,,,,,,,,,
-red_pine,control,mid_cov,present,0 - 5%,13,44.82758621,,,,,,,,,,,,,
-red_pine,control,mid_cov,medium,30 - 70%,6,20.68965517,,,,,,,,,,,,,
-red_pine,control,mid_cov,low,5 - 30%,8,27.5862069,,,,,,,,,,,,,
-red_pine,control,slash,absent,0%,2,6.896551724,,,,,,,,,,,,,
-red_pine,control,slash,present,0 - 5%,8,27.5862069,,,,,,,,,,,,,
-red_pine,control,slash,medium,30 - 70%,12,41.37931034,,,,,,,,,,,,,
-red_pine,control,slash,low,5 - 30%,7,24.13793103,,,,,,,,,,,,,
-red_pine,control,upper_cov,absent,0%,11,37.93103448,,,,,,,,,,,,,
-red_pine,control,upper_cov,present,0 - 5%,10,34.48275862,,,,,,,,,,,,,
-red_pine,control,upper_cov,medium,30 - 70%,4,13.79310345,,,,,,,,,,,,,
-red_pine,control,upper_cov,low,5 - 30%,4,13.79310345,,,,,,,,,,,,,
-red_pine,control,vine_cov,absent,0%,21,72.4137931,,,,,,,,,,,,,
-red_pine,control,vine_cov,present,0 - 5%,8,27.5862069,,,,,,,,,,,,,
-red_pine,interior,disturb,absent,0%,4,26.66666667,,,,,,,,,,,,,
-red_pine,interior,disturb,present,0 - 5%,7,46.66666667,,,,,,,,,,,,,
-red_pine,interior,disturb,medium,30 - 70%,1,6.666666667,,,,,,,,,,,,,
-red_pine,interior,disturb,low,5 - 30%,3,20,,,,,,,,,,,,,
-red_pine,interior,fern,absent,0%,10,66.66666667,,,,,,,,,,,,,
-red_pine,interior,fern,present,0 - 5%,4,26.66666667,,,,,,,,,,,,,
-red_pine,interior,fern,low,5 - 30%,1,6.666666667,,,,,,,,,,,,,
-red_pine,interior,herb,high,> 70%,7,46.66666667,,,,,,,,,,,,,
-red_pine,interior,herb,medium,30 - 70%,7,46.66666667,,,,,,,,,,,,,
-red_pine,interior,herb,low,5 - 30%,1,6.666666667,,,,,,,,,,,,,
-red_pine,interior,inv_cov,absent,0%,10,66.66666667,,,,,,,,,,,,,
-red_pine,interior,inv_cov,present,0 - 5%,4,26.66666667,,,,,,,,,,,,,
-red_pine,interior,inv_cov,low,5 - 30%,1,6.666666667,,,,,,,,,,,,,
-red_pine,interior,low_cov,medium,30 - 70%,9,60,,,,,,,,,,,,,
-red_pine,interior,low_cov,low,5 - 30%,6,40,,,,,,,,,,,,,
-red_pine,interior,mid_cov,high,> 70%,2,13.33333333,,,,,,,,,,,,,
-red_pine,interior,mid_cov,present,0 - 5%,7,46.66666667,,,,,,,,,,,,,
-red_pine,interior,mid_cov,medium,30 - 70%,2,13.33333333,,,,,,,,,,,,,
-red_pine,interior,mid_cov,low,5 - 30%,4,26.66666667,,,,,,,,,,,,,
-red_pine,interior,slash,high,> 70%,3,20,,,,,,,,,,,,,
-red_pine,interior,slash,present,0 - 5%,1,6.666666667,,,,,,,,,,,,,
-red_pine,interior,slash,medium,30 - 70%,7,46.66666667,,,,,,,,,,,,,
-red_pine,interior,slash,low,5 - 30%,4,26.66666667,,,,,,,,,,,,,
-red_pine,interior,upper_cov,absent,0%,7,46.66666667,,,,,,,,,,,,,
-red_pine,interior,upper_cov,present,0 - 5%,5,33.33333333,,,,,,,,,,,,,
-red_pine,interior,upper_cov,medium,30 - 70%,2,13.33333333,,,,,,,,,,,,,
-red_pine,interior,upper_cov,low,5 - 30%,1,6.666666667,,,,,,,,,,,,,
-red_pine,interior,vine_cov,absent,0%,9,60,,,,,,,,,,,,,
-red_pine,interior,vine_cov,present,0 - 5%,6,40,,,,,,,,,,,,,
-red_pine,perimeter,disturb,absent,0%,5,38.46153846,,,,,,,,,,,,,
-red_pine,perimeter,disturb,present,0 - 5%,3,23.07692308,,,,,,,,,,,,,
-red_pine,perimeter,disturb,medium,30 - 70%,4,30.76923077,,,,,,,,,,,,,
-red_pine,perimeter,disturb,low,5 - 30%,1,7.692307692,,,,,,,,,,,,,
-red_pine,perimeter,fern,absent,0%,13,100,,,,,,,,,,,,,
-red_pine,perimeter,herb,high,> 70%,5,38.46153846,,,,,,,,,,,,,
-red_pine,perimeter,herb,medium,30 - 70%,4,30.76923077,,,,,,,,,,,,,
-red_pine,perimeter,herb,low,5 - 30%,4,30.76923077,,,,,,,,,,,,,
-red_pine,perimeter,inv_cov,absent,0%,9,69.23076923,,,,,,,,,,,,,
-red_pine,perimeter,inv_cov,present,0 - 5%,3,23.07692308,,,,,,,,,,,,,
-red_pine,perimeter,inv_cov,low,5 - 30%,1,7.692307692,,,,,,,,,,,,,
-red_pine,perimeter,low_cov,high,> 70%,1,7.692307692,,,,,,,,,,,,,
-red_pine,perimeter,low_cov,medium,30 - 70%,9,69.23076923,,,,,,,,,,,,,
-red_pine,perimeter,low_cov,low,5 - 30%,3,23.07692308,,,,,,,,,,,,,
-red_pine,perimeter,mid_cov,high,> 70%,2,15.38461538,,,,,,,,,,,,,
-red_pine,perimeter,mid_cov,present,0 - 5%,3,23.07692308,,,,,,,,,,,,,
-red_pine,perimeter,mid_cov,medium,30 - 70%,3,23.07692308,,,,,,,,,,,,,
-red_pine,perimeter,mid_cov,low,5 - 30%,5,38.46153846,,,,,,,,,,,,,
-red_pine,perimeter,slash,present,0 - 5%,1,7.692307692,,,,,,,,,,,,,
-red_pine,perimeter,slash,medium,30 - 70%,3,23.07692308,,,,,,,,,,,,,
-red_pine,perimeter,slash,low,5 - 30%,9,69.23076923,,,,,,,,,,,,,
-red_pine,perimeter,upper_cov,absent,0%,6,46.15384615,,,,,,,,,,,,,
-red_pine,perimeter,upper_cov,present,0 - 5%,5,38.46153846,,,,,,,,,,,,,
-red_pine,perimeter,upper_cov,low,5 - 30%,2,15.38461538,,,,,,,,,,,,,
-red_pine,perimeter,vine_cov,absent,0%,10,76.92307692,,,,,,,,,,,,,
-red_pine,perimeter,vine_cov,present,0 - 5%,3,23.07692308,,,,,,,,,,,,,
-sta_rd,control,disturb,absent,0%,12,35.29411765,,,,,,,,,,,,,
-sta_rd,control,disturb,present,0 - 5%,14,41.17647059,,,,,,,,,,,,,
-sta_rd,control,disturb,medium,30 - 70%,4,11.76470588,,,,,,,,,,,,,
-sta_rd,control,disturb,low,5 - 30%,4,11.76470588,,,,,,,,,,,,,
-sta_rd,control,fern,absent,0%,1,2.941176471,,,,,,,,,,,,,
-sta_rd,control,fern,high,> 70%,1,2.941176471,,,,,,,,,,,,,
-sta_rd,control,fern,present,0 - 5%,13,38.23529412,,,,,,,,,,,,,
-sta_rd,control,fern,medium,30 - 70%,7,20.58823529,,,,,,,,,,,,,
-sta_rd,control,fern,low,5 - 30%,12,35.29411765,,,,,,,,,,,,,
-sta_rd,control,herb,high,> 70%,4,11.76470588,,,,,,,,,,,,,
-sta_rd,control,herb,present,0 - 5%,2,5.882352941,,,,,,,,,,,,,
-sta_rd,control,herb,medium,30 - 70%,13,38.23529412,,,,,,,,,,,,,
-sta_rd,control,herb,low,5 - 30%,15,44.11764706,,,,,,,,,,,,,
-sta_rd,control,inv_cov,absent,0%,23,67.64705882,,,,,,,,,,,,,
-sta_rd,control,inv_cov,present,0 - 5%,10,29.41176471,,,,,,,,,,,,,
-sta_rd,control,inv_cov,low,5 - 30%,1,2.941176471,,,,,,,,,,,,,
-sta_rd,control,low_cov,high,> 70%,18,52.94117647,,,,,,,,,,,,,
-sta_rd,control,low_cov,present,0 - 5%,2,5.882352941,,,,,,,,,,,,,
-sta_rd,control,low_cov,medium,30 - 70%,10,29.41176471,,,,,,,,,,,,,
-sta_rd,control,low_cov,low,5 - 30%,4,11.76470588,,,,,,,,,,,,,
-sta_rd,control,mid_cov,absent,0%,8,23.52941176,,,,,,,,,,,,,
-sta_rd,control,mid_cov,present,0 - 5%,15,44.11764706,,,,,,,,,,,,,
-sta_rd,control,mid_cov,medium,30 - 70%,3,8.823529412,,,,,,,,,,,,,
-sta_rd,control,mid_cov,low,5 - 30%,8,23.52941176,,,,,,,,,,,,,
-sta_rd,control,slash,absent,0%,2,5.882352941,,,,,,,,,,,,,
-sta_rd,control,slash,high,> 70%,3,8.823529412,,,,,,,,,,,,,
-sta_rd,control,slash,present,0 - 5%,7,20.58823529,,,,,,,,,,,,,
-sta_rd,control,slash,medium,30 - 70%,13,38.23529412,,,,,,,,,,,,,
-sta_rd,control,slash,low,5 - 30%,9,26.47058824,,,,,,,,,,,,,
-sta_rd,control,upper_cov,absent,0%,3,8.823529412,,,,,,,,,,,,,
-sta_rd,control,upper_cov,high,> 70%,6,17.64705882,,,,,,,,,,,,,
-sta_rd,control,upper_cov,present,0 - 5%,7,20.58823529,,,,,,,,,,,,,
-sta_rd,control,upper_cov,medium,30 - 70%,10,29.41176471,,,,,,,,,,,,,
-sta_rd,control,upper_cov,low,5 - 30%,8,23.52941176,,,,,,,,,,,,,
-sta_rd,control,vine_cov,absent,0%,31,91.17647059,,,,,,,,,,,,,
-sta_rd,control,vine_cov,present,0 - 5%,3,8.823529412,,,,,,,,,,,,,
-sta_rd,interior,disturb,absent,0%,8,22.85714286,,,,,,,,,,,,,
-sta_rd,interior,disturb,present,0 - 5%,15,42.85714286,,,,,,,,,,,,,
-sta_rd,interior,disturb,medium,30 - 70%,5,14.28571429,,,,,,,,,,,,,
-sta_rd,interior,disturb,low,5 - 30%,7,20,,,,,,,,,,,,,
-sta_rd,interior,fern,absent,0%,8,22.85714286,,,,,,,,,,,,,
-sta_rd,interior,fern,high,> 70%,1,2.857142857,,,,,,,,,,,,,
-sta_rd,interior,fern,present,0 - 5%,16,45.71428571,,,,,,,,,,,,,
-sta_rd,interior,fern,medium,30 - 70%,6,17.14285714,,,,,,,,,,,,,
-sta_rd,interior,fern,low,5 - 30%,4,11.42857143,,,,,,,,,,,,,
-sta_rd,interior,herb,absent,0%,1,2.857142857,,,,,,,,,,,,,
-sta_rd,interior,herb,high,> 70%,2,5.714285714,,,,,,,,,,,,,
-sta_rd,interior,herb,present,0 - 5%,18,51.42857143,,,,,,,,,,,,,
-sta_rd,interior,herb,medium,30 - 70%,5,14.28571429,,,,,,,,,,,,,
-sta_rd,interior,herb,low,5 - 30%,9,25.71428571,,,,,,,,,,,,,
-sta_rd,interior,inv_cov,absent,0%,29,82.85714286,,,,,,,,,,,,,
-sta_rd,interior,inv_cov,present,0 - 5%,5,14.28571429,,,,,,,,,,,,,
-sta_rd,interior,inv_cov,low,5 - 30%,1,2.857142857,,,,,,,,,,,,,
-sta_rd,interior,low_cov,high,> 70%,20,57.14285714,,,,,,,,,,,,,
-sta_rd,interior,low_cov,medium,30 - 70%,13,37.14285714,,,,,,,,,,,,,
-sta_rd,interior,low_cov,low,5 - 30%,2,5.714285714,,,,,,,,,,,,,
-sta_rd,interior,mid_cov,high,> 70%,5,14.28571429,,,,,,,,,,,,,
-sta_rd,interior,mid_cov,present,0 - 5%,14,40,,,,,,,,,,,,,
-sta_rd,interior,mid_cov,medium,30 - 70%,11,31.42857143,,,,,,,,,,,,,
-sta_rd,interior,mid_cov,low,5 - 30%,5,14.28571429,,,,,,,,,,,,,
-sta_rd,interior,slash,high,> 70%,4,11.42857143,,,,,,,,,,,,,
-sta_rd,interior,slash,present,0 - 5%,5,14.28571429,,,,,,,,,,,,,
-sta_rd,interior,slash,medium,30 - 70%,19,54.28571429,,,,,,,,,,,,,
-sta_rd,interior,slash,low,5 - 30%,7,20,,,,,,,,,,,,,
-sta_rd,interior,upper_cov,absent,0%,3,8.571428571,,,,,,,,,,,,,
-sta_rd,interior,upper_cov,high,> 70%,4,11.42857143,,,,,,,,,,,,,
-sta_rd,interior,upper_cov,present,0 - 5%,6,17.14285714,,,,,,,,,,,,,
-sta_rd,interior,upper_cov,medium,30 - 70%,12,34.28571429,,,,,,,,,,,,,
-sta_rd,interior,upper_cov,low,5 - 30%,10,28.57142857,,,,,,,,,,,,,
-sta_rd,interior,vine_cov,absent,0%,23,65.71428571,,,,,,,,,,,,,
-sta_rd,interior,vine_cov,present,0 - 5%,10,28.57142857,,,,,,,,,,,,,
-sta_rd,interior,vine_cov,low,5 - 30%,2,5.714285714,,,,,,,,,,,,,
-sta_rd,perimeter,disturb,absent,0%,8,30.76923077,,,,,,,,,,,,,
-sta_rd,perimeter,disturb,present,0 - 5%,8,30.76923077,,,,,,,,,,,,,
-sta_rd,perimeter,disturb,medium,30 - 70%,6,23.07692308,,,,,,,,,,,,,
-sta_rd,perimeter,disturb,low,5 - 30%,4,15.38461538,,,,,,,,,,,,,
-sta_rd,perimeter,fern,absent,0%,2,7.692307692,,,,,,,,,,,,,
-sta_rd,perimeter,fern,present,0 - 5%,15,57.69230769,,,,,,,,,,,,,
-sta_rd,perimeter,fern,medium,30 - 70%,2,7.692307692,,,,,,,,,,,,,
-sta_rd,perimeter,fern,low,5 - 30%,7,26.92307692,,,,,,,,,,,,,
-sta_rd,perimeter,herb,high,> 70%,4,15.38461538,,,,,,,,,,,,,
-sta_rd,perimeter,herb,present,0 - 5%,5,19.23076923,,,,,,,,,,,,,
-sta_rd,perimeter,herb,medium,30 - 70%,10,38.46153846,,,,,,,,,,,,,
-sta_rd,perimeter,herb,low,5 - 30%,7,26.92307692,,,,,,,,,,,,,
-sta_rd,perimeter,inv_cov,absent,0%,23,88.46153846,,,,,,,,,,,,,
-sta_rd,perimeter,inv_cov,present,0 - 5%,3,11.53846154,,,,,,,,,,,,,
-sta_rd,perimeter,low_cov,high,> 70%,17,65.38461538,,,,,,,,,,,,,
-sta_rd,perimeter,low_cov,present,0 - 5%,1,3.846153846,,,,,,,,,,,,,
-sta_rd,perimeter,low_cov,medium,30 - 70%,7,26.92307692,,,,,,,,,,,,,
-sta_rd,perimeter,low_cov,low,5 - 30%,1,3.846153846,,,,,,,,,,,,,
-sta_rd,perimeter,mid_cov,absent,0%,1,3.846153846,,,,,,,,,,,,,
-sta_rd,perimeter,mid_cov,high,> 70%,2,7.692307692,,,,,,,,,,,,,
-sta_rd,perimeter,mid_cov,present,0 - 5%,7,26.92307692,,,,,,,,,,,,,
-sta_rd,perimeter,mid_cov,medium,30 - 70%,10,38.46153846,,,,,,,,,,,,,
-sta_rd,perimeter,mid_cov,low,5 - 30%,6,23.07692308,,,,,,,,,,,,,
-sta_rd,perimeter,slash,present,0 - 5%,7,26.92307692,,,,,,,,,,,,,
-sta_rd,perimeter,slash,medium,30 - 70%,6,23.07692308,,,,,,,,,,,,,
-sta_rd,perimeter,slash,low,5 - 30%,13,50,,,,,,,,,,,,,
-sta_rd,perimeter,upper_cov,absent,0%,2,7.692307692,,,,,,,,,,,,,
-sta_rd,perimeter,upper_cov,present,0 - 5%,10,38.46153846,,,,,,,,,,,,,
-sta_rd,perimeter,upper_cov,medium,30 - 70%,9,34.61538462,,,,,,,,,,,,,
-sta_rd,perimeter,upper_cov,low,5 - 30%,5,19.23076923,,,,,,,,,,,,,
-sta_rd,perimeter,vine_cov,absent,0%,17,65.38461538,,,,,,,,,,,,,
-sta_rd,perimeter,vine_cov,present,0 - 5%,8,30.76923077,,,,,,,,,,,,,
-sta_rd,perimeter,vine_cov,medium,30 - 70%,1,3.846153846,,,,,,,,,,,,,
+harvest,location,plot_attrib,attrib_val,n,freq
+sta_rd,control,disturb,a,12,35.294117647058826
+sta_rd,control,disturb,l,4,11.76470588235294
+sta_rd,control,disturb,m,4,11.76470588235294
+sta_rd,control,disturb,p,14,41.17647058823529
+sta_rd,interior,disturb,a,8,22.857142857142858
+sta_rd,interior,disturb,l,7,20
+sta_rd,interior,disturb,m,5,14.285714285714285
+sta_rd,interior,disturb,p,15,42.857142857142854
+sta_rd,perimeter,disturb,a,8,30.76923076923077
+sta_rd,perimeter,disturb,l,4,15.384615384615385
+sta_rd,perimeter,disturb,m,6,23.076923076923077
+sta_rd,perimeter,disturb,p,8,30.76923076923077
+sta_rd,control,fern,a,1,2.941176470588235
+sta_rd,control,fern,h,1,2.941176470588235
+sta_rd,control,fern,l,12,35.294117647058826
+sta_rd,control,fern,m,7,20.588235294117645
+sta_rd,control,fern,p,13,38.23529411764706
+sta_rd,interior,fern,a,8,22.857142857142858
+sta_rd,interior,fern,h,1,2.857142857142857
+sta_rd,interior,fern,l,4,11.428571428571429
+sta_rd,interior,fern,m,6,17.142857142857142
+sta_rd,interior,fern,p,16,45.714285714285715
+sta_rd,perimeter,fern,a,2,7.6923076923076925
+sta_rd,perimeter,fern,l,7,26.923076923076923
+sta_rd,perimeter,fern,m,2,7.6923076923076925
+sta_rd,perimeter,fern,p,15,57.692307692307686
+sta_rd,control,herb,h,4,11.76470588235294
+sta_rd,control,herb,l,15,44.11764705882353
+sta_rd,control,herb,m,13,38.23529411764706
+sta_rd,control,herb,p,2,5.88235294117647
+sta_rd,interior,herb,a,1,2.857142857142857
+sta_rd,interior,herb,h,2,5.714285714285714
+sta_rd,interior,herb,l,9,25.71428571428571
+sta_rd,interior,herb,m,5,14.285714285714285
+sta_rd,interior,herb,p,18,51.42857142857142
+sta_rd,perimeter,herb,h,4,15.384615384615385
+sta_rd,perimeter,herb,l,7,26.923076923076923
+sta_rd,perimeter,herb,m,10,38.46153846153847
+sta_rd,perimeter,herb,p,5,19.230769230769234
+sta_rd,control,inv_cov,a,23,67.64705882352942
+sta_rd,control,inv_cov,l,1,2.941176470588235
+sta_rd,control,inv_cov,p,10,29.411764705882355
+sta_rd,interior,inv_cov,a,29,82.85714285714286
+sta_rd,interior,inv_cov,l,1,2.857142857142857
+sta_rd,interior,inv_cov,p,5,14.285714285714285
+sta_rd,perimeter,inv_cov,a,23,88.46153846153845
+sta_rd,perimeter,inv_cov,p,3,11.538461538461538
+sta_rd,control,low_cov,h,18,52.94117647058824
+sta_rd,control,low_cov,l,4,11.76470588235294
+sta_rd,control,low_cov,m,10,29.411764705882355
+sta_rd,control,low_cov,p,2,5.88235294117647
+sta_rd,interior,low_cov,h,20,57.14285714285714
+sta_rd,interior,low_cov,l,2,5.714285714285714
+sta_rd,interior,low_cov,m,13,37.142857142857146
+sta_rd,perimeter,low_cov,h,17,65.38461538461539
+sta_rd,perimeter,low_cov,l,1,3.8461538461538463
+sta_rd,perimeter,low_cov,m,7,26.923076923076923
+sta_rd,perimeter,low_cov,p,1,3.8461538461538463
+sta_rd,control,mid_cov,a,8,23.52941176470588
+sta_rd,control,mid_cov,l,8,23.52941176470588
+sta_rd,control,mid_cov,m,3,8.823529411764707
+sta_rd,control,mid_cov,p,15,44.11764705882353
+sta_rd,interior,mid_cov,h,5,14.285714285714285
+sta_rd,interior,mid_cov,l,5,14.285714285714285
+sta_rd,interior,mid_cov,m,11,31.428571428571427
+sta_rd,interior,mid_cov,p,14,40
+sta_rd,perimeter,mid_cov,a,1,3.8461538461538463
+sta_rd,perimeter,mid_cov,h,2,7.6923076923076925
+sta_rd,perimeter,mid_cov,l,6,23.076923076923077
+sta_rd,perimeter,mid_cov,m,10,38.46153846153847
+sta_rd,perimeter,mid_cov,p,7,26.923076923076923
+sta_rd,control,slash,a,2,5.88235294117647
+sta_rd,control,slash,h,3,8.823529411764707
+sta_rd,control,slash,l,9,26.47058823529412
+sta_rd,control,slash,m,13,38.23529411764706
+sta_rd,control,slash,p,7,20.588235294117645
+sta_rd,interior,slash,h,4,11.428571428571429
+sta_rd,interior,slash,l,7,20
+sta_rd,interior,slash,m,19,54.285714285714285
+sta_rd,interior,slash,p,5,14.285714285714285
+sta_rd,perimeter,slash,l,13,50
+sta_rd,perimeter,slash,m,6,23.076923076923077
+sta_rd,perimeter,slash,p,7,26.923076923076923
+sta_rd,control,upper_cov,a,3,8.823529411764707
+sta_rd,control,upper_cov,h,6,17.647058823529413
+sta_rd,control,upper_cov,l,8,23.52941176470588
+sta_rd,control,upper_cov,m,10,29.411764705882355
+sta_rd,control,upper_cov,p,7,20.588235294117645
+sta_rd,interior,upper_cov,a,3,8.571428571428571
+sta_rd,interior,upper_cov,h,4,11.428571428571429
+sta_rd,interior,upper_cov,l,10,28.57142857142857
+sta_rd,interior,upper_cov,m,12,34.285714285714285
+sta_rd,interior,upper_cov,p,6,17.142857142857142
+sta_rd,perimeter,upper_cov,a,2,7.6923076923076925
+sta_rd,perimeter,upper_cov,l,5,19.230769230769234
+sta_rd,perimeter,upper_cov,m,9,34.61538461538461
+sta_rd,perimeter,upper_cov,p,10,38.46153846153847
+sta_rd,control,vine_cov,a,31,91.17647058823529
+sta_rd,control,vine_cov,p,3,8.823529411764707
+sta_rd,interior,vine_cov,a,23,65.71428571428571
+sta_rd,interior,vine_cov,l,2,5.714285714285714
+sta_rd,interior,vine_cov,p,10,28.57142857142857
+sta_rd,perimeter,vine_cov,a,17,65.38461538461539
+sta_rd,perimeter,vine_cov,m,1,3.8461538461538463
+sta_rd,perimeter,vine_cov,p,8,30.76923076923077
+gas_line,control,disturb,a,6,35.294117647058826
+gas_line,control,disturb,l,8,47.05882352941176
+gas_line,control,disturb,p,3,17.647058823529413
+gas_line,interior,disturb,a,3,7.142857142857142
+gas_line,interior,disturb,h,1,2.380952380952381
+gas_line,interior,disturb,l,15,35.714285714285715
+gas_line,interior,disturb,m,16,38.095238095238095
+gas_line,interior,disturb,p,7,16.666666666666664
+gas_line,perimeter,disturb,a,1,2.941176470588235
+gas_line,perimeter,disturb,h,4,11.76470588235294
+gas_line,perimeter,disturb,l,7,20.588235294117645
+gas_line,perimeter,disturb,m,10,29.411764705882355
+gas_line,perimeter,disturb,p,12,35.294117647058826
+gas_line,control,fern,a,1,5.88235294117647
+gas_line,control,fern,l,3,17.647058823529413
+gas_line,control,fern,m,1,5.88235294117647
+gas_line,control,fern,p,12,70.58823529411765
+gas_line,interior,fern,a,8,19.047619047619047
+gas_line,interior,fern,l,10,23.809523809523807
+gas_line,interior,fern,m,9,21.428571428571427
+gas_line,interior,fern,p,15,35.714285714285715
+gas_line,perimeter,fern,a,10,29.411764705882355
+gas_line,perimeter,fern,l,7,20.588235294117645
+gas_line,perimeter,fern,m,2,5.88235294117647
+gas_line,perimeter,fern,not,8,23.52941176470588
+gas_line,perimeter,fern,p,7,20.588235294117645
+gas_line,control,herb,h,2,11.76470588235294
+gas_line,control,herb,l,4,23.52941176470588
+gas_line,control,herb,m,9,52.94117647058824
+gas_line,control,herb,p,2,11.76470588235294
+gas_line,interior,herb,h,7,16.666666666666664
+gas_line,interior,herb,l,19,45.23809523809524
+gas_line,interior,herb,m,16,38.095238095238095
+gas_line,perimeter,herb,h,11,32.35294117647059
+gas_line,perimeter,herb,l,10,29.411764705882355
+gas_line,perimeter,herb,m,10,29.411764705882355
+gas_line,perimeter,herb,p,3,8.823529411764707
+gas_line,control,inv_cov,a,17,100
+gas_line,interior,inv_cov,a,41,97.61904761904762
+gas_line,interior,inv_cov,p,1,2.380952380952381
+gas_line,perimeter,inv_cov,a,28,82.35294117647058
+gas_line,perimeter,inv_cov,p,6,17.647058823529413
+gas_line,control,low_cov,h,1,5.88235294117647
+gas_line,control,low_cov,l,4,23.52941176470588
+gas_line,control,low_cov,m,12,70.58823529411765
+gas_line,interior,low_cov,h,14,33.33333333333333
+gas_line,interior,low_cov,l,7,16.666666666666664
+gas_line,interior,low_cov,m,19,45.23809523809524
+gas_line,interior,low_cov,p,2,4.761904761904762
+gas_line,perimeter,low_cov,h,2,5.88235294117647
+gas_line,perimeter,low_cov,l,8,23.52941176470588
+gas_line,perimeter,low_cov,m,22,64.70588235294117
+gas_line,perimeter,low_cov,p,2,5.88235294117647
+gas_line,control,mid_cov,l,8,47.05882352941176
+gas_line,control,mid_cov,m,2,11.76470588235294
+gas_line,control,mid_cov,p,7,41.17647058823529
+gas_line,interior,mid_cov,a,5,11.904761904761903
+gas_line,interior,mid_cov,l,12,28.57142857142857
+gas_line,interior,mid_cov,m,1,2.380952380952381
+gas_line,interior,mid_cov,p,24,57.14285714285714
+gas_line,perimeter,mid_cov,a,1,2.941176470588235
+gas_line,perimeter,mid_cov,l,13,38.23529411764706
+gas_line,perimeter,mid_cov,m,3,8.823529411764707
+gas_line,perimeter,mid_cov,p,17,50
+gas_line,control,slash,h,2,11.76470588235294
+gas_line,control,slash,l,6,35.294117647058826
+gas_line,control,slash,m,9,52.94117647058824
+gas_line,interior,slash,h,2,4.761904761904762
+gas_line,interior,slash,l,20,47.61904761904761
+gas_line,interior,slash,m,16,38.095238095238095
+gas_line,interior,slash,p,4,9.523809523809524
+gas_line,perimeter,slash,l,10,29.411764705882355
+gas_line,perimeter,slash,m,3,8.823529411764707
+gas_line,perimeter,slash,p,21,61.76470588235294
+gas_line,control,upper_cov,h,2,11.76470588235294
+gas_line,control,upper_cov,l,6,35.294117647058826
+gas_line,control,upper_cov,m,6,35.294117647058826
+gas_line,control,upper_cov,p,3,17.647058823529413
+gas_line,interior,upper_cov,a,27,64.28571428571429
+gas_line,interior,upper_cov,l,2,4.761904761904762
+gas_line,interior,upper_cov,p,13,30.952380952380953
+gas_line,perimeter,upper_cov,a,20,58.82352941176471
+gas_line,perimeter,upper_cov,l,3,8.823529411764707
+gas_line,perimeter,upper_cov,p,11,32.35294117647059
+gas_line,control,vine_cov,a,13,76.47058823529412
+gas_line,control,vine_cov,not,1,5.88235294117647
+gas_line,control,vine_cov,p,3,17.647058823529413
+gas_line,interior,vine_cov,a,25,59.523809523809526
+gas_line,interior,vine_cov,l,5,11.904761904761903
+gas_line,interior,vine_cov,m,6,14.285714285714285
+gas_line,interior,vine_cov,not,2,4.761904761904762
+gas_line,interior,vine_cov,p,4,9.523809523809524
+gas_line,perimeter,vine_cov,a,33,97.05882352941177
+gas_line,perimeter,vine_cov,p,1,2.941176470588235
+red_pine,control,disturb,a,3,10.344827586206897
+red_pine,control,disturb,l,8,27.586206896551722
+red_pine,control,disturb,m,15,51.724137931034484
+red_pine,control,disturb,p,3,10.344827586206897
+red_pine,interior,disturb,a,4,26.666666666666668
+red_pine,interior,disturb,l,3,20
+red_pine,interior,disturb,m,1,6.666666666666667
+red_pine,interior,disturb,p,7,46.666666666666664
+red_pine,perimeter,disturb,a,5,38.46153846153847
+red_pine,perimeter,disturb,l,1,7.6923076923076925
+red_pine,perimeter,disturb,m,4,30.76923076923077
+red_pine,perimeter,disturb,p,3,23.076923076923077
+red_pine,control,fern,a,7,24.137931034482758
+red_pine,control,fern,l,6,20.689655172413794
+red_pine,control,fern,m,2,6.896551724137931
+red_pine,control,fern,p,14,48.275862068965516
+red_pine,interior,fern,a,10,66.66666666666666
+red_pine,interior,fern,l,1,6.666666666666667
+red_pine,interior,fern,p,4,26.666666666666668
+red_pine,perimeter,fern,a,13,100
+red_pine,control,herb,h,9,31.03448275862069
+red_pine,control,herb,l,8,27.586206896551722
+red_pine,control,herb,m,10,34.48275862068966
+red_pine,control,herb,p,2,6.896551724137931
+red_pine,interior,herb,h,7,46.666666666666664
+red_pine,interior,herb,l,1,6.666666666666667
+red_pine,interior,herb,m,7,46.666666666666664
+red_pine,perimeter,herb,h,5,38.46153846153847
+red_pine,perimeter,herb,l,4,30.76923076923077
+red_pine,perimeter,herb,m,4,30.76923076923077
+red_pine,control,inv_cov,a,22,75.86206896551724
+red_pine,control,inv_cov,p,7,24.137931034482758
+red_pine,interior,inv_cov,a,10,66.66666666666666
+red_pine,interior,inv_cov,l,1,6.666666666666667
+red_pine,interior,inv_cov,p,4,26.666666666666668
+red_pine,perimeter,inv_cov,a,9,69.23076923076923
+red_pine,perimeter,inv_cov,l,1,7.6923076923076925
+red_pine,perimeter,inv_cov,p,3,23.076923076923077
+red_pine,control,low_cov,l,10,34.48275862068966
+red_pine,control,low_cov,m,14,48.275862068965516
+red_pine,control,low_cov,p,5,17.24137931034483
+red_pine,interior,low_cov,l,6,40
+red_pine,interior,low_cov,m,9,60
+red_pine,perimeter,low_cov,h,1,7.6923076923076925
+red_pine,perimeter,low_cov,l,3,23.076923076923077
+red_pine,perimeter,low_cov,m,9,69.23076923076923
+red_pine,control,mid_cov,a,2,6.896551724137931
+red_pine,control,mid_cov,l,8,27.586206896551722
+red_pine,control,mid_cov,m,6,20.689655172413794
+red_pine,control,mid_cov,p,13,44.827586206896555
+red_pine,interior,mid_cov,h,2,13.333333333333334
+red_pine,interior,mid_cov,l,4,26.666666666666668
+red_pine,interior,mid_cov,m,2,13.333333333333334
+red_pine,interior,mid_cov,p,7,46.666666666666664
+red_pine,perimeter,mid_cov,h,2,15.384615384615385
+red_pine,perimeter,mid_cov,l,5,38.46153846153847
+red_pine,perimeter,mid_cov,m,3,23.076923076923077
+red_pine,perimeter,mid_cov,p,3,23.076923076923077
+red_pine,control,slash,a,2,6.896551724137931
+red_pine,control,slash,l,7,24.137931034482758
+red_pine,control,slash,m,12,41.37931034482759
+red_pine,control,slash,p,8,27.586206896551722
+red_pine,interior,slash,h,3,20
+red_pine,interior,slash,l,4,26.666666666666668
+red_pine,interior,slash,m,7,46.666666666666664
+red_pine,interior,slash,p,1,6.666666666666667
+red_pine,perimeter,slash,l,9,69.23076923076923
+red_pine,perimeter,slash,m,3,23.076923076923077
+red_pine,perimeter,slash,p,1,7.6923076923076925
+red_pine,control,upper_cov,a,11,37.93103448275862
+red_pine,control,upper_cov,l,4,13.793103448275861
+red_pine,control,upper_cov,m,4,13.793103448275861
+red_pine,control,upper_cov,p,10,34.48275862068966
+red_pine,interior,upper_cov,a,7,46.666666666666664
+red_pine,interior,upper_cov,l,1,6.666666666666667
+red_pine,interior,upper_cov,m,2,13.333333333333334
+red_pine,interior,upper_cov,p,5,33.33333333333333
+red_pine,perimeter,upper_cov,a,6,46.15384615384615
+red_pine,perimeter,upper_cov,l,2,15.384615384615385
+red_pine,perimeter,upper_cov,p,5,38.46153846153847
+red_pine,control,vine_cov,a,21,72.41379310344827
+red_pine,control,vine_cov,p,8,27.586206896551722
+red_pine,interior,vine_cov,a,9,60
+red_pine,interior,vine_cov,p,6,40
+red_pine,perimeter,vine_cov,a,10,76.92307692307693
+red_pine,perimeter,vine_cov,p,3,23.076923076923077
