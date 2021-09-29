@@ -225,8 +225,8 @@ interfere_stocking <- stem_counts %>%
     interfere_per_acre = sum(stems.per.acre)
   ) %>% 
   filter(interfere_per_acre > 2309) %>% 
-  mutate(woody_stock = "inft_stkd") %>% 
-  mutate_at(vars(woody_stock), list (factor))
+  mutate(woody_stock = "inft_stkd")  #creates variable "woody_stock" and assigns a value
+  # %>% mutate_at(vars(woody_stock), list (factor))
 
 
 
@@ -235,11 +235,8 @@ fern_stocking <- plot_data %>%
  # filter(fern %in% c("m", "h")) %>% 
   filter(fern %in% c("m")| fern %in% c("h")) %>% # includes fern medium and high levels
   group_by(harvest, location, point) %>% 
-  mutate(fern_stock = "intf_stkd"
-          ) %>% 
-  mutate_at(vars(fern_stock),
-            list(factor)
-  )
+  mutate(fern_stock = "intf_stkd" ) 
+  # %>%   mutate_at(vars(fern_stock),list(factor))
 
 
 all_interference <- 
@@ -247,7 +244,7 @@ all_interference <-
   mutate(
       all_intf = "all_intf"
   ) %>% 
-  mutate_at(vars(all_intf), list(factor)) %>% 
+  #mutate_at(vars(all_intf), list(factor)) %>% 
   arrange(harvest, location, point) %>% 
   select(c(harvest, location, point, interfere_per_acre, woody_stock, fern_stock, all_intf))
 
@@ -260,7 +257,8 @@ all_interference <-
 #
 #join the plots
 #
-
+# plot_data is untidy df of plot-scale variables.
+# Left_join seems to only work on two df at a time
 
 plot.data_01 <- 
   left_join(plot_data, silvah01,     by = c("harvest", "location", "point"))
@@ -327,6 +325,11 @@ plot.data_full <- full_join(plot.data_partial, plot_data,
 write_csv(plot.data_full, "untidy_plot_2019_stocking.csv")
 ```
 
+```{r, visual data to test calculations}
+
+vis01 <- read_csv("untidy_plot_2019_stocking.csv")
+hist(vis01$silvah01_per_acre)
+```
 
 
 
