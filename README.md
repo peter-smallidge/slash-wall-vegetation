@@ -1,8 +1,35 @@
 # slash-wall-vegetation
 # 
 # 
-Analysis of 2019 Vegetation Data from the slash wall project. Back up copies of the excel files are located in the project C:\Users\pjs23\Documents\Projects\Slash Wall Research Data\Research Data\regen data
+Analysis of  Vegetation Data from the slash wall project. Back up copies of the excel files are located in the project C:\Users\pjs23\Documents\Projects\Slash Wall Research Data\Research Data\regen data
+1. df "summary_regen_veg_data.Rmd" reads data through the output of June 2023.  Likely through the 2022 growing season.
+2. df "slash_veg_complete.Rmd" reads datafile file_path_2023_veg <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\complete_full_2023(readme).xlsx".
+    this, I believe include vegetation data through the 2023 growing season.  The data file here in #2 likely supersedes the df in #1
+3. DF slash_veg_complete makes the data complete such that all species are included in every wall even when missing.
+4. Read the code for slash_veg_complete to confirm if the spp are complete for the wall or the harvest area.
+5. DF = "slash_wall_analyses_2025" is the analysis of the complete vegetation data.
+6. DF = "plot_data_analysis_2025" is the file that analyzes the plot data.  It includes data from DF "plot_summary_all_years.Rmd"
+7.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(OLD README.md content)
 first file to run
 ~/R/slash-wall-vegetation/regen_and_plot_input_cleaning.Rmd
     this file outputs the following
