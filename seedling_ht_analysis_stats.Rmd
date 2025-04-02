@@ -1,0 +1,316 @@
+---
+title: "seedling_ht_analysis_stats.Rmd"
+author: "Peter Smallidge"
+date: "9 february 2023"
+output: html_document
+---
+
+```{r setup, include=FALSE, show_col_types=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Initialize libraries
+```{r message=FALSE, include=FALSE}
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readr)
+library(readxl)
+
+dir.create("figures_seedling_heights")
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+
+```
+<!-- 
+DATA ORIGINS
+"tidy_seedling_heights_2017-2019.csv" = file unknown
+"seedling_height_2020_alpha_point_untidy.csv" = "seedling_ht_input_format_2020data.Rmd"
+"seedling_height_2021_alpha_point_untidy.csv" = seedling_ht_input_format_2021data.Rmd
+"seedling_height_2022_alpha_point_untidy.csv" = seedling_ht_input_format_2022data.Rmd
+
+DATA FILES Produced
+write_csv(seedling_heights_raw, "heights_seedlings_raw.csv")
+write_csv(height_summ, "heights_seedlings_summary.csv")
+
+
+-->
+
+
+
+
+
+###Input Data
+```{r, input data}
+
+tidy_heights_2017_2019 <- read_csv("tidy_seedling_heights_2017-2019.csv", 
+    col_types = cols(harvest = col_character(), 
+        year = col_double(), date = col_character(), 
+        location = col_character(), point = col_character(), 
+        spp = col_character(), origin = col_character(), 
+        basal2019 = col_number(), height = col_number())) %>% 
+  select(!c(date)) %>% 
+  rename("basal" = "basal2019", ht_inch = height) %>% 
+  mutate(
+    first_grow = if_else((harvest %in% c("gas_line", "red_pine")), 2017, 2018),
+    season = year,
+    season = as.character(season),
+    number_yrs_grow = year - first_grow +1,
+    ht_cm = ht_inch *2.54,
+    basal_cm = basal * 2.54,
+    location = point,
+    wall = "neutral"
+  ) %>% 
+  mutate_at(vars(harvest, point, location, spp, origin),
+            list(factor)
+  ) %>% 
+    filter(!point %in% c("864", "866", "810")) %>%  #remove untreated gas line 
+    select(harvest, season, location, wall, year, first_grow, number_yrs_grow, point, spp, origin, basal, ht_inch, ht_cm, basal_cm)
+
+
+  
+#example code  
+# mutate(ht_class = cut(height, breaks=c(0, 30, 50, 150),labels=c("short","medium", "tall")))
+
+#mutate a new factor variable = ht_class, using continuous variable "height"
+#into two levels of 0-30 and 30-50 labeled: short and tall
+#or into three levels of 0-30, 30-50, and 50-150
+#the number of labels is one less than the number of breaks
+
+
+```
+
+
+```{r}
+point_location_x_seedling<- read_excel("regen.data.2021_cleaned.xlsx", 
+    sheet = "point_by_location", col_types = c("text", 
+        "text", "text"))%>% 
+    
+    arrange(harvest, point)
+```
+
+
+```{r}
+height_with_location_early <- full_join(tidy_heights_2017_2019, point_location_x_seedling, by = (c("point"))) %>% 
+    select(!c("location.x", "harvest.y")) %>% 
+    rename(
+      harvest = harvest.x,
+      location = location.y
+    ) %>% 
+        # retaining "location.y" which is i, p, or c
+        drop_na %>% 
+    mutate(
+      wall = if_else((location %in% c("i", "p")), "protected", "control")
+    ) %>% 
+    mutate(origin = fct_recode(origin,
+                              "sprout" = "root",
+                              "sprout" = "stump",
+                              "singl/unk" = "s")) %>% 
+    select(harvest, year, season, first_grow, number_yrs_grow, location, wall, 
+           point, spp, origin, basal, ht_inch, ht_cm, basal_cm) %>% 
+    arrange(harvest, wall, point, spp)
+
+
+      
+  
+data_early <- height_with_location_early %>% 
+arrange(harvest, spp, desc(wall))
+
+```
+
+
+
+#
+# Input untidy data 2020-2022
+#
+
+```{r late_data_input, warning=FALSE, show_col_types=FALSE}
+data_2020 <- read_csv(("seedling_height_2020_alpha_point_untidy.csv"))
+data_2021 <- read_csv(("seedling_height_2021_alpha_point_untidy.csv"))
+data_2022 <- read_csv(("seedling_height_2022_alpha_point_untidy.csv"))
+
+data_late <- bind_rows(data_2020, data_2021, data_2022) %>% 
+  select(!c(date, number_yrs_grow, numb_yrs_grow)) %>% 
+  rename(ht_inch = height) %>% 
+     mutate(
+      first_grow = case_when(
+        (harvest %in% c("gas_line", "red_pine")) ~ 2017,
+        (harvest %in% c("boot", "wedge", "sta_rd")) ~ 2018,
+        (harvest %in% c("campridge")) ~ 2019,
+        (harvest %in% c("recknagel", "circle", "decker")) ~ 2020
+      ),
+        number_yrs_grow = year - first_grow + 1
+       ) %>% 
+mutate(origin = fct_recode(origin,
+                              "sprout" = "r",
+                              "sprout" = "t",
+                              "sprout" = "v",
+                              "singl/unk" = "s")) %>% 
+  mutate(
+    harvest = as.factor(harvest), 
+    point = as.character(point),
+    spp = as.factor(spp),
+    season = as.character(season)
+  )
+
+tidy_heights <- bind_rows(data_early, data_late) %>% 
+  select(!c(number_yrs_grow, cut)) %>% 
+      mutate(
+      first_grow = case_when(
+        (harvest %in% c("gas_line", "red_pine")) ~ 2017,
+        (harvest %in% c("boot", "wedge", "sta_rd")) ~ 2018,
+        (harvest %in% c("campridge")) ~ 2019,
+        (harvest %in% c("recknagel", "circle", "decker")) ~ 2020
+        ),
+        number_yrs_grow = year - first_grow + 1,
+        ht_cm = ht_inch * 2.54,
+        basal_cm = basal * 2.54,
+        wall = if_else((location %in% c("i", "p")), "protected", "control")
+
+       ) %>% 
+    mutate(
+       wall = case_when(
+         (location %in% c("i", "p")) ~ "protected",
+         (location %in% c("c")) ~ "control"
+       )) %>% 
+    mutate(
+      origin2 = case_when(
+        (origin %in% c("root", "stump", "sprout")) ~ "veg",
+        (origin %in% c("singl/unk", "1")) ~ "singl"
+      )
+    )
+    
+
+```
+
+
+     mutate(
+      first_grow = case_when(
+        (harvest %in% c("gas_line", "red_pine")) ~ 2017,
+        (harvest %in% c("boot", "wedge", "sta_rd")) ~ 2018,
+        (harvest %in% c("campridge")) ~ 2019,
+        (harvest %in% c("recknagel", "circle", "decker")) ~ 2020
+      ))
+
+
+
+
+###Group Means
+```{r, group means}
+seedling_heights_raw <- tidy_heights %>% 
+    filter(spp %in% 
+             c("ab", "ba", "bc", "co", "pb", "rm", "ro", "sb", "sm", "wa", "wp", "eh", "bh")) %>% #spp less than n=50 removed
+    droplevels() %>%  #removes the factor levels excluded by the filter
+  filter(year >2017) %>% 
+  arrange(harvest, point, spp, year, origin2, wall, location)
+  
+write_csv(seedling_heights_raw, "heights_seedlings_raw.csv")
+
+
+height_summ <- seedling_heights_raw %>% 
+    droplevels() %>%  #removes the factor levels excluded by the filter
+  drop_na() %>% 
+  group_by(harvest, wall, origin2, spp, year, number_yrs_grow) %>% 
+  summarise(
+    ht_in_avg = mean(ht_inch),
+    ht_cm_avg = mean(ht_cm),
+    basal_avg = mean(basal),
+    basal_cm_avg = mean(basal_cm),
+    n = n()
+  ) %>% 
+  filter(n>0) %>% 
+  arrange(harvest,spp, wall, origin2, year) %>% 
+  select(harvest, spp, wall, origin2, year, everything())
+
+write_csv(height_summ, "heights_seedlings_summary.csv")
+
+
+```
+
+
+
+
+
+###Filter to common species and collapse vegetative vs. unk origin
+```{r}
+
+
+#Fig=height_graph01
+  height_graph <- ggplot(data=height_summ, aes(x = spp, y = ht_in_avg, color = number_yrs_grow)) +
+    geom_point() +
+    facet_grid (origin2~harvest)+
+      theme_classic() +
+  labs(
+    x= "species",
+    y = "seedling height (inch)",
+    title = "All Harvests - all origin unweighted",
+    subtitle = "Seedling Heights, FIG=height_graph01, seedling_ht_analysis_stats.Rmd"
+  ) 
+
+
+ggsave("figures_seedlings_heights/seedling_height_graph.jpg")
+
+
+```
+
+
+```{r}
+
+ht_2018_2019_mod <- lm(ht_cm~spp*harvest + spp*originx2 + spp*location + spp*year, data=height_common)
+
+hist(residuals(ht_2018_2019_mod)) #tests for normal distribution
+plot(predict(ht_2018_2019_mod), residuals(ht_2018_2019_mod)) #tests heteroscedasticity, thus log
+
+library(emmeans)
+emmeans(ht_2018_2019_mod, ~spp+harvest+originx2+location+year, type="response")
+#this calculates the mean and SE for all factor combinations, type=...reverse transformed
+
+
+emmip(ht_2018_2019_mod, year ~ spp | harvest + location, CIs = TRUE)
+#plots the data from emmeans to help visualize interactions
+# emmip(model name, color ~, xaxis | panel1 + panel2
+
+
+emmeans(ht_2018_2019_mod, pairwise ~ spp | harvest * location * originx2 * year, type = "response")
+#calculates the contrasts
+#assess if spp (height) matters as a function of harvest*location*originx2*year
+
+
+
+
+```
+
+
+```{r}
+emmeans(ht_2019_mod, pairwise ~ location | harvest * spp * originx2, type = "response")
+
+emmip(ht_2019_mod, harvest ~ spp | location + originx2, CIs = TRUE)
+# emmip = estimated marginal means interaction plot
+# emmip(model name, color ~, xaxis | panel1 + panel2
+# emmip(ht_2019_mod, harvest ~ spp | location + originx2, CIs = TRUE)
+
+```
+
+
+```{r}
+emmip(ht_2019_mod, harvest ~ location | spp + originx2, CIs = TRUE)
+#plots the data from emmeans to help visualize interactions
+# emmip(model name, color ~, xaxis | row_panel1 + column_panel2
+
+
+```
+
+
+
+
+
+
+
+
+
+

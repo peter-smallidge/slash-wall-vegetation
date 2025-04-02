@@ -1,0 +1,105 @@
+---
+title: "summary by wall_year_spp_size"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+File Description
+- This file reads the tidy data summarized by documents/R/slash-wall-vegetation/summary_regen_veg_data
+- The output is per acre by: wall, trmt, year, spp, and size
+- 
+
+
+
+```{r}
+
+library(ggplot2)
+library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+
+```
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+
+```{r}
+#read the most current regeneration data
+datax1 <- read_excel("regen_per_acre_all_alpha_tidy_trmt_coded_5june2023.xlsx", 
+    sheet = "regen", skip = 0) %>% 
+  mutate(
+    season= as.character(season),
+    point = as.character(point),
+    tpha = as.numeric(tpha), 
+    tpa_x_wall = as.numeric(tpa_x_wall), 
+    tpha_x_wall = as.numeric(tpha_x_wall)
+  ) %>% 
+  select(harvest, TRMT, season, cut, first_grow, numb_yrs_grow,
+         point, spp, size, type, tpa, tpha, wall_denom, 
+         tpa_x_wall, tpha_x_wall) %>% 
+  group_by(harvest, TRMT, season, point, spp, size, type) %>% 
+  summarize(
+    cut = mean(cut),
+    first_grow = mean(first_grow),
+    numb_yrs_grow = mean(numb_yrs_grow),
+    tpa = sum(tpa), 
+    tpha = sum (tpha),
+    wall_denom = mean(wall_denom), 
+    tpa_x_wall = sum(tpa_x_wall), 
+    tpha_x_wall = sum(tpha_x_wall)
+  )
+
+datax1_test <- datax1 %>%
+  filter(harvest == "gas_line", season == "2019", spp == "bc", TRMT == "inside",
+         !size == "winners",  !size == "exposed", !size =="suppressed")
+
+write.xlsx(datax1_test, "tpa_test_bc_sept2024.xlsx")
+
+```
+
+
+```{r}
+datax2 <- datax1 %>% 
+  filter(!size == "winners", !size == "LT_seedling", !size == "exposed", !size =="suppressed") %>% 
+  # mutate(
+  #   point = as.numeric(point)
+  # ) %>% 
+  group_by(harvest, TRMT, season, numb_yrs_grow, spp, size) %>% 
+  summarise(
+    tpa_avg = sum(tpa_x_wall, digits=1),
+    tpha_avg = sum(tpha_x_wall, digits=1),
+    points_occupied = n_distinct(point),
+    age = mean(numb_yrs_grow),
+    wall_denom = mean(wall_denom)
+  ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+  filter(harvest %in%c("gas_line", "recknagel"))
+
+write.xlsx(datax2, "slash_wall_veg_summary_partial.xlsx")
+```
+

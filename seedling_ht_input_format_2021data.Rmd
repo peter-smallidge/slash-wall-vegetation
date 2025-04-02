@@ -1,0 +1,291 @@
+---
+title: "seedling height input and formatting"
+author: "Peter Smallidge"
+date: "10/16/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Analysis of seedling heights 2018 & 2019
+# data input for the 2020 and 2021 seasons starts on line #194
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readxl)
+library(readr)
+
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+```
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted
+the file "cheat sheet data-import" has details 
+
+It is also possible to right-click a file name and import excel
+
+
+
+
+
+-->
+
+
+```{r}
+input.data.2021 <- read_excel("regen.data.2021_cleaned.xlsx", 
+    sheet = "growth-height", col_types = c("text", 
+        "numeric", "text", "numeric", "text", 
+        "text", "text", "numeric", "numeric", 
+        "numeric"), skip = 3) %>% 
+    rename("basal" = "basal_dia") %>%   
+    mutate(
+    point = as.character(point),
+    location = as.character(location),
+    location = point,
+    spp = as.numeric(spp)
+    ) %>% 
+    mutate(harvest = fct_recode(harvest,
+                              "gas_line" = "gasline",
+                              "red_pine" = "redpine",
+                              "sta_rd" = "stationrd",
+                              "recknagel" = "rectangle1",
+                              "recknagel" = "rectangle2",
+                              "recknagel" = "rectangle3",
+                              "recknagel" = "rectangle4",
+                              "circle" = "circle1",
+                              "circle" = "circle2",
+                              "circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+
+    )) %>% 
+    mutate(
+      wall = "neutral"
+    ) %>% 
+  select(harvest, season,date,wall, location, point, spp, origin, basal, height)
+
+
+#import point x location 
+
+point_location_seedling <- read_excel("regen.data.2021_cleaned.xlsx", 
+    sheet = "point_by_location", col_types = c("text", 
+        "text", "text"))%>% 
+    mutate(harvest = fct_recode(harvest,
+                             "gas_line" = "gasline",
+                              "red_pine" = "redpine",
+                              "sta_rd" = "stationrd",
+                              "recknagel" = "rectangle1",
+                              "recknagel" = "rectangle2",
+                              "recknagel" = "rectangle3",
+                              "recknagel" = "rectangle4",
+                              "circle" = "circle1",
+                              "circle" = "circle2",
+                              "circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+    )) %>% 
+    
+    arrange(harvest, point)
+
+    # the "filter" code below was to remove missing values associated with data not yet entered.
+    # the alternative code in the following data chunk "drop_na" serves the same purpose.
+    #
+    #filter(harvest %in% c("sta_rd", "circle", "decker", "gas_line", "recknagel"))  ### add campridge and red_pine once after data entered
+    #filter(! harvest %in% c("campridge", "red_pine"))  ### remove this once the data is entered
+    
+
+
+
+
+height_with_location <- full_join(input.data.2021, point_location_seedling, by = (c("harvest", "point"))) %>% 
+    select(!"location.x") %>%  
+        # this code selects all variables except "location.x" which was set to the point number, 
+        # retaining "location.y" which is i, p, or c
+        drop_na %>% 
+        droplevels() %>% 
+    rename("location" = "location.y") %>%  # new variable name = old variable name
+    replace_na(list(date = "other",  origin = "u", location = "u", spp = 001
+           )) %>%   #need to change missing values to real values while variable as character
+    arrange(harvest, point, spp)
+
+
+   harvested2017 <- height_with_location %>% 
+    filter(harvest %in% c("boot", "gas_line", "red_pine", "wedge", "sta_rd")) %>% 
+       mutate(
+          cut = 2017,
+          year = season,
+          numb_yrs_grow = year - cut +1
+          ) %>% 
+      select(harvest, year, season, date, numb_yrs_grow, location, wall, point, spp, origin, basal, height) %>% 
+      arrange(harvest, wall, point, spp)
+
+
+  harvested2019 <- height_with_location %>% 
+      filter(harvest %in% c("campridge", "circle", "decker","recknagel")) %>% 
+       mutate(
+          cut = 2019,
+          year = season, 
+          numb_yrs_grow = year - cut +1
+          ) %>% 
+      select(harvest, year, season, date, numb_yrs_grow, location, wall, point, spp, origin, basal, height) %>% 
+      arrange(harvest, wall, point, spp)
+
+ht_data01_2021 <- 
+  bind_rows(harvested2017, harvested2019) %>% 
+  mutate(location = fct_recode(location,
+    "c" = "control", "i" = "interior", "p" = "perimeter"
+    )) %>% 
+      select(harvest, year, season, date, numb_yrs_grow, location, wall, point, spp, origin, basal, height) %>% 
+      arrange(harvest, wall, point, spp)
+
+
+# create variable for points by inside the wall ("protected") vs. outside the wall ("control")
+points_inside_2021 <- ht_data01_2021 %>% 
+      filter(location %in% c("i", "p")) %>% 
+      mutate(wall = "protected")
+
+points_outside_2021 <- ht_data01_2021 %>% 
+      filter(location %in% c("c")) %>% 
+      mutate(wall = "control")
+      
+  
+ht_data_2021 <- bind_rows(points_inside_2021, points_outside_2021) %>% 
+arrange(harvest, spp, desc(wall))
+```
+
+
+```{r}
+  seedling_ht_2021_alpha <- ht_data_2021 %>% 
+    mutate (
+      spp = as.character(spp)
+      )%>% 
+   mutate(spp = fct_recode(spp,   #comment out species not present in data
+                           "ab" = "531",
+                          "stm" = "315",
+                          "sm" = "318",
+                          "rm" = "316",
+                          "rp" = "125",
+                          "wp" = "129",
+                         "he" = "261",
+                          #"svb" = "356",
+                          #"svb" = "355",
+                          #"yb" = "371",
+                          #"sb" = "372",
+                          #"pb" = "375",
+                         #"gb" = "379",
+                         # "ah" = "391",
+                          #"haw" = "500",
+                          "wa" = "541",
+                          #"yp" = "621",
+                          "cu" = "651",
+                          #"la" = "70",
+                          "eh" = "701",
+                          #"asp" = "740",
+                          #"bta" = "743",
+                          #"qa" = "746",
+                          #"pc" = "761",
+                          "bc" = "762",
+                          #"cc" = "763",
+                          "wo" = "802",
+                          "co" = "832",
+                          "ro" = "833",
+                          #"bl" = "901",
+                          #"wi" = "920",
+                          "ba" = "951",
+                         # "sp" = "90", 
+                         # "sa" = "931",
+                          #"wh" = "585",
+                          #"sh" = "407",
+                          "ns" = "91",
+                          "bh" = "402",
+                          #"au" = "535",
+                          #"ec" = "742",
+                          #"unk" = "999"
+                          ))
+
+#view(regen.per.acre)
+
+write_csv(seedling_ht_2021_alpha, "seedling_height_2021_alpha_point_untidy.csv")
+
+
+
+
+```
+
+
+### make data tidy 
+```{r}
+
+
+```
+
+
+<!--
+
+### Make the data tidy
+### Use separate data by year, then stack using "bind_rows"
+
+
+
+
+2017-2019  mutate(spp = fct_recode(spp,
+                          "ab" = "531",
+                          "sm" = "318",
+                          "rm" = "316",
+                          "rp" = "125",
+                          "wp" = "129",
+                          "svb" = "356",
+                          "yb" = "371",
+                          "sb" = "372",
+                          "pb" = "375",
+                          "wa" = "541",
+                          "yp" = "621",
+                          "cu" = "651",
+                          "la" = "70",
+                          "asp" = "740",
+                          "bc" = "762",
+                          "wo" = "802",
+                          "co" = "832",
+                          "ro" = "833",
+                          "bl" = "901",
+                          "ba" = "951",
+                          ))
+
+
+#from previous code
+
+#  write_csv(seedling, "tidy_seedling_heights_2017-2019.csv")
+
+-->
+
+```
+
+
+## input 2020 and 2021 seedling height data.
+
+
+```{r}
+
+
+regen_data_2020_cleaned <- read_excel("regen.data.2020_cleaned.xlsx", 
+    sheet = "height", col_types = c("text", 
+        "numeric", "text", "text", "numeric", 
+        "numeric", "text", "numeric", "numeric", 
+        "skip", "skip", "skip", "skip", "skip"), 
+    skip = 3)
+
+```
+

@@ -1,0 +1,1296 @@
+---
+title: "summary_regen_veg_data.Rmd"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+library(readxl)
+library(readr)
+#library(skimr)
+library(tidyr)
+library(tidyverse)
+#library(tidytable)  ## CAUTION this may conflict with dplyr functions
+library(ggplot2)
+library(ggpubr)
+library(dplyr)
+
+```
+
+<!-- README 
+
+File Description: The purpose of this file is to:
+  CODE 01, line 54
+  - input data from the 2019 through 2022 growing seasons. 
+    Data was created by files "regen_and_plot_input_20xx_cleaning.Rmd" Bind the data sets for each year together. (code 01)  For the 2023 growing season, the input file is "test_2023_regen_plot_input.Rmd"
+    
+The original raw data is regen_per_acre_all_alpha_tidy_1june2023.xlsx (or 2020, 2021, 2022). 
+The alpha_tidy output from the "input and cleaning" files (e.g., regen_and_plot_input_2022_cleaning.Rmd) 
+is copy and pasted into the raw data file. This ensures that if the originating input and cleaning files are rerun
+they don't automatically write over the data file used for input here.
+
+CODE 02, line 135
+  - The data file "regen_all" has all regen data from all growing seasons available. The commercial species and 
+    diversity species are extracted to produce summaries of trees per acre. Code in this section creates averages by various clusters, 
+    culminating in average by size class, spp, season, location, and harvest. Additional averaging completed by harvest x season x type.
+    
+    
+-  (lines 300 - 800) summary of tpa by various groupings of subsets of the data (e.g., exposed GT 4.5 ft)
+-  (lines 800 - 1000) graphs
+-  (code 05)
+-  (code 06)
+
+
+Exported data files (csv) include:
+summary_regen_veg_data.Rmd which outputs
+•	regen_per_acre_all_alpha_tidy_trmt_coded.csv
+•	regen_per_acre_winners_spp_composition_tables.csv
+•	regen_per_acre_winners_spp_5_dom.csv
+•	regen_per_acre_total_spp_composition_tables.csv
+•	regen_per_acre_total_spp_5_dom.csv
+•	regen_per_acre_exp_GT_4.5ft_spp_composition_tables.csv
+•*	regen_per_acre_exp_GT_4.5ft_spp_5_dom.csv
+•	regen_per_acre_desired_spp_composition_tables.csv
+•	regen_per_acre_desired_spp_5_dom.csv
+•	regen_per_acre_dsrd_exp_gt4.5ft_spp_composition_tables.csv
+•	regen_per_acre_dsrd_exp_gt4.5ft_spp_5_dom.csv
+•	regen_per_acre_type_exp_gt4.5ft_composition_tables.csv
+•	regen_per_acre_type_exp_gt4.5ft_5_dom.csv
+•	regen_summary_type_exp_gt4.5ft_composition_tables.csv
+•	regen_summary_type_exp_gt4.5ft_5_dom.csv
+
+-->
+
+```{r}
+file_path_input <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\regen_per_acre_all_alpha_tidy_1june2023.xlsx"
+
+input_count_harvest_x_location <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\count_of_points_harvest_x_location.csv"
+
+input_count_harvest_x_treatment <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\count_of_points_harvest_x_treatment.csv"
+
+
+```
+
+
+## Code 01
+```{r}
+#    suppressed = sup_short + sup_med + sup_tall + sup_sapl,
+#    exposed = exp_short + exp_med + exp_tall + exp_sapl,
+#    total = suppressed + exposed, 
+#    winners = top4
+
+# 2019 growing season. 
+# 
+regen_2019  <- read_excel(file_path_input, sheet = "2019", skip = 2)%>% 
+    rename(
+      tpa = stems.per.acre
+    ) %>% 
+             mutate(harvest = fct_recode(harvest,
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+             )) %>% 
+    mutate(
+      location = as.factor(location)
+      ) %>% 
+    select(harvest, wall, location, season, numb_yrs_grow, point, count, spp, origin, type, size, tpa, cut )
+
+table(regen_2019$harvest)
+str(regen_2019)
+```
+
+
+```{r}
+#2020 growing season
+regen_2020  <- read_excel(file_path_input, sheet = "2020", skip = 3) %>% 
+    rename(
+      tpa = stems.per.acre
+    ) %>% 
+    mutate(
+    location = as.factor(location),
+    harvest = fct_recode(harvest,
+                         "sta_rd" = "boot",
+                         "sta_rd" = "wedge")
+  ) %>% 
+      select(harvest, wall, location, season, numb_yrs_grow, point, count, spp, origin, type, size, tpa, cut )
+table(regen_2020$harvest)
+str(regen_2020)
+```
+
+
+```{r}
+#2021 growing season
+regen_2021 <- read_excel(file_path_input, sheet = "2021", skip = 3) %>% 
+  mutate(
+    year = 2021,
+    season=year,
+    tpa = stems.per.acre,
+    harvest = as.factor(harvest),
+    location = as.factor(location)
+  ) %>% 
+    select(harvest, wall, location, season, numb_yrs_grow, point, count, spp, origin, type, size, tpa, cut )
+table(regen_2021$harvest)
+str(regen_2021)
+```
+
+
+```{r}
+#2022 growing season
+regen_2022 <- read_excel(file_path_input, sheet = "2022", skip = 3) %>% 
+  mutate(
+    count = 1,
+    tpa = stems.per.acre,
+    harvest = as.factor(harvest),
+    location = as.factor(location)  
+    ) %>% 
+    select(harvest, wall, location, season, numb_yrs_grow, point, spp, origin, type, size, tpa, cut )
+table(regen_2022$harvest)
+str(regen_2022)
+```
+
+
+```{r}
+# data for testing calculations
+# 4 harvests
+testdata01 <- read_excel("regen_per_acre_all_alpha_tidy_20feb2023.xlsx", 
+    sheet = "testdata01", skip = 0) %>% 
+  rename(TRMT = wall) %>% 
+  mutate(
+    harvest = as.factor(harvest),
+    location = as.factor(location)  
+    )
+```
+
+
+```{r}
+point_count_location <- read_csv(input_count_harvest_x_location, show_col_types = FALSE) %>% 
+   mutate(
+     location = fct_recode(location,
+    "control" = "c", "interior" = "i", "perimeter" = "p"
+    )) 
+## old_value = new_value
+
+point_count_wall <- read_csv(input_count_harvest_x_treatment,  show_col_types = FALSE)
+```
+
+
+```{r}
+regen_all_base <- bind_rows(regen_2019, regen_2020, regen_2021, regen_2022) %>% 
+    arrange(harvest, location, season, spp,
+          match(size, c("sup_short", "sup_med", "sup_tall", "sup_sapl", 
+                         "exp_short", "exp_med", "exp_tall", "exp_sapl",
+                         "suppressed", "exposed", "total")), point) %>% 
+    mutate(
+      tpha = tpa * 2.47
+    ) %>% 
+  arrange(desc(harvest), wall, season, point, spp, size)
+
+
+
+
+##
+#
+regen_all_location <- full_join(regen_all_base, point_count_location, by = (c("harvest", "location"))) 
+
+
+regen_01 <- full_join(regen_all_location, point_count_wall, by = (c("harvest", "wall"))) %>% 
+  rename(TRMT = wall) %>% 
+  mutate(
+    tpa_x_wall = tpa / wall_denom, #this is the average (="x") tpa by wall treatment
+    tpa_x_location = tpa / location_denom,
+    tpha_x_wall = tpha / wall_denom,
+    tpha_x_location = tpha / location_denom,
+    count = 1
+  ) %>% 
+  arrange(harvest, desc(TRMT), season, point, spp, size) %>% 
+  select(harvest, TRMT, season, location, cut, numb_yrs_grow, point, count, spp, origin, size, type, tpa, tpha, 
+         location_denom, wall_denom, tpa_x_wall, tpa_x_location, tpha_x_wall, tpha_x_location)
+
+
+df2017 <- regen_01 %>% 
+  filter(harvest %in% c("gas_line", "red_pine")) %>% 
+      mutate(
+          cut = 2017,
+          first_grow = 2017,
+          year = season,
+          numb_yrs_grow = (year - first_grow) + 1   #e.g., 2021 - 2017 + 1
+          ) 
+
+df2018 <- regen_01 %>% 
+  filter(harvest %in% c("boot", "wedge", "sta_rd")) %>% 
+      mutate(
+          cut = 2017,
+          first_grow = 2018,
+          year = season,
+          numb_yrs_grow = (year - first_grow) + 1   #e.g., 2021 - 2018 + 1
+          ) 
+
+df2019 <- regen_01 %>% 
+  filter(harvest %in% c("campridge", "circle")) %>% 
+      mutate(
+          cut = 2019,
+          first_grow = 2020,
+          year = season,
+          numb_yrs_grow = (year - first_grow) + 1   #e.g., 2021 - 2020 + 1
+          ) 
+
+df2020 <- regen_01 %>% 
+  filter(harvest %in% c("recknagel", "decker")) %>% 
+      mutate(
+          cut = 2019,
+          first_grow = 2020,
+          year = season,
+          numb_yrs_grow = (year - first_grow) + 1   #e.g., 2021 - 2020 + 1
+          ) 
+
+regen_all <- bind_rows(df2017, df2018, df2019, df2020) %>% 
+    select(harvest, TRMT, season, location, cut, first_grow, numb_yrs_grow, point, count, spp, origin, size, type, tpa, tpha, 
+         location_denom, wall_denom, tpa_x_wall, tpa_x_location, tpha_x_wall, tpha_x_location) %>% 
+    mutate(TRMT = fct_recode(TRMT,
+                    "inside" = "protected",
+                    "outside" = "control")
+    ) 
+table(regen_all$spp)
+write_csv(regen_all, "regen_per_acre_all_alpha_tidy_trmt_coded.csv")
+
+#
+# the *.csv file saved as "regen_per_acre_all_alpha_tidy_trmt_coded.xlxs" in the root directory R>slash-wall-vegetation
+#
+
+
+```
+
+
+```{r}
+regen_all_harvest_summ <- regen_all %>% 
+  group_by(harvest, season, TRMT, spp) %>% 
+  summarize(
+    harvest_tpa = sum(tpa_x_wall),
+    harvest_tpa_location = sum(tpa_x_location),
+    harvest_tpha = sum(tpha_x_wall),
+    harvest_tpha_location = sum(tpha_x_location)
+  )
+```
+
+
+
+
+## 
+
+
+# TESTING THE CODE TO SORT SPP TABLES
+# TESTING,  this code doesn't create any new df needed in subsequent calculations
+
+
+```{r}
+
+
+
+#
+# test for exposed stems by spp in red_pine for 2021
+#
+
+testdata01 <- testdata01 %>% 
+  filter(size == "exposed") %>% 
+  filter(tpa > 0)
+
+regen_all_test_spp <- testdata01 %>% 
+  group_by(harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+# the combination of "arrange" and "slice_head" retains the n=i highest values of tpa within the grouping structure
+   arrange(harvest, season, TRMT, desc(tpa)) %>% 
+  slice_head(n=7) %>% 
+  mutate(
+    spp_freq = (points_occupied / wall_denom )*100
+  ) %>% 
+  ungroup %>% 
+  arrange(harvest, season, spp, TRMT)
+
+# calculations for tpa_x_wall confirmed on 6/5/2023
+
+
+# the metric "n_distinct" provides a count of the number of points where a species occurs
+# "mean(wall_denom) provides the number of points by wall as control or protected
+# must filter (tpa > 0) because n_distinct(variable_name) counts "0" as occupied
+# freq (by spp) = count/wall_denom * 100
+
+#
+# test for exposed stems by type (ignore spp)
+
+regen_all_test_type <- testdata01 %>% 
+  group_by(harvest, season, TRMT, type) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    spp_freq = (points_occupied / wall_denom )*100
+  ) %>% 
+  ungroup %>% 
+  arrange(harvest, season, type, TRMT)
+
+
+```
+
+
+#.
+# COMPOSITION TABLES STEM DENSITY AND FREQUENCEY
+#.
+# STEMS THAT ARE EXPOSED, ALL SIZE CLASSES
+
+```{r}
+
+#
+# Composition for stems 
+#
+
+
+
+
+
+```
+
+
+# calculation of total winners checked and confirmed as correct on 3/1/2023
+
+```{r winner tabluation}
+
+regen_all_winners_spp_initial <- regen_all %>% 
+  filter(tpa>0) %>% 
+  filter(size == "winners") %>% 
+  mutate(
+    describ = "winners"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+      arrange(harvest, season, TRMT, (desc(tpa)))
+
+  regen_winners_head <- regen_all_winners_spp_initial %>% 
+    slice_head(n=5) %>% 
+    mutate(spp_count = 1)
+  
+  regen_winners_tail <- regen_all_winners_spp_initial %>% 
+    slice_tail(n=-5) %>% 
+    filter(tpa >0) %>% 
+    mutate(
+      spp = "remainder",
+      numb = 1
+      ) %>% 
+    group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha),
+      wall_denom = mean(wall_denom),
+      age = mean(age),
+      spp_count = sum(numb)
+    )
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus spp summ in next dataframe 
+  regen_winners_summ <- bind_rows(regen_winners_head, regen_winners_tail) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    group_by(describ, harvest, season, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+      spp_count = sum(spp_count)
+    ) %>% 
+    mutate(spp = "TOTAL")
+
+    
+regen_winners_spp <- bind_rows(regen_winners_head, regen_winners_tail, regen_winners_summ) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    rename(
+      TOTAL_tpa = tpa,
+      TOTAL_tpha = tpha
+    ) %>% 
+    #ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+
+#calculations confirmed 2/21/2023
+write_csv(regen_all_winners_spp_initial, "regen_per_acre_winners_spp_composition_tables.csv")
+write_csv(regen_winners_spp, "regen_per_acre_winners_spp_5_dom.csv")
+
+
+# the metric "n_distinct" provides a count of the number of points where a species occurs
+# "mean(wall_denom) provides the number of points by wall as control or protected
+# freq (by spp) = count/wall_denom * 100
+
+
+
+```
+
+
+
+# species compositon tables for all stems 'TOTAL' by spp
+
+```{r}
+
+# Composition for stems as "TOTAL" by spp
+#
+
+regen_total_spp_initial <- regen_all %>% 
+  filter(tpa>0) %>% 
+  filter(size == "total") %>% 
+  mutate(
+    describ = "total"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, harvest, season, TRMT, spp) %>% arrange(harvest, season, TRMT, (desc(spp))) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),  # the average tpa by harvest and season for each spp is aggregated across points
+      tpha = sum(tpha_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point), #(3mar2023 calculation of points_occupied at harvest scale CONFIRMED)
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+      arrange(harvest, season, TRMT, (desc(tpa)))
+
+  regen_total_head <- regen_total_spp_initial %>% 
+    slice_head(n=5) %>% 
+    mutate(spp_count = 1)
+  
+  regen_total_tail <- regen_total_spp_initial %>% 
+    slice_tail(n=-5) %>% 
+    mutate(
+      spp = "remainder",
+      numb = 1
+      ) %>% 
+    group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha),
+      wall_denom = mean(wall_denom),
+      age = mean(age),
+      spp_count = sum(numb)
+    )
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus spp summ in next dataframe 
+  regen_summ <- bind_rows(regen_total_head, regen_total_tail) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    group_by(describ, harvest, season, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+      spp_count = sum(spp_count)
+    ) %>% 
+    mutate(spp = "TOTAL")
+
+    
+regen_total_spp <- bind_rows(regen_total_head, regen_total_tail, regen_summ) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    rename(
+      TOTAL_tpa = tpa,
+      TOTAL_tpha = tpha
+    ) %>% 
+    #ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+
+#calculations confirmed 2/21/2023
+
+write_csv(regen_total_spp_initial, "regen_per_acre_total_spp_composition_tables.csv")
+write_csv(regen_total_spp, "regen_per_acre_total_spp_5_dom.csv")
+
+
+```
+
+
+
+
+#
+# Composition for exposed stems >4.5 ft by species
+#
+
+```{r}
+
+# for exposed stems greater than 4.5 ft tall
+
+regen_exp_GT_4.5ft_spp_initial <- regen_all %>% 
+  filter(tpa>0) %>% 
+  filter(size == "exp_med" | size == "exp_tall" | size == "exp_sapl") %>% 
+  mutate(
+    describ = "exp_GT_4.5ft"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+      arrange(harvest, season, TRMT, (desc(tpa)))
+
+  regen_exp_GT_4.5ft_head <- regen_exp_GT_4.5ft_spp_initial %>% 
+    slice_head(n=5) %>% 
+    mutate(spp_count = 1)
+  
+  regen_exp_GT_4.5ft_tail <- regen_exp_GT_4.5ft_spp_initial %>% 
+    slice_tail(n=-5) %>% 
+    filter(tpa >0) %>% 
+    mutate(
+      spp = "remainder",
+      numb = 1
+      ) %>% 
+    group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha),
+      wall_denom = mean(wall_denom),
+      age = mean(age),
+      spp_count = sum(numb)
+    )
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus spp summ in next dataframe 
+  regen_summ_exp_GT_4.5ft <- bind_rows(regen_exp_GT_4.5ft_head, regen_exp_GT_4.5ft_tail) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    group_by(describ, harvest, season, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+      spp_count = sum(spp_count),
+      age = mean(age)
+    ) %>% 
+    mutate(spp = "TOTAL")
+
+    
+regen_exp_GT_4.5ft_spp <- bind_rows(regen_exp_GT_4.5ft_head, regen_exp_GT_4.5ft_tail, regen_summ_exp_GT_4.5ft) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    rename(
+      TOTAL_tpa = tpa,
+      TOTAL_tpha = tpha
+    ) %>% 
+    #ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+
+#calculations confirmed 2/21/2023
+
+write_csv(regen_exp_GT_4.5ft_spp_initial, "regen_per_acre_exp_GT_4.5ft_spp_composition_tables.csv")
+write_csv(regen_exp_GT_4.5ft_spp, "regen_per_acre_exp_GT_4.5ft_spp_5_dom.csv")
+
+spp_count_exp_gt4.5ft <- regen_exp_GT_4.5ft_spp %>% 
+  select(describ, harvest, season, TRMT, age, spp, spp_count) %>% 
+  filter(spp == "TOTAL") %>% 
+  group_by(season, TRMT, age) %>% 
+  summarize(
+    spp_count = mean(spp_count)
+  )
+
+  col03 <- spp_count_exp_gt4.5ft %>% 
+    ungroup %>% 
+    select(age, TRMT, spp_count) %>% 
+    mutate(
+      age = as.character(age),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "inside",
+      "control" = "outside"
+    )) %>% 
+    group_by(age, TRMT) %>% 
+    ggplot()+
+    geom_col(aes(x=age, y = spp_count, fill = TRMT)) +  #, position = "dodge2" , fill = harvest
+    facet_wrap(~TRMT)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "Number of Species",
+      title = "Average Species Richness for Exposed Stems > 4.5 ft",
+      subtitle = "Arnot Forest Slash Walls, summary_regen_veg_data.Rmd, fig=col03"
+    )
+
+  set_palette(col03, "uchicago")
+  ggsave("figures/species_richness_exp_gt4.5.col03.jpg")
+  
+  
+```
+
+
+#for exposed desired species, mostly hardwoods
+# bc, rm, ro, sm, wa, plus others
+
+```{r}
+
+
+regen_desired_spp_initial <- regen_all %>% 
+  filter(tpa>0) %>% 
+  filter(spp == "sm" | spp == "rm" | spp == "ro" | spp == "bc" | spp == "wa"
+         | spp == "co" | spp =="wo" | spp == "wp" | spp == "yp" 
+         | spp == "ba" | spp == "bh" | spp == "bl" | spp == "sh" 
+         | spp == "wp" | spp == "yb") %>% 
+  filter(size == "exposed") %>% 
+  mutate(
+    describ = "desired_exp_all"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+      arrange(harvest, season, TRMT, (desc(tpa)))
+
+  regen_desired_head <- regen_desired_spp_initial %>% 
+    slice_head(n=5) %>% 
+    mutate(spp_count = 1)
+  
+  regen_desired_tail <- regen_desired_spp_initial %>% 
+    slice_tail(n=-5) %>% 
+    filter(tpa >0) %>% 
+    mutate(
+      spp = "remainder",
+      numb = 1
+      ) %>% 
+    group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha),
+      wall_denom = mean(wall_denom),
+      age = mean(age),
+      spp_count = sum(numb)
+    )
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus spp summ in next dataframe 
+  regen_summ_desired <- bind_rows(regen_desired_head, regen_desired_tail) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    group_by(describ, harvest, season, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+      spp_count = sum(spp_count)
+    ) %>% 
+    mutate(spp = "desired total")
+
+    
+regen_desired_spp <- bind_rows(regen_desired_head, regen_desired_tail, regen_summ_desired) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    rename(
+      TOTAL_tpa = tpa,
+      TOTAL_tpha = tpha
+    ) %>% 
+    #ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+
+#calculations confirmed 2/21/2023
+
+write_csv(regen_desired_spp_initial, "regen_per_acre_desired_spp_composition_tables.csv")
+write_csv(regen_desired_spp, "regen_per_acre_desired_spp_5_dom.csv")
+
+```
+
+
+# calculate spp composition for desired species GT 4.5 ft tall that are exposed.
+# Not sure how this differs from previous datafile (previous has exposed stems of all heights)
+
+```{r}
+
+# for exposed stems greater than 4.5 ft tall
+
+regen_dsrd_exp_gt4.5ft_spp_initial <- regen_all %>% 
+  filter(tpa>0) %>% 
+  filter(spp == "sm" | spp == "rm" | spp == "ro" | spp == "bc" | spp == "wa"
+         | spp == "co" | spp =="wo" | spp == "wp" | spp == "yp" 
+         | spp == "ba" | spp == "bh" | spp == "bl" | spp == "sh" 
+         | spp == "wp" | spp == "yb") %>% 
+  filter(size == "exp_med" | size == "exp_tall" | size == "exp_sapl") %>% 
+  mutate(
+    describ = "dsrd_exp_gt4.5ft"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+      arrange(harvest, season, TRMT, (desc(tpa)))
+
+  regen_dsrd_exp_gt4.5ft_head <- regen_dsrd_exp_gt4.5ft_spp_initial %>% 
+    slice_head(n=5) %>% 
+    mutate(spp_count = 1)
+  
+  regen_dsrd_exp_gt4.5ft_tail <- regen_dsrd_exp_gt4.5ft_spp_initial %>% 
+    slice_tail(n=-5) %>% 
+    filter(tpa >0) %>% 
+    mutate(
+      spp = "remainder",
+      numb = 1
+      ) %>% 
+    group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha),
+      wall_denom = mean(wall_denom),
+      age = mean(age),
+      spp_count = sum(numb)
+    )
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus spp summ in next dataframe 
+  regen_summ_dsrd_exp_gt4.5ft <- bind_rows(regen_dsrd_exp_gt4.5ft_head, regen_dsrd_exp_gt4.5ft_tail) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    group_by(describ, harvest, season, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+      spp_count = sum(spp_count)
+    ) %>% 
+    mutate(spp = "dsrd_exp_gt4.5ft")
+
+    
+regen_dsrd_exp_GT_4.5ft_spp <- bind_rows(regen_dsrd_exp_gt4.5ft_head, regen_dsrd_exp_gt4.5ft_tail, regen_summ_dsrd_exp_gt4.5ft) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    rename(
+      TOTAL_tpa = tpa,
+      TOTAL_tpha = tpha
+    ) %>% 
+    #ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+
+#calculations confirmed 2/21/2023
+
+write_csv(regen_dsrd_exp_gt4.5ft_spp_initial, "regen_per_acre_dsrd_exp_gt4.5ft_spp_composition_tables.csv")
+write_csv(regen_dsrd_exp_GT_4.5ft_spp, "regen_per_acre_dsrd_exp_gt4.5ft_spp_5_dom.csv")
+
+
+x1_w_ash <- regen_dsrd_exp_GT_4.5ft_spp %>% 
+      filter(!spp %in% c("dsrd_exp_gt4.5ft"))  %>%   
+  group_by(harvest, season, TRMT) %>%  
+      summarize(
+        TOTAL_tpa = sum(TOTAL_tpa),
+        age = mean(age, na.rm=TRUE)
+      )
+
+x1_wo_ash <- regen_dsrd_exp_GT_4.5ft_spp %>% 
+      filter(!spp %in% c("dsrd_exp_gt4.5ft", "wa"))  %>%   
+  group_by(harvest, season, TRMT) %>%  
+      summarize(
+        TOTAL_tpa = sum(TOTAL_tpa),
+        age = mean(age, na.rm=TRUE)
+      )
+ggplot((x1_w_ash),
+    mapping = aes(x = age, y = TOTAL_tpa, group = TRMT)) + #(this creates a line for each level of the "group" factor (e.g., TRMT))
+    geom_point(mapping = aes(color = harvest), shape = 1) +
+    geom_smooth(method = lm, se=FALSE, aes(linetype = as.factor(TRMT))) +
+      stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+      stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x = "Number of Growing Seasons Post Harvest",
+    y = "Stems per acre",
+    title = "Annual Change in Abundance of Exposed Desired Species > 4.5 ft",
+    subtitle = "Slash Walls (with ash), summary_regen_veg_data.Rmd, fig=x1"
+  )
+
+  ggsave("figures/desired_spp_tpa_w_ash_by_age_fig_x1.jpg")
+
+  x2 <- regen_dsrd_exp_GT_4.5ft_spp
+  ggplot((x2),
+    mapping = aes(x = age, y = PCT_pts_present, group = TRMT)) + #(this creates a line for each level of the "group" factor (e.g., origin))
+    geom_point(mapping = aes(shape = harvest), color = 1) +
+    geom_smooth(method = lm, se=FALSE, aes(linetype = as.factor(TRMT))) +
+      stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+      stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x = "Number of Growing Seasons Post Harvest (yrs)",
+    y = "% Points Occupied by Exposed Desired Stems > 4.5 ft",
+    title = "Annual Change in Abundance of Exposed Desired Species > 4.5 ft",
+    subtitle = "Slash Walls (with ash), summary_regen_veg_data.Rmd, fig=x2"
+  )
+
+  ggsave("figures/desired_spp_PCT-occupied_by_age_fig_x2.jpg")
+
+  
+  col01 <- x1_w_ash %>% 
+    ungroup %>% 
+    select(harvest, age, TRMT, TOTAL_tpa) %>% 
+    mutate(
+      age = as.character(age),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "protected",
+      "control" = "control"
+    )) %>% 
+    group_by(harvest, age, TRMT) %>% 
+    ggplot()+
+    geom_col(aes(x=age, y = TOTAL_tpa, fill = harvest)) +
+    facet_wrap(~TRMT)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "Stems Per Acre (by Harvest)",
+      title = "Annual Change in Abundance of Exposed Desired Species > 4.5 ft",
+      subtitle = "Slash Walls (with ash), summary_regen_veg_data.Rmd, fig=col01"
+    )
+
+  set_palette(col01, "uchicago")
+  ggsave("figures/tpa_exposed_desired_gt4.5_with_ash_fig_col01.jpg")
+
+  
+ 
+
+
+
+```
+
+
+# it appears the following codes changes the type associated with sweet birch
+# such that type = "sb"  and then reruns the summary of GT4.5exp sorted by type
+
+
+```{r}
+
+
+regen_sb <- regen_all %>% 
+  filter(spp == "sb" ) %>% 
+  mutate(type = "sb")
+
+regen_sb_gone <- regen_all %>% 
+  filter(!spp == "sb")
+  
+ regen_type_exp_gt4.5ft_initial <- bind_rows(regen_sb, regen_sb_gone) %>% 
+  filter(tpa>0) %>% 
+  filter(size == "exp_med" | size == "exp_tall" | size == "exp_sapl") %>% 
+  mutate(
+    describ = "type_exp_gt4.5ft"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, harvest, season, TRMT, type) %>% arrange(harvest, season, TRMT, (desc(type))) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+      arrange(harvest, age, TRMT, (desc(tpa)))
+
+  regen_type_exp_gt4.5ft_head <- regen_type_exp_gt4.5ft_initial %>% 
+    slice_head(n=5) %>% 
+    mutate(type_count = 1) %>%   # type_count is nonsensical, the value is always 1 or 5
+    ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT, type)
+
+  regen_type_exp_gt4.5ft_tail <- regen_type_exp_gt4.5ft_initial %>% 
+    slice_tail(n=-5) %>% 
+    mutate(
+      type = "remainder",
+      numb = 1
+      ) %>% 
+    group_by(describ, harvest, season, TRMT, type) %>% 
+    summarize(
+      tpa = sum(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha),
+      wall_denom = mean(wall_denom),
+      age = mean(age),
+      type_count = sum(numb)
+    ) %>% 
+    ungroup %>%   
+    arrange(describ, harvest, desc(season), TRMT)
+
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus spp summ in next dataframe 
+  regen_summ_type_exp_gt4.5ft <- bind_rows(regen_type_exp_gt4.5ft_head, regen_type_exp_gt4.5ft_tail) %>% 
+    select(describ, harvest, season, TRMT, type, tpa, tpha, PCT_pts_present, wall_denom, age, type_count) %>% 
+    group_by(describ, harvest, season, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+      type_count = sum(type_count)
+    ) %>% 
+    mutate(type = "SUM")
+
+    
+regen_type_exp_GT_4.5ft <- bind_rows(regen_type_exp_gt4.5ft_head, regen_type_exp_gt4.5ft_tail, regen_summ_type_exp_gt4.5ft) %>% 
+    select(describ, harvest, season, TRMT, type, tpa, tpha, PCT_pts_present, wall_denom, age, type_count) %>% 
+    rename(
+      TOTAL_tpa = tpa,
+      TOTAL_tpha = tpha
+    ) %>% 
+    ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+
+#calculations confirmed 2/21/2023
+
+write_csv(regen_type_exp_gt4.5ft_initial, "regen_per_acre_type_exp_gt4.5ft_composition_tables.csv")
+write_csv(regen_type_exp_GT_4.5ft, "regen_per_acre_type_exp_gt4.5ft_5_dom.csv")
+
+
+
+
+
+```
+
+
+# isolate the oldest year of trmt x harvest and plot the difference between treatments of % occupancy
+# use this to illustrate the difference among slash walls and need to pay attention to details.
+
+# https://stackoverflow.com/questions/24237399/how-to-select-the-rows-with-maximum-values-in-each-group-with-dplyr
+```{r}
+##
+## this code does not provide first occurrence data file
+##
+
+regen_harvest_occ <- regen_type_exp_gt4.5ft_initial %>% 
+    filter(type =="commercial") %>% 
+    slice_head(1, by = TRMT, harvest, age) %>% 
+    group_by(TRMT, harvest,age) %>% 
+    filter(age == max(age))  
+    
+    #slice(which.max(age))
+    #slice_head(n=1)
+    #slice_max(age)
+
+```
+
+
+
+#
+# Summary blending all harvests, averaging harvest values by TYPE
+#
+
+## boxplot to show variation among harvests
+```{r}
+data1 <- regen_dsrd_exp_gt4.5ft_spp_initial %>% 
+  filter(age == 3)
+
+data2 <- regen_
+
+boxplot(tpa ~ harvest, data = data1)
+
+
+
+```
+
+
+```{r}
+
+x3 <- regen_type_exp_GT_4.5ft %>% 
+      filter(type %in% c("commercial", "diversity"))  %>%   #the input file has sweet birch as a distinct type
+  group_by(harvest, season, TRMT) %>%  
+      summarize(
+        TOTAL_tpa = sum(TOTAL_tpa),
+        TOTAL_tpha = sum(TOTAL_tpha),
+        age = mean(age, na.rm=TRUE)
+      )
+
+x3_averaged <- x3 %>% 
+  group_by(age, TRMT) %>% 
+  summarize(
+    avg_tpa = mean(TOTAL_tpa),
+    avg_tpha = mean(TOTAL_tpha),
+    age = mean(age)
+  ) %>% 
+      dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+x3_HT <- regen_type_exp_GT_4.5ft %>%  #HT = "harvest total"
+    filter(!type %in% c("SUM"))  %>%   #the input file has sweet birch as a distinct type
+    group_by(harvest, age, season, TRMT) %>% 
+    summarize(
+    TOTAL_tpa = sum(TOTAL_tpa),
+    TOTAL_tpha = sum(TOTAL_tpha),
+    age = mean(age)
+  )
+    
+
+
+ggplot((x3),
+    mapping = aes(x = age, y = TOTAL_tpa, group = TRMT)) + #(this creates a line for each level of the "group" factor (e.g., origin))
+    geom_point(mapping = aes(color = harvest), shape = 1) +
+    geom_smooth(method = lm, se=FALSE, aes(linetype = as.factor(TRMT))) +
+      stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+      stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x = "Number of Growing Seasons Post Harvest",
+    y = "Stems per acre",
+    title = "Annual Change in Abundance of Exposed Comm and Div Species > 4.5 ft",
+    subtitle = "Arnot Forest Slash Walls, summary_regen_veg_data.Rmd, fig=x3"
+  )
+
+  ggsave("figures/TPA_commercial_diversity_exp_gt4.5.fig_x3.jpg")
+
+  col04 <- x3_averaged %>% 
+    ungroup %>% 
+    select(age, TRMT, avg_tpa) %>% 
+    mutate(
+      age = as.character(age),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "protected",
+      "control" = "control"
+    )) %>% 
+    group_by(age, TRMT) %>% 
+    ggplot()+
+    geom_col(aes(x=age, y = avg_tpa, fill = TRMT)) +
+    facet_wrap(~TRMT)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "Stems Per Acre (average of harvests)",
+      title = "Abundance of Exposed Commercial & Diversity Species > 4.5 ft",
+      subtitle = "Slash Walls (excludes sweet birch), summary_regen_veg_data.Rmd, fig=col04"
+    )
+
+  set_palette(col04, "uchicago")
+  ggsave("figures/tpa_comm_diversity_exposed_wo_sweetbirch_gt4.5_fig_col04.jpg")
+  
+ # graph of total TPA by harvest to illustrate differences, importance of site and wall effectiveness
+  # calculations need to be verified, average/summation doesn't appear correct
+  col04_HT <- x3_HT %>% 
+    ungroup %>% 
+    select(harvest, age, TRMT, TOTAL_tpa) %>% 
+    mutate(
+      age = as.character(age),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "protected",
+      "control" = "control"
+    )) %>% 
+    group_by(harvest, age, TRMT) %>% 
+    ggplot()+
+    geom_col(aes(x=age, y = TOTAL_tpa, fill = harvest)) +
+    facet_wrap(~TRMT)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "Stems Per Acre",
+      title = "Cumulative Abundance by Harvest of Exposed Stems > 4.5 ft",
+      subtitle = "Arnot Forest Slash Walls, summary_regen_veg_data.Rmd, fig=col04_HT"
+    )
+
+  set_palette(col04_HT, "uchicago")
+  ggsave("figures/tpa_by_harvest_exposed_gt4.5_fig_col04_HT.jpg")
+  
+  
+  
+  
+  
+  x4 <- regen_type_exp_GT_4.5ft %>% 
+#  filter(spp == "ab" | spp == "wa" | spp == "sb" | spp == "rm" | 
+#           spp == "ro" | spp == "sm" | spp == "eh") %>% 
+#  filter(numb_yrs_grow >3) %>% 
+    filter(!type %in% c("SUM", "other"))  %>%   
+    group_by(season, TRMT, type) %>% 
+  summarize(
+    avg_tpa = mean(TOTAL_tpa),
+    age = mean(age)
+    )
+
+
+#testing code for two lines per facet copied from z4 (this works!)
+ggplot(data=x4, mapping = aes(x=age, y = avg_tpa, group=TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method=lm, se=F, aes(linetype = as.factor(TRMT))) +
+  facet_wrap(~type) +
+    stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+    stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  #theme_bw() +
+  labs(
+    x = "Number of Growing Seasons Post Harvest",
+    y = "Stems per acre",
+    title = "Annual Change in Abundance for Stems by 'Type' > 4.5 ft",
+    subtitle = "Arnot Forest Slash Walls, summary_regen_veg_data.Rmd, fig=x4"
+  ) 
+  
+  ggsave("figures/TPA_type_gt4.5.fig x4.jpg")
+
+  
+#
+# code to provide annual totals by type and TRMT
+#
+regen_sb2 <- regen_all %>% 
+  filter(spp == "sb" ) %>% 
+  mutate(type = "sb")
+
+regen_sb2_gone <- regen_all %>% 
+  filter(!spp == "sb")
+
+  
+ regen_summary_type_exp_gt4.5ft_initial <- regen_type_exp_gt4.5ft_initial %>% 
+  filter(tpa>0) %>% 
+  mutate(
+    describ = "type_summ"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, age, TRMT, type) %>% arrange(TRMT, age, type) %>% 
+    summarize(
+      tpa = mean(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = mean(tpha),
+      wall_denom = sum(wall_denom),  ####  !!  ## this calculation is correct (posted 3march2023)
+      points_occupied = sum(points_occupied),
+      n = n()
+    ) %>% 
+  # filter (age > 1) %>%   # only Recknagel has data from year 1
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100 ####  !!  ## this calculation is correct (posted 3march2023)
+     ) %>% 
+   ungroup %>% 
+   arrange(age, TRMT, type)
+
+quicktest <- bind_rows(regen_sb2, regen_sb2_gone) %>% 
+  filter(numb_yrs_grow == "1", TRMT == "control") %>% 
+  filter(tpa>0) %>% 
+  filter(size == "exp_med" | size == "exp_tall" | size == "exp_sapl")
+
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus type sum in next dataframe 
+  regen_summ_type_exp_gt4.5ft <- regen_summary_type_exp_gt4.5ft_initial %>% 
+    select(describ, age, TRMT, type, tpa, tpha, PCT_pts_present, wall_denom, age) %>% 
+    group_by(describ, age, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+    ) %>% 
+    ungroup %>% 
+    mutate(type = "total")
+
+    
+regen_summary_type_exp_GT_4.5ft <- bind_rows( regen_summary_type_exp_gt4.5ft_initial, regen_summ_type_exp_gt4.5ft  ) %>% 
+  arrange(type) %>% 
+    ungroup %>% 
+    select(describ, age, TRMT, type, tpa, tpha, PCT_pts_present, wall_denom, age) %>% 
+    rename(
+      averageL_tpa = tpa,
+      average_tpha = tpha
+    ) %>% 
+    arrange(desc(age), TRMT, type) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits
+
+
+#calculations confirmed 2/21/2023
+
+write_csv(regen_summary_type_exp_gt4.5ft_initial, "regen_summary_type_exp_gt4.5ft_composition_tables.csv")
+write_csv(regen_summary_type_exp_GT_4.5ft, "regen_summary_type_exp_gt4.5ft_5_dom.csv")
+  
+
+  col02 <- regen_summary_type_exp_gt4.5ft_initial %>% 
+    ungroup %>% 
+    select(type, age, TRMT, tpa, tpha, PCT_pts_present) %>% 
+    mutate(
+      age = as.character(age),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "protected",
+      "control" = "control"
+    )) %>% 
+    group_by(type, age, TRMT) %>% 
+    filter(!type=="other") %>% 
+    ggplot()+
+    geom_col(aes(x=age, y = tpa, fill = type)) + #, position = "dodge2"
+    facet_wrap(~TRMT)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "Stems Per Acre",
+      title = "Abundance of Exposed Stems > 4.5 ft by 'Type'",
+      subtitle = "Slash Walls, summary_regen_veg_data.Rmd, fig=col02"
+    )
+
+  set_palette(col02, "uchicago")
+  ggsave("figures/type_summ_tpa_by_age_exp_gt4.5.jpg")
+
+
+  col05 <- regen_summary_type_exp_gt4.5ft_initial %>% 
+    ungroup %>% 
+    select(type, age, TRMT, tpa, tpha, PCT_pts_present) %>% 
+    mutate(
+      age = as.character(age),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "protected",
+      "control" = "control"
+    )) %>% 
+    group_by(type, age, TRMT) %>% 
+    filter(!type=="other") %>% 
+    ggplot()+
+    geom_col(aes(x=age, y = PCT_pts_present, fill = TRMT), position = "dodge2") + #
+    facet_wrap(~type)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "% Points Occupied (average by harvest)",
+      title = "Occupancy of Exposed Stems > 4.5 ft by 'Type'",
+      subtitle = "Slash Walls, summary_regen_veg_data.Rmd, fig=col05"
+    )
+
+  set_palette(col05, "uchicago")
+  ggsave("figures/type_summ_PCT_pts_occupy_by_age_exp_gt4.5.jpg")
+  
+```
+
+
+#
+# composition for medium and sapl size exposed stems by growing season and type (ignore harvest and spp)
+# include all harvests
+
+
+```{r}
+
+
+
+
+
+```
+
+
+
+
+
+  

@@ -1,0 +1,195 @@
+---
+title: "seedling height input and formatting"
+author: "Peter Smallidge"
+date: "10/16/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Analysis of seedling heights 2018 & 2022
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(skimr)        ## install.packages("skimr")
+library(readxl)
+library(readr)
+
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+```
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted
+the file "cheat sheet data-import" has details 
+
+It is also possible to right-click a file name and import excel
+
+
+-->
+
+
+
+
+
+
+```{r}
+input.data.2022 <- read_excel("slash.wall.data.2022.16may2023_final.xlsx", 
+    sheet = "growth-height") %>% 
+    mutate(
+    point = as.character(point),
+    location = as.character(location),
+    location = point
+    ) %>% 
+    mutate(
+      wall = "neutral"
+    ) %>% 
+  select(harvest, season,date,wall, location, point, spp, origin, basal, height) %>% 
+    mutate(
+      point = as.character(point)
+    )
+```
+
+
+#import point x location 
+
+```{r}
+point_location_seedling <- read_excel("location_by_point.xlsx") %>% 
+    mutate(
+      point = as.character(point)
+    )
+
+```
+
+
+```{r}
+height_with_location <- full_join(input.data.2022, point_location_seedling, by = (c("harvest", "point"))) %>% 
+    select(!c(location.x, wall.x)) %>%  
+        drop_na %>% 
+#        droplevels() %>% 
+    rename(
+      location = location.y,
+      wall = wall.y
+      ) %>%  # new variable name = old variable name
+    replace_na(list(date = "other",  origin = "u", location = "u", spp = 001
+           )) %>%   #need to change missing values to real values while variable as character
+    arrange(harvest, point, spp) %>% 
+    mutate(
+      year = season
+    ) %>% 
+    mutate(harvest = fct_recode(harvest,
+                              "gas_line" = "gasline",
+                              "red_pine" = "redpine",
+                              "sta_rd" = "stationrd",
+                              "recknagel" = "rectangle1",
+                              "recknagel" = "rectangle2",
+                              "recknagel" = "rectangle3",
+                              "recknagel" = "rectangle4",
+                              "circle" = "circle1",
+                              "circle" = "circle2",
+                              "circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+
+    )) %>% 
+    # mutate(
+    #   cut = if_else((harvest %in% c("gas_line", "red_pine")), 2017, 2018),
+    #   cut = if_else((harvest %in% c("boot", "wedge", "sta_rd")), 2018, 2020),
+    #   cut = if_else((harvest %in% c("recknagel", "circle", "decker")), 2020, 9999),
+    # )
+
+    mutate(
+      cut = case_when(
+        (harvest %in% c("gas_line", "red_pine")) ~ 2017,
+        (harvest %in% c("boot", "wedge", "sta_rd")) ~ 2018,
+        (harvest %in% c("campridge")) ~ 2019,
+        (harvest %in% c("recknagel", "circle", "decker")) ~ 2020
+      ),
+        number_yrs_grow = year - cut + 1
+       )
+```
+  The last mutate code changes the value of "cut" to 2017 if the harvest name is list. otherwise the year of cut is 2019
+  
+  (from chatGPT, for two conditions)
+  mutate(
+    value = if_else(value > 20, value * 2, value),
+  )
+
+(from chatGPT, for multiple conditions)
+  mutate(z = case_when(
+    x > 2 & y > 8 ~ "high_x_and_high_y",
+    x > 2 & y <= 8 ~ "high_x_and_low_y",
+    x <= 2 & y > 8 ~ "low_x_and_high_y",
+    x <= 2 & y <= 8 ~ "low_x_and_low_y"
+  ))
+
+```{r}
+  seedling_ht_2022_alpha <- height_with_location %>% 
+    mutate (
+      spp = as.character(spp)
+      )%>% 
+   mutate(spp = fct_recode(spp,   #comment out species not present in data
+                           "ab" = "531",
+                         # "stm" = "315",
+                          "sm" = "318",
+                          "rm" = "316",
+                          "rp" = "125",
+                          "wp" = "129",
+                         "he" = "261",
+                          #"svb" = "356",
+                          #"svb" = "355",
+                          #"yb" = "371",
+                          "sb" = "372",
+                          #"pb" = "375",
+                         #"gb" = "379",
+                         # "ah" = "391",
+                          #"haw" = "500",
+                          "wa" = "541",
+                          #"yp" = "621",
+                          "cu" = "651",
+                          #"la" = "70",
+                          "eh" = "701",
+                          #"asp" = "740",
+                          #"bta" = "743",
+                          #"qa" = "746",
+                          #"pc" = "761",
+                          "bc" = "762",
+                          #"cc" = "763",
+                          #"wo" = "802",
+                          "co" = "832",
+                          "ro" = "833",
+                          #"bl" = "901",
+                          #"wi" = "920",
+                          "ba" = "951",
+                         # "sp" = "90", 
+                         # "sa" = "931",
+                          #"wh" = "585",
+                          "sh" = "407",
+                         "spr" = "90",
+                          #"ns" = "91",
+                          "bh" = "402",
+                          #"au" = "535",
+                          #"ec" = "742",
+                          #"unk" = "999"
+                          ))
+
+#view(regen.per.acre)
+
+write_csv(seedling_ht_2022_alpha, "seedling_height_2022_alpha_point_untidy.csv")
+
+
+
+
+```
+

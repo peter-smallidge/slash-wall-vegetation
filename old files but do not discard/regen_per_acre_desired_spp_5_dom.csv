@@ -1,0 +1,250 @@
+describ,harvest,season,TRMT,spp,TOTAL_tpa,TOTAL_tpha,PCT_pts_present,wall_denom,age,spp_count
+desired_exp,campridge,2022,inside,rm,1288,3180,49,94,3,1
+desired_exp,campridge,2022,inside,wa,538,1328,19,94,3,1
+desired_exp,campridge,2022,inside,ro,337,833,17,94,3,1
+desired_exp,campridge,2022,inside,wp,166,409,4,94,3,1
+desired_exp,campridge,2022,inside,ba,69,171,5,94,3,1
+desired_exp,campridge,2022,inside,remainder,140,346,NA,94,3,3
+desired_exp,campridge,2022,inside,desired total,2537,6267,NA,NA,NA,8
+desired_exp,campridge,2021,inside,rm,683,1688,32,94,2,1
+desired_exp,campridge,2021,inside,wa,303,749,13,94,2,1
+desired_exp,campridge,2021,inside,ro,230,569,15,94,2,1
+desired_exp,campridge,2021,inside,ba,69,171,5,94,2,1
+desired_exp,campridge,2021,inside,sm,54,133,2,94,2,1
+desired_exp,campridge,2021,inside,remainder,101,250,NA,94,2,3
+desired_exp,campridge,2021,inside,desired total,1441,3559,NA,NA,NA,8
+desired_exp,campridge,2020,inside,rm,410,1012,15,94,1,1
+desired_exp,campridge,2020,inside,yb,127,313,5,94,1,1
+desired_exp,campridge,2020,inside,ro,69,170,6,94,1,1
+desired_exp,campridge,2020,inside,ba,54,134,4,94,1,1
+desired_exp,campridge,2020,inside,sm,43,106,1,94,1,1
+desired_exp,campridge,2020,inside,remainder,86,213,NA,94,1,4
+desired_exp,campridge,2020,inside,desired total,789,1949,NA,NA,NA,9
+desired_exp,circle,2022,inside,rm,1620,4001,54,24,3,1
+desired_exp,circle,2022,inside,ro,1035,2556,54,24,3,1
+desired_exp,circle,2022,inside,wa,317,784,17,24,3,1
+desired_exp,circle,2022,inside,bh,127,313,8,24,3,1
+desired_exp,circle,2022,inside,sm,116,288,12,24,3,1
+desired_exp,circle,2022,inside,remainder,122,302,NA,24,3,2
+desired_exp,circle,2022,inside,desired total,3337,8244,NA,NA,NA,7
+desired_exp,circle,2021,inside,ro,971,2397,54,24,2,1
+desired_exp,circle,2021,inside,rm,802,1981,29,24,2,1
+desired_exp,circle,2021,inside,wa,253,625,17,24,2,1
+desired_exp,circle,2021,inside,bh,84,208,4,24,2,1
+desired_exp,circle,2021,inside,ba,64,159,4,24,2,1
+desired_exp,circle,2021,inside,remainder,64,159,NA,24,2,1
+desired_exp,circle,2021,inside,desired total,2238,5529,NA,NA,NA,6
+desired_exp,circle,2020,inside,ro,380,938,25,24,1,1
+desired_exp,circle,2020,inside,sm,169,417,4,24,1,1
+desired_exp,circle,2020,inside,ba,106,263,8,24,1,1
+desired_exp,circle,2020,inside,rm,84,208,8,24,1,1
+desired_exp,circle,2020,inside,wa,84,208,4,24,1,1
+desired_exp,circle,2020,inside,desired total,824,2035,NA,NA,NA,5
+desired_exp,decker,2022,outside,wa,203,500,20,15,3,1
+desired_exp,decker,2022,outside,ro,135,334,13,15,3,1
+desired_exp,decker,2022,outside,rm,68,167,7,15,3,1
+desired_exp,decker,2022,outside,sm,68,167,7,15,3,1
+desired_exp,decker,2022,outside,wp,68,167,7,15,3,1
+desired_exp,decker,2022,outside,desired total,540,1334,NA,NA,NA,5
+desired_exp,decker,2022,inside,wa,339,837,19,37,3,1
+desired_exp,decker,2022,inside,rm,296,730,14,37,3,1
+desired_exp,decker,2022,inside,sm,237,586,8,37,3,1
+desired_exp,decker,2022,inside,bc,229,567,8,37,3,1
+desired_exp,decker,2022,inside,ro,137,338,14,37,3,1
+desired_exp,decker,2022,inside,remainder,103,254,NA,37,3,1
+desired_exp,decker,2022,inside,desired total,1341,3312,NA,NA,NA,6
+desired_exp,decker,2021,inside,rm,302,747,11,37,2,1
+desired_exp,decker,2021,inside,wa,158,389,11,37,2,1
+desired_exp,decker,2021,inside,ro,109,270,11,37,2,1
+desired_exp,decker,2021,inside,bc,55,135,3,37,2,1
+desired_exp,decker,2021,inside,sm,52,129,5,37,2,1
+desired_exp,decker,2021,inside,remainder,48,119,NA,37,2,1
+desired_exp,decker,2021,inside,desired total,724,1789,NA,NA,NA,6
+desired_exp,decker,2020,inside,bc,137,338,5,37,1,1
+desired_exp,decker,2020,inside,sm,109,270,3,37,1,1
+desired_exp,decker,2020,inside,wa,82,203,5,37,1,1
+desired_exp,decker,2020,inside,rm,76,187,8,37,1,1
+desired_exp,decker,2020,inside,ba,65,161,3,37,1,1
+desired_exp,decker,2020,inside,remainder,55,135,NA,37,1,1
+desired_exp,decker,2020,inside,desired total,524,1294,NA,NA,NA,6
+desired_exp,gas_line,2022,outside,rm,1384,3418,53,17,6,1
+desired_exp,gas_line,2022,outside,wa,1305,3223,24,17,6,1
+desired_exp,gas_line,2022,outside,ro,820,2025,41,17,6,1
+desired_exp,gas_line,2022,outside,bc,576,1422,29,17,6,1
+desired_exp,gas_line,2022,outside,sm,179,441,12,17,6,1
+desired_exp,gas_line,2022,outside,remainder,60,147,NA,17,6,1
+desired_exp,gas_line,2022,outside,desired total,4322,10676,NA,NA,NA,6
+desired_exp,gas_line,2022,inside,wa,1948,4811,56,77,6,1
+desired_exp,gas_line,2022,inside,rm,1092,2697,35,77,6,1
+desired_exp,gas_line,2022,inside,sm,648,1601,32,77,6,1
+desired_exp,gas_line,2022,inside,ro,351,868,30,77,6,1
+desired_exp,gas_line,2022,inside,yp,338,835,6,77,6,1
+desired_exp,gas_line,2022,inside,remainder,225,555,NA,77,6,3
+desired_exp,gas_line,2022,inside,desired total,4602,11366,NA,NA,NA,8
+desired_exp,gas_line,2021,outside,wa,1260,3111,29,17,5,1
+desired_exp,gas_line,2021,outside,rm,1100,2717,35,17,5,1
+desired_exp,gas_line,2021,outside,bc,723,1787,29,17,5,1
+desired_exp,gas_line,2021,outside,ro,701,1731,35,17,5,1
+desired_exp,gas_line,2021,outside,sm,60,147,6,17,5,1
+desired_exp,gas_line,2021,outside,desired total,3843,9493,NA,NA,NA,5
+desired_exp,gas_line,2021,inside,wa,1619,3998,55,77,5,1
+desired_exp,gas_line,2021,inside,rm,766,1893,27,77,5,1
+desired_exp,gas_line,2021,inside,sm,745,1840,31,77,5,1
+desired_exp,gas_line,2021,inside,yp,305,753,6,77,5,1
+desired_exp,gas_line,2021,inside,ro,232,574,19,77,5,1
+desired_exp,gas_line,2021,inside,remainder,262,648,NA,77,5,3
+desired_exp,gas_line,2021,inside,desired total,3929,9705,NA,NA,NA,8
+desired_exp,gas_line,2020,outside,rm,1046,2585,41,17,4,1
+desired_exp,gas_line,2020,outside,wa,939,2319,24,17,4,1
+desired_exp,gas_line,2020,outside,ro,477,1177,35,17,4,1
+desired_exp,gas_line,2020,outside,bc,425,1051,12,17,4,1
+desired_exp,gas_line,2020,outside,sm,60,147,6,17,4,1
+desired_exp,gas_line,2020,outside,desired total,2947,7279,NA,NA,NA,5
+desired_exp,gas_line,2020,inside,wa,1340,3310,48,77,4,1
+desired_exp,gas_line,2020,inside,rm,801,1978,29,77,4,1
+desired_exp,gas_line,2020,inside,sm,721,1781,31,77,4,1
+desired_exp,gas_line,2020,inside,ro,212,524,16,77,4,1
+desired_exp,gas_line,2020,inside,ba,134,331,6,77,4,1
+desired_exp,gas_line,2020,inside,remainder,232,572,NA,77,4,3
+desired_exp,gas_line,2020,inside,desired total,3440,8496,NA,NA,NA,8
+desired_exp,gas_line,2019,outside,wa,1155,2852,24,17,3,1
+desired_exp,gas_line,2019,outside,rm,1126,2782,35,17,3,1
+desired_exp,gas_line,2019,outside,bc,403,995,12,17,3,1
+desired_exp,gas_line,2019,outside,ro,357,883,24,17,3,1
+desired_exp,gas_line,2019,outside,desired total,3041,7511,NA,NA,NA,4
+desired_exp,gas_line,2019,inside,wa,791,1954,35,77,3,1
+desired_exp,gas_line,2019,inside,rm,484,1195,17,77,3,1
+desired_exp,gas_line,2019,inside,sm,426,1051,22,77,3,1
+desired_exp,gas_line,2019,inside,yp,207,512,3,77,3,1
+desired_exp,gas_line,2019,inside,bc,135,332,16,77,3,1
+desired_exp,gas_line,2019,inside,remainder,173,428,NA,77,3,2
+desired_exp,gas_line,2019,inside,desired total,2216,5473,NA,NA,NA,7
+desired_exp,recknagel,2022,outside,wa,380,938,28,32,3,1
+desired_exp,recknagel,2022,outside,ro,158,391,12,32,3,1
+desired_exp,recknagel,2022,outside,bh,95,235,9,32,3,1
+desired_exp,recknagel,2022,outside,sh,63,156,3,32,3,1
+desired_exp,recknagel,2022,outside,ba,32,78,3,32,3,1
+desired_exp,recknagel,2022,outside,remainder,32,78,NA,32,3,1
+desired_exp,recknagel,2022,outside,desired total,760,1876,NA,NA,NA,6
+desired_exp,recknagel,2022,inside,ro,4608,11383,66,38,3,1
+desired_exp,recknagel,2022,inside,rm,3208,7924,66,38,3,1
+desired_exp,recknagel,2022,inside,wa,848,2094,32,38,3,1
+desired_exp,recknagel,2022,inside,sm,543,1341,29,38,3,1
+desired_exp,recknagel,2022,inside,bc,188,464,11,38,3,1
+desired_exp,recknagel,2022,inside,remainder,197,486,NA,38,3,2
+desired_exp,recknagel,2022,inside,desired total,9592,23691,NA,NA,NA,7
+desired_exp,recknagel,2021,outside,wa,95,235,6,32,2,1
+desired_exp,recknagel,2021,outside,ba,32,78,3,32,2,1
+desired_exp,recknagel,2021,outside,ro,32,78,3,32,2,1
+desired_exp,recknagel,2021,outside,sm,32,78,3,32,2,1
+desired_exp,recknagel,2021,outside,desired total,190,469,NA,NA,NA,4
+desired_exp,recknagel,2021,inside,ro,2146,5301,42,38,2,1
+desired_exp,recknagel,2021,inside,rm,1515,3742,47,38,2,1
+desired_exp,recknagel,2021,inside,sm,458,1131,16,38,2,1
+desired_exp,recknagel,2021,inside,wa,453,1119,24,38,2,1
+desired_exp,recknagel,2021,inside,bc,227,561,8,38,2,1
+desired_exp,recknagel,2021,inside,remainder,160,395,NA,38,2,2
+desired_exp,recknagel,2021,inside,desired total,4959,12250,NA,NA,NA,7
+desired_exp,recknagel,2020,outside,wa,32,78,3,32,1,1
+desired_exp,recknagel,2020,outside,desired total,32,78,NA,NA,NA,1
+desired_exp,recknagel,2020,inside,ro,640,1580,24,38,1,1
+desired_exp,recknagel,2020,inside,rm,414,1022,11,38,1,1
+desired_exp,recknagel,2020,inside,wa,293,724,8,38,1,1
+desired_exp,recknagel,2020,inside,bc,187,461,5,38,1,1
+desired_exp,recknagel,2020,inside,sm,80,198,5,38,1,1
+desired_exp,recknagel,2020,inside,remainder,53,132,NA,38,1,2
+desired_exp,recknagel,2020,inside,desired total,1666,4116,NA,NA,NA,7
+desired_exp,red_pine,2022,outside,rm,3320,8201,66,29,6,1
+desired_exp,red_pine,2022,outside,wa,886,2189,31,29,6,1
+desired_exp,red_pine,2022,outside,ro,850,2098,38,29,6,1
+desired_exp,red_pine,2022,outside,wp,838,2070,38,29,6,1
+desired_exp,red_pine,2022,outside,co,123,304,14,29,6,1
+desired_exp,red_pine,2022,outside,remainder,223,550,NA,29,6,3
+desired_exp,red_pine,2022,outside,desired total,6240,15414,NA,NA,NA,8
+desired_exp,red_pine,2022,inside,rm,7289,18003,86,28,6,1
+desired_exp,red_pine,2022,inside,wa,1416,3498,50,28,6,1
+desired_exp,red_pine,2022,inside,ro,805,1990,61,28,6,1
+desired_exp,red_pine,2022,inside,wp,412,1017,29,28,6,1
+desired_exp,red_pine,2022,inside,sm,195,481,14,28,6,1
+desired_exp,red_pine,2022,inside,remainder,265,654,NA,28,6,3
+desired_exp,red_pine,2022,inside,desired total,10382,25642,NA,NA,NA,8
+desired_exp,red_pine,2021,outside,rm,2426,5992,52,29,5,1
+desired_exp,red_pine,2021,outside,wa,747,1844,31,29,5,1
+desired_exp,red_pine,2021,outside,ro,486,1199,24,29,5,1
+desired_exp,red_pine,2021,outside,wp,244,604,21,29,5,1
+desired_exp,red_pine,2021,outside,co,163,402,14,29,5,1
+desired_exp,red_pine,2021,outside,remainder,188,464,NA,29,5,3
+desired_exp,red_pine,2021,outside,desired total,4254,10506,NA,NA,NA,8
+desired_exp,red_pine,2021,inside,rm,6470,15982,86,28,5,1
+desired_exp,red_pine,2021,inside,wa,1703,4206,54,28,5,1
+desired_exp,red_pine,2021,inside,ro,627,1548,46,28,5,1
+desired_exp,red_pine,2021,inside,bc,486,1199,25,28,5,1
+desired_exp,red_pine,2021,inside,wp,289,715,18,28,5,1
+desired_exp,red_pine,2021,inside,remainder,344,851,NA,28,5,4
+desired_exp,red_pine,2021,inside,desired total,9919,24500,NA,NA,NA,9
+desired_exp,red_pine,2020,outside,rm,1528,3775,41,29,4,1
+desired_exp,red_pine,2020,outside,ro,381,940,24,29,4,1
+desired_exp,red_pine,2020,outside,wa,175,431,14,29,4,1
+desired_exp,red_pine,2020,outside,wp,140,345,14,29,4,1
+desired_exp,red_pine,2020,outside,co,123,304,10,29,4,1
+desired_exp,red_pine,2020,outside,remainder,70,173,NA,29,4,2
+desired_exp,red_pine,2020,outside,desired total,2416,5968,NA,NA,NA,7
+desired_exp,red_pine,2020,inside,rm,4447,10983,79,28,4,1
+desired_exp,red_pine,2020,inside,wa,1370,3385,46,28,4,1
+desired_exp,red_pine,2020,inside,ro,703,1735,36,28,4,1
+desired_exp,red_pine,2020,inside,bc,219,540,14,28,4,1
+desired_exp,red_pine,2020,inside,sm,109,268,11,28,4,1
+desired_exp,red_pine,2020,inside,remainder,195,481,NA,28,4,3
+desired_exp,red_pine,2020,inside,desired total,7041,17392,NA,NA,NA,8
+desired_exp,red_pine,2019,outside,rm,768,1898,34,29,3,1
+desired_exp,red_pine,2019,outside,ro,210,518,17,29,3,1
+desired_exp,red_pine,2019,outside,co,153,378,14,29,3,1
+desired_exp,red_pine,2019,outside,wa,140,345,7,29,3,1
+desired_exp,red_pine,2019,outside,wo,70,173,3,29,3,1
+desired_exp,red_pine,2019,outside,remainder,35,86,NA,29,3,1
+desired_exp,red_pine,2019,outside,desired total,1375,3397,NA,NA,NA,6
+desired_exp,red_pine,2019,inside,rm,4233,10456,64,28,3,1
+desired_exp,red_pine,2019,inside,wa,1245,3076,39,28,3,1
+desired_exp,red_pine,2019,inside,ro,611,1510,32,28,3,1
+desired_exp,red_pine,2019,inside,bc,122,302,11,28,3,1
+desired_exp,red_pine,2019,inside,co,109,268,4,28,3,1
+desired_exp,red_pine,2019,inside,remainder,109,268,NA,28,3,2
+desired_exp,red_pine,2019,inside,desired total,6429,15880,NA,NA,NA,7
+desired_exp,sta_rd,2022,outside,wa,1613,3984,47,34,5,1
+desired_exp,sta_rd,2022,outside,rm,478,1180,21,34,5,1
+desired_exp,sta_rd,2022,outside,sm,149,368,12,34,5,1
+desired_exp,sta_rd,2022,outside,ba,11,28,3,34,5,1
+desired_exp,sta_rd,2022,outside,desired total,2251,5560,NA,NA,NA,4
+desired_exp,sta_rd,2022,inside,wa,3856,9524,69,61,5,1
+desired_exp,sta_rd,2022,inside,rm,1626,4017,46,61,5,1
+desired_exp,sta_rd,2022,inside,sm,266,656,16,61,5,1
+desired_exp,sta_rd,2022,inside,ba,191,472,11,61,5,1
+desired_exp,sta_rd,2022,inside,bc,58,144,7,61,5,1
+desired_exp,sta_rd,2022,inside,desired total,5997,14813,NA,NA,NA,5
+desired_exp,sta_rd,2021,outside,wa,1193,2946,32,34,4,1
+desired_exp,sta_rd,2021,outside,rm,313,774,12,34,4,1
+desired_exp,sta_rd,2021,outside,sm,30,74,3,34,4,1
+desired_exp,sta_rd,2021,outside,desired total,1536,3794,NA,NA,NA,3
+desired_exp,sta_rd,2021,inside,wa,2277,5624,49,61,4,1
+desired_exp,sta_rd,2021,inside,rm,541,1335,26,61,4,1
+desired_exp,sta_rd,2021,inside,ba,134,332,8,61,4,1
+desired_exp,sta_rd,2021,inside,sm,79,195,7,61,4,1
+desired_exp,sta_rd,2021,inside,bc,6,16,2,61,4,1
+desired_exp,sta_rd,2021,inside,desired total,3037,7502,NA,NA,NA,5
+desired_exp,sta_rd,2020,outside,wa,1519,3753,29,34,3,1
+desired_exp,sta_rd,2020,outside,rm,387,957,12,34,3,1
+desired_exp,sta_rd,2020,outside,desired total,1907,4709,NA,NA,NA,2
+desired_exp,sta_rd,2020,inside,wa,1909,4716,43,61,3,1
+desired_exp,sta_rd,2020,inside,rm,256,633,16,61,3,1
+desired_exp,sta_rd,2020,inside,ba,111,275,7,61,3,1
+desired_exp,sta_rd,2020,inside,sm,33,82,2,61,3,1
+desired_exp,sta_rd,2020,inside,desired total,2310,5706,NA,NA,NA,4
+desired_exp,sta_rd,2019,outside,wa,1102,2722,26,34,2,1
+desired_exp,sta_rd,2019,outside,rm,30,74,3,34,2,1
+desired_exp,sta_rd,2019,outside,desired total,1132,2796,NA,NA,NA,2
+desired_exp,sta_rd,2019,inside,wa,349,861,21,61,2,1
+desired_exp,sta_rd,2019,inside,ba,247,611,8,61,2,1
+desired_exp,sta_rd,2019,inside,rm,73,181,5,61,2,1
+desired_exp,sta_rd,2019,inside,sm,33,82,2,61,2,1
+desired_exp,sta_rd,2019,inside,bc,17,41,2,61,2,1
+desired_exp,sta_rd,2019,inside,desired total,719,1776,NA,NA,NA,5

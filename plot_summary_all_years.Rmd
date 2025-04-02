@@ -1,0 +1,193 @@
+str---
+title: "plot summary for all years"
+author: "Peter Smallidge"
+date: "3/9/2023"
+output: github_document
+```
+
+<!-- README
+
+File Description: The purpose of this file is to:
+- input data from the 2019-2022 growing season site-level plot data (code 01)
+
+plot-data-2019.csv
+plot_data_2020_untidy.csv
+plot_data_2021_untidy(revised).csv
+plot_data_2022_untidy.csv
+
+
+
+exported data files include:
+
+
+ -->
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### input of slash wall site plot data 
+
+###Initialize Libraries
+```{r, cars, include=FALSE}
+
+
+#library(ggplot2)
+#library(ggpubr)
+library(readr)
+library(dplyr)
+library(readxl)
+#library(skimr)
+library(tidyr)
+library(tidyverse)
+
+#library(readr)
+#library(skimr)
+#library(tidytable)  ## CAUTION this may conflict with dplyr functions
+library(ggplot2)
+library(ggpubr)
+
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+```
+
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted to correct data type
+the file "cheat sheet data-import" has details -->
+
+### code 01
+###Input Plot Data (code 01)
+
+
+```{r}
+
+plot2019 <- read_excel("~/R/slash-wall-vegetation/old files but do not discard/plot-data-2019.xlsx") %>% 
+    mutate(
+    mid_spp = as.character(mid_spp),
+    upper_spp = as.character(upper_spp),
+    inv_spp = as.character(inv_spp)
+    ) %>% 
+    rename(
+    invasive_spp = inv_spp
+    ) %>% 
+    mutate(
+    spp = "004",
+    origin = "s",
+#    season = 2019
+    )
+    
+plot2020 <- read_csv("~/R/slash-wall-vegetation/old files but do not discard/plot_calc_2020_untidy.csv") %>% 
+    mutate(
+    mid_spp = as.character(mid_spp),
+    upper_spp = as.character(upper_spp),
+    invasive_spp = as.character(invasive_spp)
+    ) %>% 
+    mutate(
+    spp = "004",
+    origin = "s"
+#    season = 2020
+    )
+    
+    
+plot2021 <- read_csv("~/R/slash-wall-vegetation/old files but do not discard/plot_data_2021_untidy(revised).csv") %>% 
+    mutate(
+    mid_spp = as.character(mid_spp),
+    upper_spp = as.character(upper_spp),
+    invasive_spp = as.character(invasive_spp)
+    ) %>% 
+    mutate(
+    spp = "004",
+    origin = "s",
+#    season = 2021
+    )
+    
+    
+plot2022 <- read_csv("~/R/slash-wall-vegetation/old files but do not discard/plot_data_2022_untidy.csv") 
+
+plotdata_all <- bind_rows(plot2019, plot2020, plot2021, plot2022) %>% 
+           mutate(harvest = fct_recode(harvest,
+                             "gas_line" = "gl",
+                              "red_pine" = "rp",
+                              #"sta_rd" = "stationrd",
+                              #"recknagel" = "rectangle1",
+                              #"recknagel" = "rectangle2",
+                              #"recknagel" = "rectangle3",
+                              #"recknagel" = "rectangle4",
+                              #"circle" = "circle1",
+                              #"circle" = "circle2",
+                              #"circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge",
+                              "red_pine" = "crp",
+                              "gas_line" = "cgl",
+                              "sta_rd" = "cwb"
+       ),
+       point = as.character(point),
+       season = as.character(season)
+       ) %>% 
+       filter(!(harvest == "gas_line" & point %in% c(866, 864)))  %>%  #corrected code selects for either point at the intersection of harvest and point
+        mutate(
+            location = case_when(
+            location == "perimeter" ~ "p",
+            location == "interior" ~ "i",
+            location == "control" ~ "c",
+      TRUE ~ location  # Keeps other values unchanged
+        )
+        ) %>% 
+        mutate(
+        filename = "plot_summary_all_years.Rmd",
+        df = "plotdata_final"
+)
+  
+
+location_by_point <- read_excel("~/R/slash-wall-vegetation/summary output/point_labels_all(readme).xlsx")
+          
+
+
+plotdata_final <- left_join(plotdata_all, location_by_point, by = (c("harvest", "point", "location"))) %>% 
+    mutate(
+        year = as.numeric(season),
+        firstgrow = 2035, # default value for the first growing season
+        firstgrow = case_when(
+          harvest %in% c("gas_line", "red_pine") ~ 2017,
+          harvest %in% c("sta_rd") ~ 2018,
+          harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2021,
+          harvest %in% c("6_6", "6_9") ~ 2022,
+          TRUE ~ firstgrow  # Keeps the existing value of "firstgrow" for all other cases
+    ),
+        numb_yrs_grow = (year - firstgrow) + 1
+     ) %>% 
+     mutate(
+        cut = 2035, # default value for the first growing season
+        cut = case_when(
+          harvest %in% c("gas_line", "red_pine", "sta_rd") ~ 2017,
+          harvest %in% c("campridge","circle") ~ 2019,
+          harvest %in% c("recknagel", "recknagel_north","decker") ~ 2020,
+          harvest %in% c("6_6", "6_9") ~ 2022,
+          TRUE ~ cut  # Keeps the existing value of "firstgrow" for all other cases
+    ))
+
+
+    
+
+write_csv(plotdata_final, "plotdata_all_years(revised).csv")
+
+
+```
+
+

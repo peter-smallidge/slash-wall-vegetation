@@ -1,0 +1,194 @@
+---
+title: "plot data analysis 2025"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# activate library functions
+```{r message=FALSE}
+
+library(ggplot2)
+library(ggpattern)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(writexl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+# install.packages("shinyaddins")
+# library(shinyaddins)
+
+```
+
+
+### Create file path input and the output folder (code 01) 
+
+file paths, input and output
+```{r}
+#complete data
+file_path_site2019_2023 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_plot_data_2019_2023(19feb2025)(readme).xlsx"
+
+file_path_site2019_2022 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\plotdata_all_years_3april2023.xlsx"
+
+file_path_labels <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme).xlsx"
+
+
+file_path_spp_harvest <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\spp_x_harvest_x_trmt_x_season(5march2025).xlsx"
+
+file_path_denom <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\sample_size_table(16feb2025).xlsx"
+
+
+
+
+output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
+```
+
+
+```{r}
+
+site2023 <- read_excel(file_path_site2019_2023, sheet = "19feb2025") %>% 
+#table(site2023$season)
+# 2019 2020 2021 2022 2023 
+#  248  486  277  676  284
+#  
+#  import/bind season = 2021 from site2022, harvest = recknagel, red_pine, sta_rd, circle
+rename(
+    clump_fern = clump,
+    native_shrub_cov = native_cov,
+    native_shrub_spp = native_spp
+) %>% 
+ mutate(
+     herb = recode(herb, "j" = "h")
+     ) %>% 
+select(-wall, -trmt, -height, -basalarea, -filename_datafile)
+# comm_sdl is data collected in the field; seedA is computed from comm_sdl as bracket:random generated values for 2020-2022
+
+
+site2022 <- read_excel(file_path_site2019_2022, sheet = "plotdata_all_years") %>% 
+#table(site2022$season)...note different "n" for 2021 and 2022
+# 2019 2020 2021 2022 ....2020-2022 - campridge, circle, decker, gas_line, recknagel, red_pine, sta_rd
+#  245  486  486  486 
+#  table(site2022$location, site2022$harvest)
+#  table(site2022$season, site2022$harvest)
+
+#
+# inv_cov was used in 2019. Invasive_cov used 2020-2023
+mutate(invasive_cov2 = case_when(
+  season == 2019 ~ inv_cov,  # Use inv_cov for 2019
+  season %in% 2020:2022 ~ invasive_cov,  # Use invasive_cov for 2020-2022
+  TRUE ~ NA_character_  # Keep NA for other cases
+),
+season = as.character(season),
+point = as.character(point)
+) %>% 
+select(-invasive_cov, -inv_cov) %>% 
+
+mutate(native_shrub_cov = case_when(
+    season == 2019 ~ low_cov,
+    season %in% 2020:2022 ~ native_cov,
+    TRUE ~NA_character_
+)) %>% 
+
+mutate(native_shrub_spp = case_when(
+    season == 2019 ~ low_spp,
+    season %in% 2020:2022 ~ native_spp,
+    TRUE ~NA_character_
+)) %>% 
+    
+    mutate(
+    location = case_when(
+      location == "control" ~ "c",
+      location == "interior" ~ "i",
+      location == "perimeter" ~ "p",
+      TRUE ~ location  # Keeps other values unchanged
+    )
+      ) %>% 
+rename(     #new name = old name
+    invasive_cov = invasive_cov2,
+    rhiz_fern = fern
+) %>% 
+select(-ba, -spp, -origin, -TRMT, -first, -year, -numb_yrs_grow, -native_cov, 
+       -native_spp, -low_spp, -low_cov)
+
+
+point_labels <- read_excel(file_path_labels, sheet = "Sheet1") %>% 
+    mutate(
+        brush = if_else(is.na(brush), "b", brush)
+    )
+
+print(point_labels)
+```
+
+merge 2022 and 2023
+```{r}
+# Identify common columns
+common_cols <- intersect(names(site2023), names(site2022))
+print(common_cols)
+
+# Identify columns unique to each dataframe
+unique_2023_cols <- setdiff(names(site2023), names(site2022))
+unique_2022_cols <- setdiff(names(site2022), names(site2023))
+
+print(unique_2023_cols)
+print(unique_2022_cols)
+```
+
+
+```{r}
+merged <- full_join(site2023, site2022, by = c("harvest", "season", "point", "location")) %>% 
+    select(-baf.x, -baf.y) %>% 
+    mutate(
+        oakhick.y = as.numeric(oakhick.y),
+        beech.y = as.numeric(beech.y),
+        maple.y = as.numeric(maple.y),
+        birch.y = as.numeric(birch.y),
+        hdwd.y = as.numeric(hdwd.y),
+        conifer.y = as.numeric(conifer.y),
+        comm_sdl.y = as.numeric(comm_sdl.y)
+    ) %>% 
+        select(harvest, season, point, location, date.x, date.y, disturb.x, disturb.y, slash.x, slash.y, clump_fern,
+           grass, herb.x, herb.y, herb_spp, native_shrub_cov.x, native_shrub_cov.y, native_shrub_spp.x, native_shrub_spp.y, mid_cov.x, mid_cov.y,
+           everything())
+
+# Identify the column names ending in .x and .y
+x_columns <- grep("\\.x$", names(merged), value = TRUE)
+y_columns <- gsub("\\.x$", ".y", x_columns)
+
+# Combine the paired columns into a list
+paired_columns <- data.frame(
+  column_x = x_columns,
+  column_y = y_columns
+)
+
+# Print the paired columns
+#  print(paired_columns)   THE DATA LOOK GOOD
+
+merged <- paired_columns %>%
+  pmap(~ {
+    merged <- merged %>%
+      mutate(!!gsub("\\.x$", "", .x) := coalesce(!!sym(.x), !!sym(.y)))
+  })
+```
+
+
+
+
+
+
+```{r eval=FALSE}
+circle <- site2022 %>% 
+    filter(season == 2020 | season == 2021) %>% 
+    filter((season == 2021) and (season == 2022 and not variable = comm_sdl))
+```
+

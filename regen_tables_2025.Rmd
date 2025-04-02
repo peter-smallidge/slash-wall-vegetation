@@ -1,0 +1,225 @@
+---
+title: "Regen_Tables_2025"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# activate library functions
+```{r message=FALSE}
+
+library(ggplot2)
+library(ggpattern)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(writexl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+# install.packages("shinyaddins")
+# library(shinyaddins)
+
+```
+
+
+### Create file path input and the output folder (code 01) 
+
+file paths, input and output
+```{r}
+#complete data
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2023_complete(19feb2025)(read_me).xlsx"
+
+file_path_spp_harvest <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\spp_x_harvest_x_trmt_x_season(5march2025).xlsx"
+
+file_path_denom <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\sample_size_table(16feb2025).xlsx"
+
+
+output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
+```
+
+
+# read denominators, but they mostly aren't used
+```{r}
+denom <- read_excel(file_path_denom)
+
+harvest_summ <- read_excel(file_path_spp_harvest)
+
+```
+
+
+
+```{r}
+species <- read_excel(file_path_spp_harvest) %>% 
+    select(harvest, season, trmt, growingseasons, spp, type, pct_points_any, pct_points_GTR1ft, pct_points_GTR5ft,
+           all_sizes, total, GTR5ft, firstgrow, year, wall_count, stems.ramet, denom, height)
+    
+## Step 1: Select top 10 species within each group
+## there are no calculations here, just sorting the top five spp for each group_by
+top_spp <- species %>%  #stem count variables
+    select(harvest, season, trmt, growingseasons, spp, type, all_sizes, total, GTR5ft,pct_points_any, pct_points_GTR1ft, pct_points_GTR5ft, 
+           firstgrow, year, wall_count, denom, height, stems.ramet) %>% 
+    group_by(season, harvest, trmt) %>%
+    arrange(desc(total), .by_group = TRUE) %>%
+    slice_head(n = 10) %>%
+    ungroup()
+
+# Step 2: Calculate remainder for all other species
+remainder <- species_by_harvest %>%
+    select(harvest, season, trmt, growingseasons, spp, type, all_sizes, total, GTR5ft,pct_points_any, pct_points_GTR1ft, pct_points_GTR5ft, 
+           firstgrow, year, wall_count, denom, height, stems.ramet) %>% 
+  group_by(season, harvest, trmt) %>%
+  filter(!spp %in% top_spp$spp) %>%  # Exclude top 5 spp
+  summarize(
+    wall_count = first(wall_count),
+    spp = "Remainder",  # Label for remaining species
+    across(where(is.numeric), sum, na.rm = TRUE),  # Sum numeric variables for the total remainder
+    #(average?)  stems.ramet = mean(stems.ramet)
+    .groups = "drop"
+  )
+
+# Step 3: Calculate total (sum of top 5 + remainder)
+total_row <- bind_rows(top_spp, remainder) %>%
+    select(harvest, season, trmt, growingseasons, spp, type, all_sizes, total, GTR5ft,pct_points_any, pct_points_GTR1ft, pct_points_GTR5ft, 
+           firstgrow, year, wall_count, denom, height, stems.ramet) %>% 
+  group_by(season, harvest, trmt) %>%
+  summarize(
+    wall_count = first(wall_count),
+    spp = "TOTAL",  # Label for total
+    across(where(is.numeric), sum, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Step 4: Combine top 5 species, remainder,  total and add a blank row.
+# use a dummy variable to force the sort given there is no existing variable that
+# would sort ascending or descending.
+
+# Combine and sort Remainder and TOTAL first
+remain_total <- bind_rows(remainder, total_row) %>%
+  arrange(season, harvest, trmt, spp) %>%   # Sort by spp to ensure Remainder comes before TOTAL
+  # mutate(spp = case_when(
+  #       spp %in% c("TOTAL") ~ "TOTAL", # see step 3 above where spp defined as "Total" but could change to "TOTAL"
+  #       TRUE ~ spp,  # Keeps the existing value of "spp" for all other cases
+  #   )) %>% 
+  mutate(dummy = case_when(
+        spp == "Remainder" ~ 11,
+        spp == "TOTAL" ~ 12,
+        TRUE ~ NA_real_  # Assign NA for other cases
+  ))
+
+# Assign dummy values to top_spp
+top_spp <- top_spp %>%
+  group_by(season, harvest, trmt) %>%
+  mutate(dummy = row_number()) %>%  # Assign 1 to 10
+  ungroup()
+
+blank_rows <- top_spp %>%
+  group_by(season, harvest, trmt) %>%
+  summarize(spp = "", total = NA, dummy = 13, .groups = "drop")
+
+# Now combine with top_spp
+final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
+  arrange(harvest, season, trmt, dummy) %>%  # Sort by dummy for correct order
+  mutate(
+    date = "5 March 2025",
+      filename = "regen_tables_2025.Rmd",
+      df = "species",
+    across(
+      c(wall_count, growingseasons, stems.ramet, firstgrow, year, denom, height, 
+        pct_points_any, pct_points_GTR1ft, pct_points_GTR5ft),
+      ~ if_else(dummy %in% c(11, 12), NA_real_, .x)  # Correct syntax
+    )
+  ) %>%  
+ rename(
+     GTR1ft = total
+ ) %>% 
+      select(dummy, filename,	df	,date ,	harvest,	trmt,	season,growingseasons,	spp,	type,	all_sizes,	GTR1ft,	GTR5ft,	pct_points_any	,
+             pct_points_GTR1ft	,pct_points_GTR5ft,	firstgrow,	year,	denom,	height,	stems.ramet,    wall_count
+) %>% 
+    arrange(harvest, desc(season), trmt, dummy)
+```
+
+
+```{r}
+output_file <- file.path(output_folder, paste0("top_spp_by_harvest_x_trmt_x_season(5march2025)", ".xlsx"))
+write_xlsx(final_result, output_file)
+
+```
+
+
+
+
+#####
+#####  Assumes data are tidy  
+#####  Code taken from "summary_regen_veg_data.Rmd" line 371
+regen_exp_GT_4.5ft_spp_initial <- regen_all %>% 
+  filter(tpa>0) %>% 
+  filter(size == "exp_med" | size == "exp_tall" | size == "exp_sapl") %>% 
+  mutate(
+    describ = "exp_GT_4.5ft"  #labeling data to be clear about the variables selected
+  ) %>% 
+  group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa_x_wall),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha_x_wall),
+      wall_denom = mean(wall_denom),
+      points_occupied = n_distinct(point),
+      age = mean(numb_yrs_grow)
+    ) %>% 
+  mutate(
+    PCT_pts_present = (points_occupied / wall_denom )*100
+     ) %>% 
+      arrange(harvest, season, TRMT, (desc(tpa)))
+
+  regen_exp_GT_4.5ft_head <- regen_exp_GT_4.5ft_spp_initial %>% 
+    slice_head(n=5) %>% 
+    mutate(spp_count = 1)
+  
+  regen_exp_GT_4.5ft_tail <- regen_exp_GT_4.5ft_spp_initial %>% 
+    slice_tail(n=-5) %>% 
+    filter(tpa >0) %>% 
+    mutate(
+      spp = "remainder",
+      numb = 1
+      ) %>% 
+    group_by(describ, harvest, season, TRMT, spp) %>% 
+    summarize(
+      tpa = sum(tpa),  # the average tpa for each spp is aggregated across points
+      tpha = sum(tpha),
+      wall_denom = mean(wall_denom),
+      age = mean(age),
+      spp_count = sum(numb)
+    )
+ 
+  #this code provides the sum of stem density by harvest, giving totals plus spp summ in next dataframe 
+  regen_summ_exp_GT_4.5ft <- bind_rows(regen_exp_GT_4.5ft_head, regen_exp_GT_4.5ft_tail) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    group_by(describ, harvest, season, TRMT) %>% 
+    summarize(
+      tpa = sum(tpa),
+      tpha=sum(tpha),
+      spp_count = sum(spp_count),
+      age = mean(age)
+    ) %>% 
+    mutate(spp = "TOTAL")
+
+    
+regen_exp_GT_4.5ft_spp <- bind_rows(regen_exp_GT_4.5ft_head, regen_exp_GT_4.5ft_tail, regen_summ_exp_GT_4.5ft) %>% 
+    select(describ, harvest, season, TRMT, spp, tpa, tpha, PCT_pts_present, wall_denom, age, spp_count) %>% 
+    rename(
+      TOTAL_tpa = tpa,
+      TOTAL_tpha = tpha
+    ) %>% 
+    #ungroup %>% 
+    arrange(describ, harvest, desc(season), TRMT) %>% 
+    dplyr::mutate_if(is.numeric, round, 0)  #changes all numeric variable to round to 0 significant digits

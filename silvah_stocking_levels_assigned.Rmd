@@ -42,6 +42,7 @@ stem_counts <- read_csv("tidy_regen_point_2019.csv") %>%
                               "sta_rd" = "wedge")) %>% 
   droplevels() #drops unused levels of a factor
   
+
 plot_data <- read_csv("untidy_plot_2019.csv") %>% 
   select("harvest", "location", "point", "year", "disturb", "slash", "fern", "herb",
          "low_cov", "inv_cov", "mid_cov", "upper_cov","vine_cov", "ba", "seedling_numb") %>% 
@@ -77,6 +78,7 @@ plot_data <- read_csv("untidy_plot_2019.csv") %>%
 # (ii) "silvah02" 5 stem > 3 ft tall [1925/ac, 4755/ha], -or- 
 # (iii) "silvah03" 2 stems > 5 ft [770/ac, 1901/ha].
 # Once 70% of plots have (iii) stocking, the stand is considered regenerated.
+# the above labels i, ii, and iii are applied to each point to assess stocking success.
 
 
 silvah01 <- stem_counts %>% 

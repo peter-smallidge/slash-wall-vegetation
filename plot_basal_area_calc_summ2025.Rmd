@@ -1,0 +1,272 @@
+---
+title: "Slash Wall Plot Analysis"
+author: "Peter Smallidge"
+date: "10/14/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE, message=FALSE}
+# Library: dplyr, expss, ggplot2, ggpubr, labeling, plyr,
+#library(ggplot2)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(writexl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+# install.packages("shinyaddins")
+# library(shinyaddins)
+
+```
+
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# filter rows, select columns
+# 
+
+
+
+<!-- Comments 
+
+
+
+
+-->
+
+
+
+#file paths, input and output
+```{r}
+#Input data files
+file_path_site20192023 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_plot_data_2019_2023(19feb2025)(readme).xlsx"
+
+file_path_BA2020 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_summary_2020_basal_area.xlsx"
+
+file_path_cafriBA2023 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\overstory dbh data for 6-9 and 6-6 CAFRI_2023_oct_30.xlsx"
+
+file_path_cafri <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\CAFRI Treatment & Plot Location 8-2024.xlsx"
+
+file_path_points <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all.xlsx"
+
+
+
+#Output data files
+output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
+
+
+# sample input code
+#   raw2019 <- read_excel(file_path_2019, sheet = "seedling", skip = 0 ) %>% 
+# 
+#sample output code
+#   output_file <- file.path(output_folder, paste0("site_plot_data_2019_2023(19feb2025)", ".xlsx"))
+#   write_xlsx(site_data, output_file)
+
+
+
+
+```
+
+```{r}
+all_labels <- read_excel(file_path_points, sheet = "Sheet1")
+
+cafri_merged <- read_excel(file_path_cafri, sheet = "merged", skip = 6) %>% 
+    select(stand, wall, height, overstory, understory, area, point) %>% 
+    rename(harvest = stand) %>% 
+    mutate(
+        wall = as.character(wall),
+        point = as.character(point)
+    )
+
+point_labels <- left_join(all_labels, cafri_merged, by = c("harvest", "wall", "point", "height"))
+```
+
+
+
+```{r}
+site_basal <- read_excel(file_path_site20192023, sheet = "19feb2025", skip = 0) %>% 
+    select(harvest, wall, season, date, point, location, trmt, height, basalarea, baf, oakhick,
+           beech, maple, birch, hdwd, conifer) %>% 
+    filter(!(harvest == "gas_line" & point %in% c(866, 864)))  %>%  #corrected code selects for either point at the intersection of harvest and point
+    mutate(
+        basalarea2 = (oakhick+beech+ maple+ birch+ hdwd+ conifer) * baf
+    ) %>% 
+    group_by(harvest, season, trmt, wall) %>% 
+    summarize(
+        n = n(),
+        point_count = n_distinct(point),
+        basal = sum(basalarea),
+        basal2 = sum(basalarea2),
+        oak = sum(oakhick),
+        beech = sum(beech),
+        maple = sum(maple),
+        birch = sum(birch),
+        hdwd = sum(hdwd),
+        conifer = sum(conifer),
+        .groups = "drop"
+    ) %>% 
+    filter(!basal==0 & !basal2 == 0) %>% 
+    select(-basal2) %>% 
+    select(harvest, wall, season, point_count, trmt, basal) %>% 
+    mutate(
+        basalarea_sqft = basal/point_count,
+        across(where(is.numeric), ~ round(., 1))
+    ) %>% 
+    group_by(harvest, trmt, wall) %>% 
+    summarize(
+        basalarea_sqft = mean(basalarea_sqft),
+        .groups = "drop"
+    ) %>% 
+    mutate(across(where(is.numeric), ~ round(., 1)))
+```
+
+ 
+```{r message=FALSE}
+basal2020 <- read_excel(file_path_BA2020, sheet = "site_summary_2020_basal_area", skip = 3) %>% 
+    mutate(
+    trmt = "protected",
+    trmt = if_else(location == "c", "control", trmt) #if location = c, then trmt is set to "control, otherwise it remains as "trmt"
+    ) %>% 
+    group_by(harvest, trmt) %>% 
+    summarize(
+        ba2020sqft = mean(residual_ba_sqft_ac)
+    ) %>% 
+    mutate(across(where(is.numeric), ~ round(., 1)))
+
+
+```
+ 
+```{r}
+
+basal_early <- site_basal %>% 
+    left_join(basal2020, by = c("harvest", "trmt")) %>% 
+    mutate(
+        basal_avg = (basalarea_sqft + ba2020sqft) / 2
+    ) %>% 
+    mutate(across(where(is.numeric), ~ round(., 1))) %>% 
+    rename(
+        ba = basal_avg
+    )
+
+```
+
+
+```{r message=FALSE}
+cafridbh <- read_excel(file_path_cafriBA2023, sheet = "dbh2023cafri", skip = 4) %>% 
+    rename(
+        harvest = stand,
+        wall = wall_number
+        ) %>% 
+    filter(notes != "marginal" | is.na(notes)) %>%  
+    filter(notes != "out" | is.na(notes)) %>% 
+    select(-notes) %>% 
+    mutate(
+        wall = as.character(wall),
+        point = as.character(point),
+        spp = as.character(fct_recode(
+        factor(spp),
+        "rp" = "125", "wp" = "129", "scp" = "130", "he" = "261",
+        "svb" = "356", "sm" = "310", "stm" = "315", "rm" = "316",
+        "sm" = "318", "ah" = "341", "ab" = "351", "svb" = "355",
+        "yb" = "371", "sb" = "372", "pb" = "375", "ah" = "391",
+        "bih" = "402", "sh" = "407", "pc" = "461", "unk" = "492",
+        "haw" = "500", "ab" = "521", "ab" = "53", "ab" = "531",
+        "wa" = "541", "wh" = "585", "yp" = "621", "ab" = "631",
+        "app" = "660", "la" = "70", "eh" = "701", "unk" = "706",
+        "bta" = "743", "qa" = "746", "pc" = "761", "bc" = "762",
+        "cc" = "763", "wo" = "802", "co" = "832", "ro" = "833",
+        "smc" = "866", "ns" = "91", "bl" = "901", "wi" = "920",
+        "sa" = "931", "ba" = "951", "toh" = "998", "unk" = "999",
+        "dws" = "Devil's Walking Stick",
+        #data recording errors or previously missed
+        "sb" = "273", "gb" = "379", "au" = "535", "ec" = "742",
+        "sp" = "90", "ohw" = "001", "ohw" = "1", "ab" = "331",
+        "unk" = "ush", "sm" = "136", "sb" = "732", "ab" = "851" 
+  ))
+ ) %>% 
+    mutate(
+        tpa = 43560 / (((2.75 * dbh2023) * (2.75 * dbh2023)) * pi),
+        ba = 10
+    ) %>% 
+    arrange(harvest, wall, point, tag) %>% 
+    group_by(harvest, wall, point) %>% 
+    summarize(
+        n = n(),
+        ba = sum(ba),
+        tpa = sum(tpa),
+        .groups = "drop"
+    ) %>% 
+    mutate(across(where(is.numeric), ~ round(., 1))) %>% 
+    left_join(point_labels, by = c("harvest", "wall", "point")) %>% 
+    group_by(harvest, wall, trmt, understory) %>% 
+    summarize(
+        height = first(height),
+        location = first(location),
+        acres = first(area),
+        targetBA = first(overstory),
+        numbpoints = n(),
+        ba = mean(ba),
+        tpa = mean(tpa),
+        .groups = "drop"
+    ) %>% 
+    mutate(across(where(is.numeric), ~ round(., 1))) %>% 
+    group_by(harvest, wall, trmt) %>% 
+    summarize(
+       height = first(height),
+        location = first(location),
+        acres = first(acres),
+        targetBA = first(targetBA),
+        ba = mean(ba),
+       tpa = mean(tpa),
+       .groups = "drop"
+    )
+
+    
+
+
+```
+
+```{r}
+duplicates <- cafridbh %>%
+  group_by(across(everything())) %>%
+  filter(n() > 1) %>%
+  ungroup()
+```
+
+```{r}
+basalarea <- bind_rows(basal_early, cafridbh) %>% 
+    select(harvest, wall, trmt, ba, targetBA, tpa) %>% 
+    mutate(
+        shade = "low",
+        shade = if_else(ba > 47, "high", shade), #if ba > 47, then shade is set to "high, otherwise it remains as "shade"
+            # ba > 47 was based on the midpoint of BA values for cafri data
+    filename = "plot_basal_area_calc_summ2025.Rmd",
+    date_of_output = "20feb2025"
+    ) %>% 
+    select(filename, date_of_output, harvest, wall, trmt, ba, targetBA, tpa, shade)
+
+
+```
+
+```{r}
+output_file <- file.path(output_folder, paste0("basal_area_all_slashwalls_2023data", ".xlsx"))
+write_xlsx(basalarea, output_file)
+
+
+
+```
+
+
+

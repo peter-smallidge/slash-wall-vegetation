@@ -1,0 +1,966 @@
+---
+title: "regen_and_plot_input_2023_cleaning.Rmd"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+<!-- README
+
+File Description: The purpose of this file is to:
+- input data from the 2023 growing season regeneration plots (code 01, code 02)
+    note, the plot dimensions have changed since the 2022 data were collected and processed
+
+- input the plot site characteristics (code xx)
+- Distinct from previous growing seasons, there are no seedling height data. 
+
+
+- input the overstory measurements of dbh and perhaps silvah variables (code xx)
+
+
+- standardize the names of the harvests (code xx)
+
+- count the number of sample plots and compare to number of veg plots (code xx)
+
+- insert "empty" veg plots where no veg occurred, using spp code "001" (code xx)
+
+- convert stem counts to stems per acre (code 05)
+- convert harvest names to consistent usage across years (code 05)
+- convert species numeric to alphabetic abbrev (code 05)
+- convert untidy to tidy data, alphabetic species (code 06)
+
+
+exported data files include:
+plot_data_2023_untidy.csv (line 237)
+regen_per_acre_2023_numeric_point_untidy.csv (line 353)
+regen_point_per_acre_2023_alpha_tidy.csv (line 530)
+
+ -->
+
+### Analysis of slash wall regeneation plot data - 2023
+
+###Initialize Libraries
+
+```{r}
+
+#library(ggplot2)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+
+```
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted to correct data type
+the file "cheat sheet data-import" has details -->
+
+<!--     -->
+
+### code 01
+###Input Regen Data for north, south, rectangle, gas_line (code 01) 
+
+```{r, input regen data from from multiple files and combine rows}
+
+#new raw data at "regen_2023_feb_1_2024(north, south, rectangle, gasline)_final.xlsx"
+# the file "feb_1_2024" is the final version
+# includes Recknagel North, Recknagel South, Rectangle, and Gas_line
+
+#future input files need to interchange the first two rows, and delete the comments column.
+#
+# seed01 @ 3.7 ft radius
+# seed02, seed03 @ 6 ft radius
+# sapl @ 16 ft radius
+
+
+input_veg01 <-  read_excel("slash.wall.data.2023_1_feb_2024_regen(north, south, rectangle, gasline)_final.xlsx", 
+    sheet = "regen", col_types = c("text", 
+        "text", "text", "text", "text", "text", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric"), 
+    skip = 1) %>% 
+            # replace missing values before changing character variables to factor variables
+#    filter(!harvest =="recknagel_north") %>% 
+    replace_na(list(date = "other", count = 1,
+                  sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0, wall = "99"
+                  )) %>%   #need to change missing values to real values while variable is a character type
+    mutate(
+     location = point,
+      origin = "clump", 
+      stand = as.factor(stand), 
+      season = as.numeric(season),
+      status = "vacant"
+      ) %>% 
+   mutate(stand = recode(stand,
+      "recknagel" = "recknagel_south"
+      )) %>% 
+    select(stand, wall, season, date, point, location, spp, origin, count, everything()) %>% 
+   arrange(stand, point, location, spp)
+
+
+input_veg01$origin[input_veg01$count < 1.1] <- "single" #in "replace_na" above, missing values of "count" changed to 1. Here
+#    if the value of count is less than 1.1, then the variable origin is assigned the value of "single"
+input_veg01$location[input_veg01$stand == "recknagel_north"] <- "p"
+input_veg01$status[input_veg01$stand == "recknagel_north"] <- "protected"
+
+# the above code changes the value of the variable "origin" based on the value of the variable "count"
+# if "count" is less than 1, then "origin" is changed to "single"
+```
+
+
+```{r assign treatment class to each point}
+location_by_point <- read_excel("location_by_point.xlsx") |> 
+    mutate(
+        stand = harvest,
+        status = wall,
+        wall = "99",
+        point = as.character(point)
+    ) |> 
+    select(stand, status, point, location) |> 
+     mutate(stand = fct_recode(stand,
+          "gas_line" = "gasline",
+          "recknagel" = "rectangle1",
+          "recknagel" = "rectangle2",
+          "recknagel" = "rectangle3",
+          "recknagel" = "rectangle4"
+   )) |> 
+   filter(stand %in% c("gas_line", "campridge", "recknagel")) |> 
+   mutate(
+   stand = fct_drop(stand)  
+   )
+
+
+```
+
+
+
+Merge the veg01 data with the locationxpoint codes
+
+```{r}
+walls01 = left_join(input_veg01, location_by_point, by = c("stand", "point")) |> 
+    select(!c(location.x, status.x )) |> 
+    rename(
+        status = status.y,
+        location = location.y
+    )
+
+```
+
+
+
+code 02 - input regen data for campridge and cafri
+
+```{r}
+
+
+input_veg02 <- read_excel("slash.wall.data.2023.23july2024(maybe FINAL).xlsx", 
+    sheet = "regen", col_types = c("text", 
+        "text", "numeric", "text", "text", 
+        "text", "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "skip"), skip = 2) |> 
+    replace_na(list(date = "other", count = 1,
+                  sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0, wall = "99"
+                  )) |>   #need to change missing values to real values while variable is a character type 
+   mutate(
+        origin = "clump",
+        location = point, 
+        stand = as.factor(stand),
+        status = "vacant"
+        ) |> 
+   select(stand, wall, season, date, point, location, spp, origin, count, everything())
+   
+   input_veg02$origin[input_veg01$count < 1.1] <- "single" #in "replace_na" above, missing values of "count" changed to 1. Here
+
+```
+
+#read in the cafri categories and treatments for joining to the cafri veg data
+```{r}
+
+cafri_label <- read_excel("CAFRI Treatment & Plot Location 8-2024.xlsx", 
+    sheet = "merged", skip = 4) |> 
+    mutate(
+    wall = as.character(wall),
+    height = as.character(height),
+    overstory = as.character(overstory),
+    understory = as.character(understory),
+    center_tree = as.character(center_tree),
+    point = as.character(point),
+    location = "p",
+    status = "protected"
+    )
+    
+cafri_label$status[cafri_label$height == "0"] <- "control"
+    
+```
+
+```{r}
+cafri01 = left_join(input_veg02, cafri_label, by = c("stand", "wall", "point")) |> 
+    drop_na(height) |> 
+    select(!c("status.x", "location.y")) |> 
+    rename(
+    status = status.y,
+    location = location.x) |> 
+    mutate(
+    location = "p")
+  
+
+
+cafri01$location[cafri01$status == "control"] <- "c"
+
+write.xlsx(cafri01, "raw_data_cafri2023_point_location_regen_trmt_assignment.xlsx")  
+    
+```
+
+```{r}
+campridge = left_join(input_veg02, location_by_point, by = c("stand", "point")) |> 
+    filter(wall == "99") |> 
+    select(!c("location.x", "status.x")) |> 
+    rename(
+        status = status.y,
+        location = location.y
+    )
+
+
+```
+
+```{r}
+## merge the datafiles and retain the regen data
+
+data01 = bind_rows(walls01, cafri01, campridge) |> 
+    select(stand, wall, season, date, point, spp, origin, count,
+        sup.seed01, sup.seed02, sup.seed03, sup.sapl,
+        exp.seed01, exp.seed02, exp.seed03, exp.sapl,
+        status, location) |> 
+mutate(spp = fct_recode(spp, 
+                          "rp" = "125",
+                          "wp" = "129",
+                          "scp" = "130",
+                          "he" = "261",
+                          "svb" = "356",
+                          "sm" = "310",
+                          "stm" = "315",
+                          "rm" = "316",
+                          "sm" = "318",
+                          "ah" = "341",
+                          "ab" = "351", # 6-9, wall 3, point 11
+                          "svb" = "355",
+                          "svb" = "356",
+                          "yb" = "371",
+                          "sb" = "372",
+                          "pb" = "375",
+                          #"gb" = "379",
+                          "ah" = "391",
+                          "bih" = "402",
+                          "sh" = "407",
+                          "pc" = "461", # campridge, point 483, typo for 761
+                          "unk" = "492",
+                          "haw" = "500",
+                          "ab" = "521", # 6-9, wall 5, point 26, typo as spp 521
+                          "ab" = "53",  # 6-9, wall 10, point 80, typo 53 as 531
+                          "ab" = "531",
+                          "wa" = "541",
+                          "wh" = "585",
+                          "yp" = "621",
+                          "ab" = "631", # 6-9, wall 9, point 478, typo 631 for 531
+                          #"cu" = "651",
+                          "app" = "660",
+                          "la" = "70",
+                          "eh" = "701",
+                          "unk" = "706",
+                          #"asp" = "740",
+                          "bta" = "743",
+                          "qa" = "746",
+                          "pc" = "761",
+                          "bc" = "762",
+                          "cc" = "763",
+                          #"xx6" = "793",
+                          "wo" = "802",
+                          "co" = "832",
+                          "ro" = "833",
+                          "smc" = "866",
+                          "ns" = "91",
+                          "bl" = "901",
+                          "wi" = "920",
+                          "sa" = "931",
+                          "ba" = "951",
+                          "ToH" = "998",
+                          "unk" = "999",
+                          "brs" = "Devil's Walking Stick"
+                          #"sp" = "90", 
+                          #"au" = "535",
+                          #"ec" = "742",
+                          ))
+
+write.xlsx(data01, "regen_data_dummy_print_check_species.xlsx")  
+```
+
+
+
+
+
+join dataframes of the early slash walls with the cafri slash walls
+seed01 radius = 3.7 ft
+seed02 radius = 6.0 ft
+seed03 radius = 6.0 ft
+sapl radius = 16.0 ft
+pi = 3.141593
+
+```{r}
+
+veg2023raw = data01 %>% 
+group_by(origin) |> 
+summarize(
+test_clump = mean(count)
+)
+
+mutate(
+  sup.seed01ac = sup.seed01 * pi *(3.7^2) * count,
+  sup.seed02ac = sup.seed02 * pi *(6^2) * count,
+  sup.seed03ac = sup.seed03 * pi *(6^2) * count,
+  sup.saplac = sup.sapl * pi *(16^2) * count,
+  exp.seed01ac = exp.seed01 * pi *(3.7^2) * count,
+  exp.seed02ac = exp.seed02 * pi *(6^2) * count,
+  exp.seed03ac = exp.seed03 * pi *(6^2) * count,
+  exp.saplac = exp.sapl * pi *(16^2) * count
+) %>% 
+select(
+  !c(sup.seed01, sup.seed02, sup.seed03, sup.sapl,
+  exp.seed01, exp.seed02, exp.seed03, exp.sapl)
+) %>% 
+mutate(clumped = origin) %>% 
+mutate(clumped = fct_recode(clumped,
+  "1" = "clump",
+  "0" = "single"
+)) %>% 
+mutate(clumped = as.character(clumped)) %>%  #going straight from factor to as.numeric resulted in singles = 2 and clumps = 1
+mutate(clumped = as.numeric(clumped)) %>% 
+mutate(harvest = fct_recode(harvest,
+                              "gasline" = "gas_line"
+             )) 
+
+
+
+veg2023summ = veg2023raw %>% 
+arrange(harvest, wall, point, spp) %>% 
+group_by(harvest, wall, point, spp) %>% 
+summarize(
+  sup.seed01ac = sum(sup.seed01ac),
+  sup.seed02ac = sum(sup.seed02ac),
+  sup.seed03ac = sum(sup.seed03ac),
+  sup.saplac = sum(sup.saplac),
+  exp.seed01ac = sum(exp.seed01ac),
+  exp.seed02ac = sum(exp.seed02ac),
+  exp.seed03ac = sum(exp.seed03ac),
+  exp.saplac = sum(exp.saplac),
+  clumps = sum(clumped),
+  avg_ramet_size = mean(count)  #count is the numnber of stems per rament
+) %>% 
+mutate(
+type = "empty"
+)
+
+
+veg2023summ$type[veg2023summ$spp %in% c("ba", "bc", "bih", "bl", "co", "he", "rm", "ro", "sa", 
+"sb", "sh", "sm", "wa", "wo", "wp", "yb", "yp")] <- "commercial"   #n=17
+
+veg2023summ$type[veg2023summ$spp %in% c("ab", "eh", "pc", "stm", "toh" )] <- "interfere"   #n=5
+
+veg2023summ$type[veg2023summ$spp %in% c("app", "bta", "haw", "dws", "la", "ns", "pb", "qa", "rp", "scp", "smc", "svb", "wh", "wi" )] <- "diversity" #n=14
+
+veg2023summ$type[veg2023summ$spp %in% c("ah", "cc", "unk" )] <- "other"  #n=3
+
+#commercial
+# "ba", "bc", "bih", "bl", "co", "he", "rm", "ro", "rp", "sa",
+# "sb", "sh", "sm", "wa", "wo", "wp", "yb", "yp"
+
+#interfere
+#"ab", "eh", "pc", "stm", "toh"
+
+#diversity
+#"app", "bta", "haw", "dws", "la", "ns", "pb", "qa", "rp", "scp", "smc", "wh", "wi"
+
+#other
+#"ah", "cc", "unk"
+
+```
+
+```{r}
+
+#code to export the point labels for the 2023 growing season veg data
+#an update to "location_by_point.xlsx" file
+# use the location_by_point file to update the "location" for the early slash walls
+
+
+old_wall_points <- read_excel("points2023excel.xlsx", 
+    col_types = c("text", "text", "text", 
+        "text", "text")) %>% 
+        mutate(harvest = fct_recode(harvest,
+                              "recknagel_south" = "recknagel"
+             )) 
+
+        
+cafri_trmt_points_2023 <- read_excel("cafri_trmt_points_2023.xlsx", 
+    col_types = c("text", "text", "text", 
+        "text", "text"))
+
+points2023 <- bind_rows(old_wall_points, cafri_trmt_points_2023)
+
+
+
+```
+
+
+```{r}
+
+
+```
+
+<!-- comment 
+
+
+-->
+
+    # Full join created duplicate variables of "location.x" and "location.y"
+
+
+```{r}
+#need to double check this code (15 july 2024)
+veg_data1a <- full_join(veg2023summ, points2023, by = (c("harvest", "wall", "point"))) %>% 
+    select(!"location.x") %>% 
+    drop_na(season) %>%    # this removes harvests without data collected in 2023
+    rename("location" = "location.y") %>% 
+    mutate(
+    cut = 0, 
+    year = as.numeric(season)
+          ) %>% 
+    arrange(harvest, point, spp) %>% 
+    select(harvest, season, cut, year, date, point, location, wall, everything())
+   
+veg_data1a$cut[veg_data1a$harvest %in% c("gasline")] <- 2017
+veg_data1a$cut[veg_data1a$harvest %in% c("campridge", "recknagel_south", "recknagel_north")] <- 2019
+veg_data1a$cut[veg_data1a$harvest %in% c("6_6")] <- 2021
+veg_data1a$cut[veg_data1a$harvest %in% c("6_9")] <- 2021
+# veg_data1a$wall[veg_data1a$harvest %in% c("recknagel_north")] = "protected"
+# veg_data1a$location[veg_data1a$harvest %in% c("recknagel_north")] = "perimeter"
+
+
+veg_data1 <- veg_data1a %>% 
+      mutate(
+          numb_yrs_grow = year - cut
+          ) %>% 
+    mutate(location = recode(location,
+    "c" = "control", "i" = "interior", "p" = "perimeter"
+    )) %>% 
+    select(harvest, season, cut, year, date, numb_yrs_grow, point, location, wall, everything())
+
+  
+  
+```
+
+<!-- 
+The next chunk reads the site level data. Currently this is set to 
+eval = false.  Change at some future point in time
+-->
+
+```{r, , include=T, message = F, eval = FALSE}
+
+plot_data01  <- read_excel("~/R/slash-wall-vegetation/slash.wall.data.2022.16may2023_final.xlsx", 
+    sheet = "site-plot", col_types = c("text", 
+        "text", "text", "text", "numeric", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "numeric", "skip"), skip = 6) %>% 
+        select(harvest, season, date, location, point, comm_sdl) %>% 
+  mutate(
+    location = as.character(location),
+    point = as.character(point)
+) %>% 
+  mutate(location = point) %>% 
+  mutate(harvest = fct_recode(harvest,
+                              "gas_line" = "gasline",
+                              "recknagel" = "rectangle1",
+                              "recknagel" = "rectangle2",
+                              "recknagel" = "rectangle3",
+                              "recknagel" = "rectangle4",
+                              "circle" = "circle1",
+                              "circle" = "circle2",
+                              "circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+  )) %>% 
+  arrange(harvest, point)
+  
+  
+  plot_data <- full_join(plot_data01, point_location, by = (c("harvest", "point"))) %>% 
+      select(!"location.x") %>% 
+      rename("location" = "location.y") %>% 
+      arrange(harvest, point, spp) %>% 
+      mutate(
+      season = as.numeric(season)
+)
+      # select(harvest, date, season, point, location, spp, origin, comm_sdl)
+
+# the missing values in df=plot_data are created because some plot data haven't been entered ("plot_data")
+# but there are data for the location assignment of the point ("point_location"), In full_join
+# all entries are included.
+
+#write_csv(plot_data, "plot_data_2022_untidy.csv")
+
+```
+
+
+
+<!--
+
+
+-->
+
+
+
+
+#####
+#####
+begin code review, below. Above code created 30 october 2023
+#####
+#####
+
+
+### code 03
+###Count Number of Sample Points (code 03)
+
+```{r, count number of sample points}
+
+reck_north = input_veg %>% 
+  select(harvest, point) %>% 
+  filter(harvest == "recknagel_north") %>% 
+  group_by(harvest, point)%>% 
+  slice_head(n=1)%>% 
+  mutate(
+  location = "perimeter",
+  wall = "protected"
+  )
+
+
+# create variable for total plots for denominator of average density
+point_count_01 <-  bind_rows(point_location, reck_north) %>% 
+  mutate(
+  n = 1
+    ) %>% 
+  mutate(location = recode(location,
+    "c" = "control", "i" = "interior", "p" = "perimeter"
+    )) %>% 
+  arrange(point) %>% 
+  select(harvest, location, point, wall, n)
+
+
+point_count_01$wall[point_count_01$location %in% c("interior", "perimeter")] = "protected"
+
+
+# counts the number of points by each location: interior, perimeter, control
+point_count_location <- point_count_01 %>%    #denominator for harvest x location, number of plots
+  group_by(harvest, location) %>% 
+  summarize(
+    location_denom = sum(n))
+
+# counts the number of points by inside the wall ("protected") vs. outside the wall ("control")
+point_count_wall = point_count_01 %>%
+    group_by(harvest, wall) %>% 
+    summarize(
+    wall_denom = sum(n)
+    )
+
+
+write_csv(point_count_location, "count_of_points_harvest_x_location.csv")
+write_csv(point_count_wall, "count_of_points_harvest_x_wall.csv")
+
+
+# for each inventory point, the value of "n" = 1
+```
+
+
+### code 04
+###Create plots for regen with no observations (code 04)
+
+```{r, filling out empty sample points, eval=FALSE}
+
+#There are 486 plots locations in 2020. 
+
+#The missing points would cause an error for calculation
+#of the number of stems per acre as an average of points.
+#
+#  IGNORE IGNORE
+#  code 04 not needed. Expansion of veg_data occurred at prior step. 486 unique plots
+#  there are now no missing point
+#  assess using console "unique(veg_data$point)
+#  IGNORE dataframe = site_data, rather use dataframe = "veg_data"
+
+site_data01 <- full_join(point_location, veg_data, by = "point") %>% 
+  select(!c(harvest.y, location.y)) %>% 
+  rename(harvest = harvest.x, location = location.x)   
+
+site_data <- site_data01 %>% 
+  # select(!c(season.y, date.y, location.y, spp.y, origin.y, comm_sdl.y)) %>% 
+  # rename( location = location.x, date = date.x, season = season.x, spp = spp.x, comm_sdl = comm_sdl.x, origin = origin.x) %>% 
+  replace_na(list(date = "other",  origin = "u", spp = "001",
+                  sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0,
+                  top4 = 0, comm_sdl = 0
+                  )) %>%    #need to change missing values to real values with variable as character
+    mutate(location = recode(location,
+    "c" = "control", "i" = "interior", "p" = "perimeter"
+    ))  #"old value" = "new value"
+
+
+#renames a variable label from new = old
+
+# 2022 data
+# confirmed that all plot numbers are unique
+#date = character
+#spp, origin, location and point are all character
+#all other = numeric
+
+
+```
+
+```{r, eval=FALSE}
+
+### this code is not needed, do not run
+
+# inside <- veg_data %>% 
+#     filter(location %in% c("interior", "perimeter")) %>% 
+#     droplevels %>% 
+#     mutate(
+#       wall = "protected"
+#     )
+# 
+# outside <- veg_data %>% 
+#     filter(location %in% c("control")) %>% 
+#     droplevels %>% 
+#     mutate(
+#       wall = "control"
+#     )
+
+```
+
+
+### code 05
+###data manipulations - per acre calculations & spp names
+### output csv files of untidy data with spp numeric and spp alphabetic
+```{r, regen per acre at points - calculations}
+#
+#height classes: 
+#   01 = 4" to 12", within 3.7 ft radius
+#   02 = 12" to 5 ft, within 6 ft radius
+#   03 = 5 ft to 1", within 6 ft radius
+#   sapl = 1" - 5" dbh, within 16 ft radius
+  #following code calculates the number of seedlings per acre
+  #by species for each height class. Not yet tidy.
+
+
+regen_per_acre <- veg_data1 %>%
+  mutate(  #convert plot count of stems to stems/acre
+    sup_short = sup.seed01 * count * (43560 /((pi) * (3.7 * 3.7))),
+    sup_med = sup.seed02 * count * (43560 /((pi) * (6 * 6))),
+    sup_tall = sup.seed03 * count * (43560 /((pi) * (6 * 6))),
+    sup_sapl = sup.sapl * count * (43560 /((pi) * (16 * 16))),
+    exp_short = exp.seed01 * count * (43560 /((pi) * (3.7 * 3.7))),
+    exp_med = exp.seed02 * count * (43560 /((pi) * (6 * 6))),
+    exp_tall = exp.seed03 * count * (43560 /((pi) * (6 * 6))),
+    exp_sapl = exp.sapl * count * (43560 /((pi) * (16 * 16))),
+    ) %>% 
+  mutate(
+    suppressed = sup_short + sup_med + sup_tall + sup_sapl,
+    exposed = exp_short + exp_med + exp_tall + exp_sapl,
+    total = suppressed + exposed
+    ) %>% 
+    select(!c(sup.seed01, sup.seed02, sup.seed03, sup.sapl,
+            exp.seed01, exp.seed02, exp.seed03, exp.sapl,
+            date))
+
+write_csv(regen_per_acre, "regen_per_acre_2023_numeric_point_untidy.csv")
+
+  
+  regen_alpha <- regen_per_acre %>% 
+   mutate(spp = fct_recode(spp,   #comment out species not present in data
+                         # "empty" = "1",
+                          # "empty" = "001",
+                          # "ohw" = "004",
+                          "ab" = "531",
+                          "stm" = "315",
+                          "sm" = "318",
+                          "rm" = "316",
+                          "rp" = "125",
+                          # "wp" = "129",
+                          # "he" = "261",
+                          "svb" = "356",
+                          "svb" = "355",
+                          # "yb" = "371",
+                          "sb" = "372",
+                          # "pb" = "375",
+                          #"gb" = "379",
+                          "ah" = "391",
+                          # "haw" = "500",
+                          "wa" = "541",
+                          # "yp" = "621",
+                          #"cu" = "651",
+                          # "app" = "660",
+                          # "la" = "70",
+                          "eh" = "701",
+                          #"asp" = "740",
+                          "bta" = "743",
+                          "qa" = "746",
+                          "pc" = "761",
+                          "bc" = "762",
+                          # "cc" = "763",
+                          # "wo" = "802",
+                          # "co" = "832",
+                          "ro" = "833",
+                          "smc" = "866",
+                          #"bl" = "901",
+                          "wi" = "920",
+                          "ba" = "951",
+                          #"sp" = "90", 
+                          # "sa" = "931",
+                          # "wh" = "585",
+                          # "sh" = "407",
+                          #"ns" = "91",
+                           "bh" = "402",
+                          #"au" = "535",
+                          #"ec" = "742",
+                          #"unk" = "999",
+                          
+#recode data entry errors (avoids repeated fixes with data file updates)
+# These numeric codes were entered, and because the raw data file is repeatedly updated, the
+# errors would have to be correct each time. This lacks finesse but is more effecient.
+                          # "sb" = "273",
+                          # "ab" = "331",
+                          # "ab" = "351"
+                          ))
+
+table(regen_alpha$spp)
+table(regen_alpha$harvest)
+#view(regen.per.acre)
+
+write_csv(regen_alpha, "regen_per_acre_2023_alpha_point_untidy.csv")
+
+
+
+
+
+```
+
+
+### code 06
+
+
+
+### making data tidy - comm/regen
+```{r, making data tidy commercial species}
+# commercial regeneration species
+# 316 318 372 541 621 762  802 832 833 951 
+# 129, 261, 371,407, 402
+# maple, yeb, swb, wa, yp, oaks, ba , bh, sh
+# no populus 740, 743, 746, no pab 375
+
+
+comm <- regen_alpha %>% 
+  
+  filter(spp %in% c("wp", "he", "rm", "sm","yb", "sb", "wa", "yp",
+                     "bc", "wo", "co", "ro", "ba", "bl", "rp", "cu", "sh", "bh", "ohw"
+                    )) %>% 
+  mutate(
+    type = as.factor("commercial")
+  ) %>% 
+  pivot_longer(c( sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+###making data tidy - diverse/regen
+```{r, making data tidy diverse}
+
+# desirable diversity species (no interfering, no commercial, but includes Populus, paper birch, not pin cherry)
+# 129 261 316 318 356 372 375 500 541 621 743 746 762 802 832 833  90 920 951, 407, 931
+
+diverse <- regen_alpha %>% 
+  
+  filter(spp %in% c("svb", "pb", "gb", "haw", "asp", "bta", "qa",
+                    "wi", "sh", "wh","sa","ec", "smc"
+                    )) %>% 
+  #
+
+  mutate(
+    type = as.factor("diversity")
+  ) %>% 
+  pivot_longer(c(sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+###making data tidy - interfering species/regen
+```{r, tidy for interfering species}
+
+# interfering species
+
+interfere <- regen_alpha %>% 
+  
+  filter(spp %in% c("ab", "stm", "eh", "pc", "au")) %>% 
+  mutate(
+    type = as.factor("interfering")
+  ) %>% 
+  pivot_longer(c(sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+###making data tidy - other species
+```{r}
+# other species
+
+other <- regen_alpha %>% 
+  
+  filter(spp %in% c("empty", "ah", "la", "sp", "unk", "cc", "ns"
+                    )) %>% 
+  mutate(
+    type = as.factor("other")
+  ) %>% 
+  pivot_longer(c(sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+ 
+
+###Write tidy data for each point
+```{r, tidy regen and plot data, assign stocking label to each point}
+
+tidy_regen_point <- 
+  bind_rows(comm, diverse, interfere, other)
+ 
+ 
+write_csv(tidy_regen_point, "regen_point_per_acre_2023_alpha_tidy.csv")
+
+```
+
+
+
+
+###Make Plot Data Tidy
+
+
+
+```{r}
+
+# not ready to run this code
+# not ready to run this code
+# not ready to run this code
+# not ready to run this code
+
+# 
+plot_data_tidy <- #read the csv file having basal area calculations %>% 
+
+# (need to input the calculated values of plot variables 
+#  such as basal area per acre.  
+  
+  select(!c(baf,
+            low_spp, inv_spp, mid_spp, upper_spp, vine_spp)) %>% 
+  
+  pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                  comm_stock, pre_comm_stock, diver_stock,
+                  pre_diver_stock,  interf_woody_stock, fern_stock, all_intf,
+                 winner_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val") %>% 
+  
+  replace_na(list("attrib_val" = "no", comm_per_acre = 0, pre_comm_per_acre = 0,
+                  diver_per_acre = 0, pre_diver_per_acre = 0, interfere_per_acre = 0,
+                  pre_interfere_per_acre = 0))
+
+write_csv(plot.data_tidy, "tidy_plot_2019.csv")
+
+
+
+
+```
+
+
+
+<!-- 
+ includes factor and number variables...can't blend via "pivot_longer"
+ pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                 ba, seedling_numb, comm_per_acre, comm_stock,
+                 pre_comm_per_acre, pre_comm_stock,diver_per_acre, diver_stock,
+                 pre_diver_per_acre, pre_diver_stock, interfere_per_acre, interfere_stock,
+                 pre_interfere_per_acre, pre_interfere_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val")
+-->

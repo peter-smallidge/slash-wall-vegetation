@@ -1,0 +1,347 @@
+---
+title: "slash wall analyses 2025"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r }
+
+#library(ggplot2)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(writexl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+# install.packages("shinyaddins")
+# library(shinyaddins)
+
+```
+
+
+
+
+### code 01
+### Create file path input and the output folder (code 01) 
+
+file paths, input and output
+```{r}
+#complete data
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2023_complete(16feb2025)(read_me).xlsx"
+file_path_denom <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\count_of_points_stand_by_protection.xlsx"
+
+
+output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
+```
+
+
+
+```{r}
+denom <- read_excel(file_path_denom, sheet = "Sheet 1") %>% 
+    rename(
+        harvest = stand,
+        trmt = status
+        ) %>%   
+    mutate(
+      harvest = case_when(
+      harvest == "boot" ~ "sta_rd",
+      harvest == "circle1" ~ "circle",
+      harvest == "circle2" ~ "circle",
+      harvest == "circle3" ~ "circle",
+      harvest == "cricle1" ~ "circle",
+      harvest == "gasline" ~ "gas_line",
+      harvest == "recksouth" ~ "recknagel",
+      harvest == "redpine" ~ "red_pine",
+      harvest == "stationrd" ~ "sta_rd",
+      harvest == "wedge" ~ "sta_rd",
+      harvest == "old" ~ "new",
+      TRUE ~ harvest  # Keeps other values unchanged
+    )
+      )
+
+denom_stand_trmt <- denom %>% 
+    group_by(harvest, trmt) %>% 
+    summarize(
+        denom = sum(wall_denom)
+    ) %>% 
+    mutate(
+        filename = "slash_wall_analyses_2025.Rmd"
+    ) %>% 
+    select(filename, everything())
+
+output_file <- file.path(output_folder, paste0("sample_size_table(16feb2025)", ".xlsx"))
+write_xlsx(denom_stand_trmt, output_file)
+
+
+```
+#Notes
+# - data are complete at the level of the wall
+```{r}
+d0 <- read_excel(file_path_veg_complete, sheet = "Data", skip = 2) %>% 
+    left_join(denom_stand_trmt, by = c("harvest", "trmt")) %>% 
+        mutate(
+        supD = supC1 + supC2,
+        expD = expC1 + expC2
+    ) %>% 
+    arrange(harvest, season, trmt, wall, point, spp) %>% 
+    select(-stemcount, -upperexposed) 
+
+#numeric vars to sum by origin
+numeric_vars1 <- c("seedA", "supB", "supC1", "supC2", "supD", "supP", "expB", "expC1", "expC2",
+                  "expD", "expP", "total", "clumps.acre", "stems.ramet")
+
+#numeric_vars2 = average by origin
+numeric_vars2 <- c("firstgrow", "year", "present", "success", "denom", "growingseasons", "height")
+
+d1.1 <- d0 %>% #aggregate or average to collapse "origin"
+    group_by(harvest, season, wall, point, spp) %>% 
+    mutate(type = case_when(
+        spp %in% c("sb") ~ "sb",
+        TRUE ~ type,  # Keeps the existing value of "type" for all other cases
+    )) %>%     
+    summarize(
+        filename = first(filename),
+        trmt = first(trmt),
+        type = first(type),
+        numb_points = n(),
+        across(all_of(numeric_vars1), sum, na.rm = TRUE),  # Sum all specified numeric vars1
+        across(all_of(numeric_vars2), mean, na.rm = TRUE),  # Sum all specified numeric vars2
+        .groups = "drop"
+    )
+
+d1 <- d1.1 %>% 
+    arrange(desc(season), harvest, wall, type, spp, point) %>% 
+    select(harvest, wall, point, type, spp, season, trmt, everything())
+
+d1a <- d1 %>% 
+    filter(season == "2023") %>% 
+    filter(harvest == "6_6" & season == "2023") %>% 
+    filter(total > 0) %>% 
+    arrange(desc(season), harvest, wall, type, spp, point) 
+
+```
+
+wall summary, mean values by wall and spp - across points
+```{r}
+wall_summ <- d1 %>% 
+#    filter(spp =="004") %>% 
+    filter(season == "2023") %>% 
+#    arrange(harvest, season, trmt, wall, point, spp) %>% 
+#    select(harvest, season, trmt, wall, point, spp, seedA, total, growingseasons)
+    group_by(harvest, season, wall, spp) %>% 
+    summarize(
+        filename = first(filename),
+        numbplots = first(denom),
+        trmt = first(trmt),
+        type = first(type),
+        numbpoints = n(),
+        total = mean(total), #seedA and all larger stems
+        seedlings = mean(seedA),
+#        GTR5ft_sum = sum(supD + supP + expD + expP),
+        GTR5ft = mean(supD + supP + expD + expP),
+        exp5ft = mean(expD + expP),  #average of points within a wall
+        established = mean(supB + supD + supP + expB + expD + expP),  #average of points within a wall
+        richness_established = sum((supB + supD + supP + expB + expD + expP) > 0, na.rm = TRUE),  # Count plots by spp where stems >12" occur
+        richness_GTR5ft = sum((supD + supP + expD + expP) > 0, na.rm = TRUE), # count of plots by spp for stems > 5 ft
+        richness_GTR5ft_commdiv = sum((supD + supP + expD + expP) > 0 & (type == "commercial" | type == "diversity") , na.rm = TRUE),  
+            #Count escaped comm and divers spp
+        across(all_of(numeric_vars1), mean, na.rm = TRUE),    
+        .groups = "drop"
+    ) %>% 
+    arrange(harvest, trmt,wall, type, spp) %>% 
+    filter(total > 0) %>% 
+    mutate(
+        across(where(is.numeric), ~ round(., 0))
+        ) %>% 
+    select(filename, harvest, season, trmt, type, spp, wall, everything())
+
+output_file <- file.path(output_folder, paste0("wall_summ(16feb2025)", ".xlsx"))
+write_xlsx(wall_summ, output_file)
+
+```
+
+
+#all summary, mean values by wall and spp - across points
+# this chunk allows calc of occupancy by point without double counting spp of the same type
+# merge this with the richness calcs at the harvest/season/trmt scale
+```{r eval=FALSE}
+point_wall_summ <- d1 %>% 
+#    filter(spp =="004") %>% 
+    filter(season == "2023") %>% 
+#create dummy variables
+    mutate(
+    type = case_when(
+    type %in% c("commercial") ~ "commercial",
+    
+    spp %in% c("ab", "eh", "pc", "stm", "toh" ) ~ "interfere",
+
+    )
+    group_by(harvest, season, wall, point, type) %>% 
+    summarize(
+        filename = first(filename),
+        numbplots = first(denom),
+        trmt = first(trmt),
+        type = first(type),
+        numb_spp = n(),
+        total = mean(total), #seedA and all larger stems
+        seedlings = mean(seedA),
+#        GTR5ft_sum = sum(supD + supP + expD + expP),
+        GTR5ft = mean(supD + supP + expD + expP),
+        exp5ft = mean(expD + expP),  #average of points within a wall
+        established = mean(supB + supD + supP + expB + expD + expP),  #average of points within a wall
+        richness_established = sum((supB + supD + supP + expB + expD + expP) > 0, na.rm = TRUE),  # Count plots by spp where stems >12" occur
+        richness_GTR5ft = sum((supD + supP + expD + expP) > 0, na.rm = TRUE), # count of plots by spp for stems > 5 ft
+        richness_GTR5ft_commdiv = sum((supD + supP + expD + expP) > 0 & (type == "commercial" | type == "diversity") , na.rm = TRUE),  
+            #Count escaped comm and divers spp
+        across(all_of(numeric_vars1), mean, na.rm = TRUE),    
+        .groups = "drop"
+    ) %>% 
+    arrange(harvest, trmt, wall, type, point) %>% 
+    filter(total > 0) %>% 
+    mutate(
+        across(where(is.numeric), ~ round(., 1))
+        ) %>% 
+    select(filename, harvest, season, trmt, wall, type, point, everything()) 
+    
+
+output_file <- file.path(output_folder, paste0("point_wall_summ(17feb2025)", ".xlsx"))
+write_xlsx(point_wall_summ, output_file)
+
+```
+
+
+# initial code for richness
+```{r eval=FALSE}
+trmt_richness_summ <- wall_summ %>% 
+    filter(season == "2023") %>% 
+    group_by(harvest, type, trmt, wall) %>% 
+    summarize(
+        filename = first(filename),
+        trmtdenom = first(numbplots),
+        numbpoints = first(numbpoints),
+        n = n(),
+        seedlings = sum(seedlings),
+        total = sum(total), #seedA and all larger stems
+
+#established
+        num_spp_present =  n_distinct(spp[established > 0], na.rm = TRUE),  # Count non-zero values, positioned prior to calculation of "established"
+        established = sum(established), #stem count per acre of stems > 12"
+        richness_established = sum(richness_established/numbpoints), #proportion of points occupied by stems > 12"
+        spp_occ_pct = ifelse(num_spp_present > 0, (richness_established / num_spp_present*100), NA), #for spp present, their average % occupancy of points within a wall
+        point_estab_pct = richness_established * 100, # % points within wall with at least one established seedling
+        points_occupied_estab = mean(richness_established/numbpoints*100), # number of points occupied by an established seedling
+
+# GTR5ft
+        num_spp_GTR5ft =  n_distinct(spp[GTR5ft > 0], na.rm = TRUE),  # Count non-zero values, positioned prior to calculation of "established" (calc confirmed)
+        GTR5ft_tpa = sum(GTR5ft), # number of stems per acre per wall > 5ft
+        richness_GTR5ft = sum(richness_GTR5ft/ numbpoints), #     
+        points_GTR5ft_pct = (sum(num_spp_GTR5ft)),#/(numbpoints*100), #percentage of points in a wall occupied by stems GTR5ft
+    
+        occupancy_GTR5ft_commdiv = mean(richness_GTR5ft_commdiv/numbpoints*100),
+        across(all_of(numeric_vars1), sum, na.rm = TRUE), 
+        .groups = "drop"
+        ) %>%
+     mutate(
+        across(where(is.numeric), ~ round(., 1))
+        ) %>% 
+  
+    group_by(harvest, type, trmt) %>% 
+    summarize(
+        filename = first(filename),
+        trmtdenom = first(numbplots),
+        n = n(),
+        occupancy_exposed = sum(richness_all_exposed) / trmtdenom * 100,
+        across(all_of(numeric_vars1), mean, na.rm = TRUE),    
+        GTR5ft = sum(GTR5ft),
+        all_exposed = sum(all_exposed),  #average of points within a wall
+        escaped = sum(escaped),  #average of walls within a treatment
+) %>%
+    select(filename, harvest, trmt, type, n,...... everything()) %>% 
+    arrange(harvest, type, trmt)
+
+```
+
+
+
+Use summ by point to calculate occupancy and avoid double counting plots that have multiple spp of the same type
+        total = sum(total), #seedA and all larger stems
+```{r}
+
+trmt_occupancy_summ <- point_wall_summ %>% 
+    filter(season == "2023") %>% 
+    group_by(harvest, type, trmt, wall) %>% 
+    summarize(
+        filename = first(filename),
+        trmtdenom = first(numbplots),
+        numbpoints = first(numbpoints),
+        n = n(),
+        seedlings = sum(seedlings),
+
+#established
+        num_spp_present =  n_distinct(spp[established > 0], na.rm = TRUE),  # Count non-zero values, positioned prior to calculation of "established"
+        established = sum(established), #stem count per acre of stems > 12"
+        richness_established = sum(richness_established/numbpoints), #proportion of points occupied by stems > 12"
+        spp_occ_pct = ifelse(num_spp_present > 0, (richness_established / num_spp_present*100), NA), #for spp present, their average % occupancy of points within a wall
+        point_estab_pct = richness_established * 100, # % points within wall with at least one established seedling
+        points_occupied_estab = mean(richness_established/numbpoints*100), # number of points occupied by an established seedling
+
+# GTR5ft
+        num_spp_GTR5ft =  n_distinct(spp[GTR5ft > 0], na.rm = TRUE),  # Count non-zero values, positioned prior to calculation of "established" (calc confirmed)
+        GTR5ft_tpa = sum(GTR5ft), # number of stems per acre per wall > 5ft
+        richness_GTR5ft = sum(richness_GTR5ft/ numbpoints), #     
+        points_GTR5ft_pct = (sum(num_spp_GTR5ft)),#/(numbpoints*100), #percentage of points in a wall occupied by stems GTR5ft
+    
+        occupancy_GTR5ft_commdiv = mean(richness_GTR5ft_commdiv/numbpoints*100),
+        across(all_of(numeric_vars1), sum, na.rm = TRUE), 
+        .groups = "drop"
+        ) %>%
+     mutate(
+        across(where(is.numeric), ~ round(., 1))
+        ) %>% 
+  
+    group_by(harvest, type, trmt) %>% 
+    summarize(
+        filename = first(filename),
+        trmtdenom = first(numbplots),
+        n = n(),
+        occupancy_exposed = sum(richness_all_exposed) / trmtdenom * 100,
+        across(all_of(numeric_vars1), mean, na.rm = TRUE),    
+        GTR5ft = sum(GTR5ft),
+        all_exposed = sum(all_exposed),  #average of points within a wall
+        escaped = sum(escaped),  #average of walls within a treatment
+) %>%
+    select(filename, harvest, trmt, type, n,...... everything()) %>% 
+    arrange(harvest, type, trmt)
+
+```
+
+
+    
+
+```{r}
+trmt_spp_summ <- wall_summ %>% 
+    group_by(harvest, trmt, type) %>% 
+    summarize(
+        filename = first(filename),
+        trmtdenom = first(numbplots),
+        occupancy_exposed = sum(richness_all_exposed) / trmtdenom * 100,
+        across(all_of(numeric_vars1), mean, na.rm = TRUE),    
+        GTR5ft = mean(GTR5ft),
+        all_exposed = mean(all_exposed),  #average of points within a wall
+        escaped = mean(escaped),  #average of walls within a treatment
+) %>%
+    select(filename, harvest, trmt, type, trmtdenom, total, occupancy_exposed, GTR5ft, all_exposed, escaped, everything()) %>% 
+    arrange(harvest, type, trmt)
+
+```

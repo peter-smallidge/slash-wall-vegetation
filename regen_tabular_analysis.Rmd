@@ -34,7 +34,6 @@ library(readr)
 regen01 <-  read_csv("tidy_regen_point_2019.csv") %>% 
  mutate_at(vars(harvest, location, point, spp, origin, year, type, size),
             list(factor)) %>% 
-  filter(!point %in% c("864", "866", "810")) %>%  #remove untreated gas line plots
   rename("stems_per_acre" = "stems.per.acre") %>% 
   mutate(
       stems_per_ha = 2.47 * stems_per_acre

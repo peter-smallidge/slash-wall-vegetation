@@ -10,11 +10,37 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r, include=FALSE}
+# code to make variables into factors
+  mutate_at(
+    vars(harvest, season, location, point, spp, origin),
+    list(factor)) %>%
+    
+# code to re-label the levels of a factor, newname=oldname
+   mutate(harvest = fct_recode(harvest,
+                             "gas_line" = "gl",
+                              "red_pine" = "rp",
+                              "sta_rd" = "wb
+
+```{r, include=FALSE, message=FALSE}
 # Library: dplyr, expss, ggplot2, ggpubr, labeling, plyr,
-#       tidyverse, skimr
-library(tidyverse)
-library(skimr)        ## install.packages("skimr")
+#library(ggplot2)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(writexl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+# install.packages("shinyaddins")
+# library(shinyaddins)
+
+```
+
+
 #
 # ALT plus hypen = <- (within chunk)
 # ctrl plus shift plus m = %>% 
@@ -25,80 +51,179 @@ library(skimr)        ## install.packages("skimr")
 
 ```
 
+<!-- Comments 
 
 
-<br>
 
-## Read data files as csv located within the repository  
-## Conduct basic visualization of the data  
-## Use the function "skim" to provide summary statistics  
 
+-->
+
+
+
+#file paths, input and output
 ```{r}
-#setwd("~/R/slash-wall-vegetation")
-#input.data = read.table("plot-data-2019.csv", header = TRUE, sep = ",")
-#plot.data <- input.data
+#Input data files
+file_path_site20192023 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_plot_data_2019_2023(19feb2025)(readme).xlsx"
+file_path_BA2020 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_summary_2020_basal_area.xlsx"
+file_path_cafriBA2023 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\overstory dbh data for 6-9 and 6-6 CAFRI_2023_oct_30.xlsx"
 
-plot.data = read_csv("~/R/slash-wall-vegetation/plot-data-2019.csv")
-
-
-str(plot.data) #displays the structure of the variables
-#skim(plot.data)
-table(plot.data$ba)
+#Output data files
+output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
 
 
-### test the grouping function in skim, which reports "grouping" variables ###
-
-plot.data %>% 
-  arrange(harvest, location) %>% 
-  group_by(harvest,location) 
-#  skim()
-
-  plot.data$harvest[plot.data$harvest == "cgl"] <- "gas_line"
-  plot.data$harvest[plot.data$harvest == "crp"] <- "red-pine"
-  plot.data$harvest[plot.data$harvest == "cwb"] <- "wedge_boot"
-  plot.data$harvest[plot.data$harvest == "rp"] <- "red-pine"
-  plot.data$harvest[plot.data$harvest == "gl"] <- "gas_line"
+# sample input code
+#   raw2019 <- read_excel(file_path_2019, sheet = "seedling", skip = 0 ) %>% 
+# 
+#sample output code
+#   output_file <- file.path(output_folder, paste0("site_plot_data_2019_2023(19feb2025)", ".xlsx"))
+#   write_xlsx(site_data, output_file)
 
 
-#head(plot.data, n=10)
-#tail(plot.data, n=10)
 
 
-#test2 <- test
-#test2$species[test2$species == 318] <-  "sm"
-#test2$location[test2$location == "p"] <-  "perimeter"
 ```
 
-<br>
 
-<!-- note to self: the following code was tried for purpose of manipulating data. Either it didn't work or was subsequently deemed not necessary -->
+```{r}
+#site_basal <- read_excel(file_path_site20192023, sheet = "19feb2025", skip = 0)
+```
+
+ 
+
+
+
+
+
+
+
+
+
+
+##
+##
+## old code below
+```{r}
+overstory_raw <- read_excel("site_2023_march_19_2024 (Recknagel and Gas Line).xlsx", 
+    sheet = "baf10", skip = 1) %>% 
+    slice(-2) %>% 
+  rename (
+    spp = species,
+    harvest = site
+          ) %>% 
+  mutate(
+    TRMT = "missing",
+    sprout = 0,
+    spp = as.character(spp),
+    ba = 10
+  ) %>% 
+     mutate(spp = fct_recode(spp,   #comment out species not present in data
+                          #"ab" = "531",
+                          "sm" = "318",
+                          "rm" = "316",
+                          # "wp" = "129",
+                          # "he" = "261",
+                          # "yb" = "371",
+                          #"sb" = "372",
+                          #"wa" = "541",
+                          # "yp" = "621",
+                          #"cu" = "651",
+                          #"bta" = "743",
+                          #"qa" = "746",
+                          "bc" = "762",
+                          # "wo" = "802",
+                          # "co" = "832",
+                          "ro" = "833",
+                          #"bl" = "901",
+                          "ba" = "951",
+                          # "sa" = "931",
+                          # "sh" = "407",
+                          # "bh" = "402",
+                          )) %>% 
+  mutate(
+    tpa = 43560 / (((2.75 * dbh2023) * (2.75 * dbh2023)) * pi),
+    vol_int = ((1.52968 * (numb_logs * numb_logs)) + (9.58615 * numb_logs) - 13.35212) +
+          ((1.79620 - (0.27465 * (numb_logs * numb_logs))  - 2.59995* (numb_logs)) * dbh) +
+          ((0.04482 - (0.00961 * (numb_logs * numb_logs)) + (0.44957 * numb_logs) ) * (dbh * dbh))
+    # formula INT 1/4" from Purdue fact sheet, confirmed 11/28/2023, slightly lower than the table 6 values
+  )
+
+overstory_raw$TRMT[overstory_raw$harvest %in% c("recknagel_north")] = "protected"
+overstory_raw$sprout[overstory_raw$wi_16ft %in% c("y")] = 1
+
+```
+
+
 
 
 ```{r}
-#plot.data <- input.data
-#code below to convert character variables to factor variables. I don't think this is necessary.
-#
-  #select(harvest, location, low.spp, invasive.spp, mid.spp, upper.spp, vine.spp) %>% 
- # mutate_if(is.character,as.factor)
+overstory_points <- overstory_raw %>% 
+  group_by(harvest, TRMT) %>% 
+    summarize(
+      point_count = n_unique(point)
+    )
 
-#    These are redundant with the more thorough output of "skim"
-#str(plot.data)
-#glimpse(plot.data)
-#names(plot.data)
-#dim(plot.data)
-#skimr::skim_tee(plot.data) - same as previous line
+overstory_summ <- left_join(overstory_raw, overstory_points, by = c("harvest", "TRMT")) %>% 
+  group_by(harvest, TRMT, spp) %>% 
+  summarise(
+    point_count = mean(point_count),
+    sprouts_ac = sum(sprout) / point_count,
+    ba_a = sum(ba)/ point_count,
+    tpa = sum(tpa)/ point_count,
+    INT_vol_ac = sum(vol_int) / point_count
+  ) %>% 
+  mutate(
+    dbh_q = sqrt((ba_a/tpa)/0.005454),
+    spp = as.character(spp)
+  ) %>% 
+   mutate_if(is.numeric, round, 1) %>% 
+  select(harvest, TRMT, spp, point_count, dbh_q, ba_a, tpa, INT_vol_ac, sprouts_ac) %>% 
+  arrange(harvest, TRMT, spp) # spp wouldn't sort as a factor, so changed to character
 
-#the following does not work. Variable "maple" should be integer
-#plot.data %>% 
-#  mutate(vars(maple, na.rm=TRUE),integer)
 
-#spec(plot.data)
+```
 
-#the following does not work...note maple is "character"
-#plot.data %>% 
-#  cols(
-#    maple=col_integer()
-#  )
+
+
+```{r}
+
+
+plot_data_2020_untidy <- read_csv("plot_data_2020_untidy.csv", 
+    col_types = cols(invasive_spp = col_character(), 
+        mid_spp = col_character(), upper_spp = col_character()))
+  
+  
+  #calculate basal area per acre
+  plot_2020 <- plot_data_2020_untidy %>% 
+      replace_na(list(oakhick = 0, beech = 0, maple = 0, birch = 0, hdwd = 0, conifer = 0
+                  )) %>%   #need to change missing values to real values 
+      mutate(
+        ba_acre = baf * (oakhick + beech + maple + birch + hdwd + conifer)
+        )
+  
+  cut2017 <- plot_2020 %>% 
+    filter(harvest %in% c("boot", "gas_line", "red_pine", "wedge", "sta_rd")) %>% 
+    mutate(
+      cut = 2017,
+      year = season,
+      numb_yrs_grow = year - cut +1
+    )
+  
+  cut2019 <- plot_2020 %>% 
+    filter(harvest %in% c("campridge", "circle", 
+                          "decker","recknagel")) %>% 
+      mutate(
+      cut = 2019,
+      year = season,
+      numb_yrs_grow = year - cut +1
+      )
+
+  
+plot_summary_2020 <- 
+  bind_rows(cut2017, cut2019) %>% 
+
+  
+  arrange(harvest, location) %>% 
+  group_by(harvest,location) 
 
 ```
 
@@ -121,21 +246,30 @@ plot.data %>%
 # Currently just load tidyverse and skimr
 
 
-site <- plot.data %>% 
+
+
+site <- plot_summary_2020 %>% 
  #filter(location =="interior" | location=="control") %>% 
-  select(harvest, location, ba) %>% 
+  select(harvest, location, ba_acre, cut, numb_yrs_grow) %>% 
   mutate(harvest = recode(
-    harvest, "boot" = "sta_rd", "wedge" = "sta_rd", "wedge_boot" = "sta_rd")) %>% 
+    harvest, "boot" = "sta_rd", "wedge" = "sta_rd", "wedge_boot" = "sta_rd",
+    "rect1" = "campridge", "rect2" = "campridge", "rect3" = "campridge", "rect4" = "campridge",
+    "circle1" = "circle", "circle2" = "circle", "circle3" = "circle")) %>% 
   group_by(harvest, location) %>% 
-  summarize(ba_sqft = mean(ba)) %>% 
+  summarize(ba_sqft = mean(ba_acre),
+            harvested = mean(cut),
+            n = n(),
+            Number_Growing_Seasons = mean(numb_yrs_grow)
+            ) %>% 
   mutate(
-    ba_sqha = ba_sqft * 0.22956) %>% 
+    ba_sqm = ba_sqft * 0.22956) %>% 
   arrange(harvest, location)
   
 #site
 #write.table(site, "site_BA_means.txt", sep="\t")
-write_csv(site, "site_BA_means.csv")
-
+write_csv(plot_summary_2020, "plot_calc_2020_untidy.csv")
+write_csv(site, "site_summary_2020_basal_area.csv")
+# (df not found)   write_csv(tidy_regen_point, "regen_point_per_acre_2020_alpha_tidy.csv")
 
 ```
 mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) %>%  #old = new

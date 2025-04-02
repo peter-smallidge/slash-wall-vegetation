@@ -1,0 +1,852 @@
+---
+title: "slash wall analyses 2025"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# activate library functions
+```{r message=FALSE}
+
+library(ggplot2)
+library(ggpattern)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(writexl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+# install.packages("shinyaddins")
+# library(shinyaddins)
+
+```
+
+
+
+
+### code 01
+### Create file path input and the output folder (code 01) 
+
+file paths, input and output
+```{r}
+#complete data
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2023_complete(19feb2025)(read_me).xlsx"
+file_path_denom <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\count_of_points_stand_by_protection.xlsx"
+
+
+output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
+```
+
+
+# read denominators, but they mostly aren't used
+```{r}
+denom <- read_excel(file_path_denom, sheet = "Sheet 1") %>% 
+    rename(
+        harvest = stand,
+        trmt = status
+        ) %>%   
+    mutate(
+      harvest = case_when(
+      harvest == "boot" ~ "sta_rd",
+      harvest == "circle1" ~ "circle",
+      harvest == "circle2" ~ "circle",
+      harvest == "circle3" ~ "circle",
+      harvest == "cricle1" ~ "circle",
+      harvest == "gasline" ~ "gas_line",
+      harvest == "recksouth" ~ "recknagel",
+      harvest == "redpine" ~ "red_pine",
+      harvest == "stationrd" ~ "sta_rd",
+      harvest == "wedge" ~ "sta_rd",
+      harvest == "old" ~ "new",
+      TRUE ~ harvest  # Keeps other values unchanged
+    )
+      )
+
+denom_stand_trmt <- denom %>% 
+    group_by(harvest, trmt) %>% 
+    summarize(
+        denom = sum(wall_denom)
+    ) %>% 
+    mutate(
+        filename = "slash_wall_analyses_2025.Rmd"
+    ) %>% 
+    select(filename, everything())
+
+output_file <- file.path(output_folder, paste0("sample_size_table(16feb2025)", ".xlsx"))
+write_xlsx(denom_stand_trmt, output_file)
+
+
+```
+
+
+#Notes
+# Input raw data - data are complete at the level of the wall
+```{r}
+d0 <- read_excel(file_path_veg_complete, sheet = "data", skip = 2) %>% 
+    left_join(denom_stand_trmt, by = c("harvest", "trmt")) %>% 
+        mutate(
+        GTR5ft = supD + supP + expD + expP,
+#        total = supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP, variable already exists
+        all_sizes = seedA + total
+    ) %>% 
+        mutate(spp = case_when(
+        spp %in% c("004") ~ "ohw",
+        TRUE ~ spp,  # Keeps the existing value of "type" for all other cases
+    )) %>%
+    mutate(type = case_when(
+            type %in% c("blank") ~ "commercial",
+            TRUE ~ type,  # Keeps the existing value of "type" for all other cases
+        ),
+        origin = case_when(
+            origin %in% c("unknown") ~ "single",
+            TRUE ~ origin,  # Keeps the existing value of "origin" for all other cases
+        )
+    ) %>% 
+   mutate(type = case_when(
+        spp %in% c("sb") ~ "sb",
+        TRUE ~ type,  # Keeps the existing value of "type" for all other cases
+    )) %>%     
+    arrange(harvest, season, trmt, wall, point, spp) %>% 
+    select( -upperexposed, -stemcount, -total, -GTR5ft, -all_sizes)
+
+d0_sub <- d0 %>% 
+    filter(harvest == "6_6" & season == "2023") 
+
+
+#
+#change date in file name as needed
+#
+output_file <- file.path(output_folder, paste0("input_data_subset(d0)(5march2025)", ".xlsx"))
+write_xlsx(d0_sub, output_file)
+
+```
+
+
+
+
+#Pre-process df for subsequent manipulations. Sum within species
+```{r}
+d1.1 <- d0 %>% #aggregate or average to collapse "origin"
+# use d1a    filter(harvest == "6_6" & season == "2023") %>% 
+    group_by(harvest, season, wall, point, spp) %>%  #combines origin into spp
+    summarize(
+        filename = first(filename),
+        point_count = n_distinct(point),
+        n = n(),
+        trmt = first(trmt),
+        type = first(type),
+        firstgrow = first(firstgrow),
+        year = first(year),
+        denom = first(denom),
+        growingseasons = first(growingseasons),
+        height = first(height),
+        clumps.acre = sum(clumps.acre),  # Sum all specified numeric clumps.acre and stems.ramet calc confirmed)
+        stems.ramet = sum(stems.ramet),
+        seedA = sum(seedA),
+        supB = sum(supB),
+#        supC1 = sum(supC1), C! and C2 don't exist in 2023 data
+#        supC2 = sum(supC2),
+        supD = sum(supD),
+        supP = sum(supP),
+        expB = sum(expB),
+#        expC1 = sum(expC1),
+#        expC2 = sum(expC2),
+        expD = sum(expD),
+        expP = sum(expP),
+        # across(all_of(numeric_vars1), sum, na.rm = TRUE),  
+        # across(all_of(numeric_vars2), mean, na.rm = TRUE),  # average of all specified numeric vars2
+        .groups = "drop"
+    ) %>% 
+    mutate(
+        GTR5ft = supD + supP + expD + expP,
+        total = supB + supD + supP + expB + expD + expP, 
+        all_sizes = seedA + total
+    )
+
+#
+# go to slash_veg_complete and search for "cafri_point_labels" and where 6_6, ohw seedA wall 11 didn't get the correct height (likely others)
+# 
+
+d1 <- d1.1 %>%  #d1 = d1.1, just arranged differently 
+    arrange(desc(season), harvest, wall, type, spp, point) %>% 
+    select(filename, harvest, wall, point, type, spp, season, trmt, everything())
+
+d1a <- d1 %>%   #d1a is useful to test calculation from the mostly raw data
+    filter(season == "2023") %>% 
+    filter(harvest == "6_6") %>% 
+    filter(all_sizes > 0) %>% 
+    arrange(desc(season), harvest, wall, type, spp, point) 
+
+    arrange(filename, (harvest), desc(season), wall, type, spp) %>% 
+
+```
+
+
+
+#define numeric variables
+```{r}
+#numeric vars to sum by origin
+numeric_vars1 <- c("total", "all_sizes", "GTR5ft", "seedA", "supB", "supD", "supP", "expB",
+                  "expD", "expP")
+
+#numeric_vars2 = average by origin
+numeric_vars2 <- c("firstgrow", "year", "denom", "growingseasons", "height")
+```
+
+
+
+# count # spp within type present at each point. Summarize tpa by point
+```{r}
+type_summary <- d1 %>%
+#    filter(season == "2023") %>%  # filter for season while checking code, then run for all seasons
+    group_by(harvest, season, wall, point, type) %>%
+    summarize(
+        trmt = first(trmt),
+        point_count = n_distinct(point),
+        denominator = n(), #denominator = # spp x type
+        type_count = n(),
+        any_present = sum(all_sizes > 0, na.rm = TRUE),  # Record presence at points by type where "all_sizes" > 0, for stems > 4" tall
+        GTR1ft_present = sum(total > 0, na.rm = TRUE),  # Record presence at points by type where total > 0, for stems > 12" tall
+        GTR5ft_present = sum(GTR5ft > 0, na.rm = TRUE), # Record presence at points by type where "GTR5" >0
+        across(all_of(numeric_vars1), sum, na.rm = TRUE),  # Sum all specified numeric vars1 (logic for sum confirmed)
+        across(all_of(numeric_vars2), mean, na.rm = TRUE),  # Mean of all specified numeric vars2
+
+          # Calculate mean for clumps.acre and stems.ramet based on non-zero count
+       clumps.acre = if_else(sum(clumps.acre > 0, na.rm = TRUE) > 0,  #counts the number of non-zero values of clump.acre
+                                  sum(clumps.acre, na.rm = TRUE) / sum(clumps.acre > 0, na.rm = TRUE), #if there are non-zero values, completes the calc
+                                  NA_real_), #calculations for clumps.acre and stems.ramet confirmed
+       
+       stems.ramet = if_else(sum(stems.ramet > 0, na.rm = TRUE) > 0,
+                                  sum(stems.ramet, na.rm = TRUE) / sum(stems.ramet > 0, na.rm = TRUE),
+                                  NA_real_),
+
+                .groups = "drop"
+        
+        #need to average clumps.acre and stems.ramet for the non-zero values within a type
+        ) %>%
+
+        mutate(
+            across(where(is.numeric), ~ round(., 1)),
+            filename = "slash_wall_analyses_2025.Rmd"
+        ) %>% 
+
+        select(filename, harvest, season, trmt, wall, point, type,point_count, denominator, type_count, 
+           any_present, all_sizes, GTR1ft_present, total, growingseasons, clumps.acre, 
+           stems.ramet, everything()) %>% 
+        arrange(desc(season), harvest, wall, type, point)
+
+```
+
+# occupancy by wall for type. Summ of stem counts by type
+# aggregate into average by wall x type at the harvest scale
+```{r}
+wall_type_occupancy <- type_summary %>%
+  group_by(harvest, season, trmt, wall, type) %>%
+  summarize(
+    point_count = n_distinct(point),# Total plots in the wall
+
+    plots_with_any = sum(any_present > 0, na.rm = TRUE), # Count of plots where type is represented by a spp
+    occup_any_pct = (plots_with_any / point_count) * 100, #by type, the percentage of plots within a wall with spp any size of that type
+
+    plots_with_GTR1ft = sum(total > 0, na.rm = TRUE), # Count of plots where type is represented by a spp >12" tall
+    GTR1ft_pct = (plots_with_GTR1ft / point_count) * 100,
+
+    plots_with_GTR5ft = sum(GTR5ft_present > 0, na.rm = TRUE), # Count of plots where type is represented by a spp
+    GTR5ft_pct = (plots_with_GTR5ft / point_count) * 100,
+    
+    clumps.acre = sum(clumps.acre / point_count, na.rm = TRUE), # this will calc clumps.acre based on the number of points per wall. points with zero included
+    stems.ramet = if_else(sum(stems.ramet > 0, na.rm = TRUE) > 0,
+                                  sum(stems.ramet, na.rm = TRUE) / sum(stems.ramet > 0, na.rm = TRUE),
+                                  NA_real_), # this will calc stems.ramet based on the number of points w/i wall that have clumps
+
+    across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / point_count),  # Normalize by point_count
+    across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / point_count),  # Normalize by point_count
+    .groups = "drop"
+  )  %>%   
+    mutate(
+        across(where(is.numeric), ~ round(., 1))
+  ) %>% 
+  mutate(
+        filename = "slash_wall_analyses_2025.Rmd"
+  ) %>% 
+    select(filename, harvest, season, trmt, wall, growingseasons, type, plots_with_any, point_count, occup_any_pct, plots_with_GTR1ft, 
+           GTR1ft_pct, plots_with_GTR5ft, GTR5ft_pct, clumps.acre, stems.ramet, everything())
+
+output_file <- file.path(output_folder, paste0("type_occupancy_x_wall_x_trmt_x_season(4march2025)", ".xlsx"))
+write_xlsx(wall_type_occupancy, output_file)
+
+
+```
+
+
+# calcuate the values of metrics at wall x spp
+```{r}
+species_by_wall <- d1 %>%
+#  filter(season == "2023") %>%  # filter for season while checking code, then run for all seasons
+  group_by(harvest, season, trmt, wall, spp) %>%
+   summarize(
+       filename = first(filename), 
+       type = first(type),
+       point_count = n_distinct(point),
+            #calculate the numb points 
+       numb_pts_any = sum(all_sizes > 0, na.rm = TRUE),  # Count species where all_sizes > 0
+       numb_pts_GTR1ft = sum(total > 0, na.rm = TRUE),  # Count species where "total" 12"+ > 0
+       numb_pts_GTR5ft = sum(GTR5ft > 0, na.rm = TRUE), # count of species where GTR5>0
+       any_size_pct = numb_pts_any / point_count *100,
+       GTR1ft_pct = numb_pts_GTR1ft / point_count * 100,
+       GTR5ft_pct = numb_pts_GTR5ft / point_count * 100,
+       
+       across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / point_count),  # Normalize by point_count
+       across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / point_count),  # Normalize by point_count
+       
+       x1 = sum(stems.ramet, na.rm = TRUE),
+       x2 = sum(stems.ramet > 0, na.rm = TRUE), 
+       clumps.acre = sum(clumps.acre),
+       stems.ramet = sum(stems.ramet),
+       clumps.acre = sum(clumps.acre / point_count, na.rm = TRUE), 
+            # this will calc clumps.acre based on the number of points per wall. points with zero included
+       stems.ramet = if_else(x2 > 0, x1 / x2, NA_real_),
+       # stems.ramet.2 = case_when(
+       #      sum(stems.ramet > 0, na.rm = TRUE) > 0 ~ sum(stems.ramet, na.rm = TRUE) / sum(stems.ramet > 0, na.rm = TRUE),
+       #      TRUE ~ NA_real_), # calc confirmed, stems.ramet based on # spp that have ramets
+
+           .groups = "drop"
+  )  %>%   
+  mutate(
+        across(where(is.numeric), ~ round(., 1)),
+        df = "species_by_wall"
+  ) %>%
+    filter(all_sizes > 0) %>% 
+    arrange(filename, (harvest), desc(season), trmt, type, spp) %>% 
+    select(filename, df, harvest, season, trmt, wall, growingseasons, spp, type, point_count, numb_pts_any, any_size_pct, numb_pts_GTR1ft, GTR1ft_pct, 
+           numb_pts_GTR5ft, GTR5ft_pct, clumps.acre, stems.ramet,  everything())
+
+output_file <- file.path(output_folder, paste0("spp_x_wall_x_trmt_x_season(5march2025)", ".xlsx"))
+write_xlsx(species_by_wall, output_file)
+
+
+#rerun spp x wall as type x harvest
+
+```
+
+# species averages across walls by harvest
+```{r}
+point_counts <- species_by_wall %>% 
+        group_by(harvest, season, trmt, wall) %>% 
+        summarize(
+            point_count = first(point_count), # the number of points in a wall
+            .groups = "drop"
+        ) %>% 
+        arrange((harvest), desc(season), trmt, wall) 
+
+    
+wall_counts <- point_counts %>%
+    group_by(harvest, season, trmt) %>%
+    summarize(
+        wall_count = n_distinct(wall), # number of walls in a harvest
+        points_per_wall = sum(point_count), # could also be called points_per_trmt
+        .groups = "drop")
+
+species_by_harvest <- species_by_wall %>% 
+#        filter(harvest == "6_6" & season == "2023") %>% 
+        left_join(wall_counts, by = c("harvest", "season", "trmt")) %>%  # Join to get the correct wall_count
+        group_by(harvest, season, trmt, spp) %>% 
+        summarize(
+            filename = first(filename),
+            points_per_harvest = first(points_per_wall),
+            # numb_pts_any = first(numb_pts_any), # I don't think this is needed
+            # numb_pts_seedl = first(numb_pts_seedl), # same
+            # numb_pts_GTR5ft = first(numb_pts_GTR5ft), # same
+            type = first(type),
+            freq_by_grouping = n(),
+            wall_count = first(wall_count),
+#            avg_pts_wall_any = sum(numb_pts_any) / wall_count,
+#            avg_pts_wall_seedl = sum(numb_pts_seedl) / wall_count,
+#            avg_pts_wall_GTR5ft = sum(numb_pts_GTR5ft) / wall_count,
+            pct_points_any = (sum(numb_pts_any)) / points_per_harvest *100,
+            pct_points_GTR1ft = (sum(numb_pts_GTR1ft)) / points_per_harvest *100, # for stems > 12" tall
+            pct_points_GTR5ft = (sum(numb_pts_GTR5ft)) / points_per_harvest * 100,
+            
+           across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / wall_count),  # summ numeric from each wall, divide by number of walls = avg/harvest
+           across(all_of(numeric_vars2), mean, na.rm = TRUE),
+           #across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / wall_count)  # Normalize by wall_count
+           #
+       x1 = sum(stems.ramet, na.rm = TRUE),
+       x2 = sum(stems.ramet > 0, na.rm = TRUE), 
+       clumps.acre = sum(clumps.acre),
+       stems.ramet = sum(stems.ramet),
+       clumps.acre = sum(clumps.acre / points_per_wall, na.rm = TRUE), 
+            # this will calc clumps.acre based on the number of points per wall. points with zero included
+       stems.ramet = if_else(x2 > 0, x1 / x2, NA_real_),
+
+       .groups = "drop"
+        
+    ) %>% 
+    arrange(filename, (harvest), desc(season), trmt, type, spp) %>% 
+    mutate(df = "species_by_harvest") %>% 
+#    select(-x1, -x2, -supC1, -supC2, -expC1, -expC2, -denom) %>% 
+        select(filename, df, harvest, season, trmt,  wall_count, points_per_harvest, growingseasons, spp, type, pct_points_any, pct_points_GTR1ft,
+           pct_points_GTR5ft, clumps.acre, stems.ramet, everything()) %>% 
+    mutate(
+        across(where(is.numeric), ~ round(., 1))
+    )
+
+output_file <- file.path(output_folder, paste0("spp_x_harvest_x_trmt_x_season(5march2025)", ".xlsx"))
+write_xlsx(species_by_harvest, output_file)
+
+
+```
+
+
+# TYPE averages across walls by harvest
+```{r}
+point_counts <- species_by_wall %>% 
+        group_by(harvest, season, trmt, wall) %>% 
+        summarize(
+            point_count = first(point_count),
+            .groups = "drop"
+        )
+    
+wall_counts <- point_counts %>%
+    group_by(harvest, season, trmt) %>%
+    summarize(
+        wall_count = n_distinct(wall),
+        points_per_wall = sum(point_count),
+        .groups = "drop")
+
+type_by_harvest <- species_by_harvest %>% 
+#        filter(harvest == "6_6" & season == "2023") %>% 
+        left_join(wall_counts, by = c("harvest", "season", "trmt", "points_per_wall", "wall_count")) %>%  # Join to get the correct wall_count
+        group_by(harvest, season, trmt, type) %>% 
+        summarize(
+            filename = first(filename),
+            points_per_wall = first(points_per_wall),
+            type = first(type),
+            freq_by_grouping = n(),
+            wall_count = first(wall_count),
+            pts_wall_any = sum(numb_pts_any), #nonsensical.  Go to sum@point, flag a point if any comm, if any interf, etc. then summ
+            pts_wall_seedl = sum(numb_pts_seedl),
+            pts_wall_GTR5ft = sum(numb_pts_GTR5ft),
+            pct_points_any = sum(numb_pts_any) / points_per_wall *100,
+            pct_points_seedl = sum(numb_pts_seedl) / points_per_wall *100,
+            pct_points_GTR5ft = sum(numb_pts_GTR5ft) / points_per_wall * 100,
+           type_diversity = n_distinct(spp), # the number of species per type. NEED to standardize this for area
+           across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / wall_count),  # Normalize by wall_count
+           across(all_of(numeric_vars2), mean, na.rm = TRUE),
+           #across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / wall_count)  # Normalize by wall_count
+           #
+       x1 = sum(stems.ramet, na.rm = TRUE), #the total of the stems per ramet
+       x2 = sum(stems.ramet > 0, na.rm = TRUE), # the number of spp with clumps
+       clumps.acre = sum(clumps.acre),
+       clumps.acre = sum(clumps.acre),
+       stems.ramet = if_else(x2 > 0, x1 / x2, NA_real_), #average stems.ramet
+
+       .groups = "drop"
+        
+    ) %>% 
+    arrange(filename, (harvest), desc(season), trmt, type) %>% 
+    select(!c(pts_wall_any, pct_points_any,pts_wall_seedl,pct_points_seedl,pts_wall_GTR5ft, pct_points_GTR5ft,
+              supC1, supC2, expC1, expC2, denom)) %>% 
+        select(filename, harvest, season, growingseasons, trmt,  wall_count, points_per_wall, type, 
+           clumps.acre, stems.ramet, type_diversity, everything()) %>% 
+    mutate(
+        across(where(is.numeric), ~ round(., 1))
+    )
+output_file <- file.path(output_folder, paste0("type_x_harvest_x_trmt_x_season(20feb2025)", ".xlsx"))
+write_xlsx(type_by_harvest, output_file)
+
+
+```
+
+
+
+# graphs of df = type x harvest
+# data preparation
+```{r}
+prep_type <- type_by_harvest %>% 
+    group_by(harvest) %>% 
+    filter(year == max(year)) %>% # retain the most recent growing season within each harvest
+    ungroup() %>% 
+    filter(!harvest %in% c("decker", "recknagel_north")) %>%  # remove decker and recknagel_north
+    mutate(
+        cluster = "recknagel",
+        cluster = case_when(
+            harvest %in% c("6_6") ~ "6_6",
+            harvest %in% c("6_9") ~ "6_9",
+            harvest %in% c("gas_line") ~ "gas_line",
+            harvest %in% c("red_pine") ~ "red_pine",
+            harvest %in% c("sta_rd") ~ "sta_rd",
+            TRUE ~ cluster,
+    )) %>% 
+  mutate(trmt = case_when(
+    harvest == "recknagel" & is.na(trmt) ~ "control",
+    TRUE ~ trmt  # Retain existing values in 'trmt' for all other cases
+  ))
+
+
+desired_order <- c("6_6", "6_9", "recknagel", "red_pine", "sta_rd", "gas_line") #places cluster elements in desired order, young to old
+```
+
+
+# Diversity, total, figure_D1
+```{r}
+diversity <- prep_type %>% 
+  select(harvest, cluster, trmt, type_diversity, season) %>% 
+  group_by(harvest, season, trmt) %>% 
+  summarize(
+    cluster = first(cluster),                       # Keeps the first occurrence of the cluster
+    Number_of_Species = sum(type_diversity, na.rm = TRUE),  # Calculate the mean while ignoring NA values
+    .groups = "drop"                                # Avoids grouping in the result
+  ) %>% 
+  mutate(cluster = factor(cluster, levels = desired_order)) %>%  # Set the desired order for clusters
+  arrange(cluster, harvest, trmt)                        # Arrange by cluster, harvest, and treatment
+
+
+figure_d1 <- ggplot(diversity, aes(x = cluster, y = Number_of_Species, fill = trmt)) +
+  geom_bar(stat = "identity", position = "dodge")+ 
+  scale_fill_manual(values = c("control" = "blue", "protected" = "green")) +
+  scale_pattern_manual(values = c("control" = "stripe", "protected" = "crosshatch")) +  # Define patterns
+  labs(
+       x = "Cluster",
+       y = "Number of Species",
+      title = "Number of Species by Cluster and Treatment",
+      subtitle = "Growing Season 2023, slash_wall_analyses_2025.Rmd. Figure_D1",
+       fill = "trmt") +
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+  ggsave("figures/spp_diversity_cluster_trmt_Figure_D1.jpg", plot = figure_d1, width = 8, height = 6, dpi = 300)
+```
+
+# Stem Density, commercial and diversity. GTR5ft, sapl, commercial only
+# Figure_S1, Figure_S2
+```{r}
+gtr5 <- prep_type %>% 
+  select(harvest, cluster, trmt, GTR5ft, type, season) %>% 
+  filter(type == "commercial" | type == "diversity") %>% 
+      group_by(harvest, season, trmt) %>% 
+  mutate(GTR5ft = case_when(
+    harvest == "recknagel" & trmt == "control" ~ 10,
+    TRUE ~ GTR5ft  # Insert small values (10) to allow graphing visualization. Retain existing values in 'trmt' for all other cases
+  )) %>% 
+  summarize(
+      cluster = first(cluster),
+      Comm_DiversityTPA = sum(GTR5ft),
+      .groups = "drop"
+      ) %>% 
+  mutate(cluster = factor(cluster, levels = desired_order)) %>% 
+    arrange(cluster, harvest, trmt)
+
+figure_S1 <- ggplot(gtr5, aes(x = cluster, y = Comm_DiversityTPA, fill = trmt)) +
+  geom_bar(stat = "identity", position = "dodge")+ 
+  scale_fill_manual(values = c("control" = "blue", "protected" = "green")) +
+  scale_pattern_manual(values = c("control" = "stripe", "protected" = "crosshatch")) +  # Define patterns
+  labs(
+       x = "Cluster",
+       y = "Commercial and Diversity TPA",
+      title = "Commercial and Diversity Species GTR 5 ft (TPA) by Cluster and Treatment",
+      subtitle = "Growing Season 2023, slash_wall_analyses_2025.Rmd. Figure_S1",
+       fill = "trmt") +
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+  ggsave("figures/comm_diversity_tpa_cluster_trmt_Figure_S1.jpg", plot = figure_S1, width = 8, height = 6, dpi = 300)
+
+
+sapl <- prep_type %>% 
+  select(harvest, cluster, trmt, expP, type, season) %>% 
+  filter(type == "commercial" | type == "diversity") %>% 
+  # mutate(GTR5ft = case_when(
+  #   harvest == "recknagel" & trmt == "control" ~ 10,
+  #   TRUE ~ GTR5ft  # Retain existing values in 'trmt' for all other cases
+  # )) %>% 
+  mutate(expP = case_when(
+    harvest == "recknagel" & trmt == "control" ~ 3,
+    TRUE ~ expP  # Recknagel controls had 0 stems, so plug data for graph visualization. Retain existing values in 'expP' for all other cases
+  )) %>% 
+    group_by(harvest, season, trmt) %>% 
+    summarize(
+      cluster = first(cluster),
+      Exposed_Sapl_CommDiv = sum(expP),
+      .groups = "drop"
+      ) %>%
+    group_by(cluster, trmt) %>% 
+        summarize(
+      cluster = first(cluster),
+      Exposed_Sapl_CommDiv = mean(Exposed_Sapl_CommDiv),
+      .groups = "drop"
+      ) %>%
+  mutate(cluster = factor(cluster, levels = desired_order))
+
+
+figure_S2 <- ggplot(sapl, aes(x = cluster, y = Exposed_Sapl_CommDiv, fill = trmt)) +
+  geom_bar(stat = "identity", position = "dodge")+ 
+  scale_fill_manual(values = c("control" = "blue", "protected" = "green")) +
+  scale_pattern_manual(values = c("control" = "stripe", "protected" = "crosshatch")) +  # Define patterns
+  labs(
+       x = "Cluster",
+       y = "Exposed Saplings Commercial and Diversity TPA",
+      title = "Exposed Saplings (Comm & Div Species) (TPA) by Cluster and Treatment",
+      subtitle = "Growing Season 2023, slash_wall_analyses_2025.Rmd. Figure_S2",
+       fill = "trmt") +
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+  ggsave("figures/exposed_sapling_CommDivSpp_tpa_cluster_trmt_Figure_S2.jpg", plot = figure_S2, width = 8, height = 6, dpi = 300)
+
+  interf <- prep_type %>% 
+  select(harvest, cluster, trmt, GTR5ft, type, season) %>% 
+  filter(type == "interfere") %>% 
+      group_by(harvest, season, trmt) %>% 
+  # mutate(GTR5ft = case_when(
+  #   harvest == "recknagel" & trmt == "control" ~ 10,
+  #   TRUE ~ GTR5ft  # Retain existing values in 'trmt' for all other cases
+  # )) %>% 
+    group_by(harvest, season, trmt) %>% 
+    summarize(
+      cluster = first(cluster),
+      InterGTR5 = sum(GTR5ft),
+      .groups = "drop"
+      ) %>%
+    group_by(cluster, trmt) %>% 
+    summarize(
+      cluster = first(cluster),
+      InterGTR5 = mean(InterGTR5),
+      .groups = "drop"
+      ) %>%
+    mutate(cluster = factor(cluster, levels = desired_order))
+
+figure_F1 <- ggplot(interf, aes(x = cluster, y = InterGTR5, fill = trmt)) +
+  geom_bar(stat = "identity", position = "dodge")+ 
+  scale_fill_manual(values = c("control" = "blue", "protected" = "green")) +
+  scale_pattern_manual(values = c("control" = "stripe", "protected" = "crosshatch")) +  # Define patterns
+  labs(
+       x = "Cluster",
+       y = "Interfering Species GTR 5 ft (TPA)",
+      title = "Interfering Species GTR 5 ft (TPA) by Cluster and Treatment",
+      subtitle = "Growing Season 2023, slash_wall_analyses_2025.Rmd. Figure_F1",
+       fill = "trmt") +
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+  ggsave("figures/interfering_GTR5ft_tpa_cluster_trmt_Figure_F1.jpg", plot = figure_F1, width = 8, height = 6, dpi = 300)
+
+
+```
+
+
+
+
+
+# Stem Density, commercial only GTR5ft, sapl
+# Figure_C1, Figure_S2
+```{r}
+comm01 <- prep_type %>% 
+  select(harvest, cluster, trmt, GTR5ft, supB, expB, supD, expD, supP, total, expP, type, season) %>% 
+  filter(type == "commercial") %>% 
+  mutate(
+      seedl_sml = supB + expB,
+      seedl_lgr = supD + expD,
+      sapl = supP + expP,
+      GTR5ft = case_when(
+    harvest == "recknagel" & trmt == "control" ~ 10,
+    TRUE ~ GTR5ft  # Insert small values (10) to allow graphing visualization. Retain existing values in 'trmt' for all other cases
+  )) %>% 
+  group_by(cluster, trmt) %>% 
+  summarize(
+ #     harvest = first(harvest),
+      seedl_sml = mean(seedl_sml),
+      seedl_lgr = mean(seedl_lgr),
+      sapl = mean(sapl),
+#      total = mean(total),
+      .groups = "drop"
+      ) %>% 
+  pivot_longer(cols = c(seedl_sml, seedl_lgr, sapl),
+               names_to = "height_class",
+               values_to = "tpa") %>%
+  mutate(tpa = case_when(
+    tpa == 0 ~ 100,  # Replace 0 with 25
+    TRUE ~ tpa      # Keep all other values unchanged
+  )) %>% 
+  mutate(
+    cluster = factor(cluster, levels = desired_order),
+    height_class = factor(height_class, levels = c("seedl_sml", "seedl_lgr", "sapl", "total")) # Adjust order
+  ) %>%
+    arrange(cluster, trmt, height_class)
+
+
+comm01 <- comm01 %>%
+  mutate(fill_color = case_when(
+    trmt == "control" ~ control_colors[height_class],
+    trmt == "protected" ~ protected_colors[height_class]
+  ))
+
+
+
+
+figure_c1 <- ggplot(comm01, aes(x = cluster, y = tpa, fill = fill_color, pattern_fill = height_class)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", 
+                   pattern = "stripe", pattern_density = 0.1, pattern_spacing = 0.05) +
+  scale_fill_identity() +  # Uses preassigned colors
+  scale_pattern_fill_manual(values = c("seedl_sml" = "stripe", "seedl_lgr" = "crosshatch", "sapl" = "dots")) +
+  labs(
+    x = "Cluster",
+    y = "Commercial Trees Per Acre (TPA)",
+    title = "Commercial Species 12-60in, 60in to 1in, >1in (TPA) by Cluster and Treatment",
+    subtitle = "Growing Season 2023, slash_wall_analyses_2025.Rmd. Figure_C1",
+    fill = "Treatment",
+    pattern_fill = "Height Class"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+#
+#these patterns didn't quite work
+#
+# figure_c1 <- ggplot(comm01, aes(x = cluster, y = tpa, fill = trmt, pattern = height_class)) +
+#   geom_bar_pattern(stat = "identity", position = "dodge",
+#                    aes(pattern_fill = height_class),  # Ensure pattern is mapped to height_class
+#                    pattern_density = 0.5, pattern_spacing = 0.02) +  
+#   scale_fill_manual(values = c("control" = "blue", "protected" = "green")) +  # Treatment = Color
+#   scale_pattern_manual(values = c("seedl_sml" = "stripe", 
+#                                   "seedl_lgr" = "crosshatch", 
+#                                   "sapl" = "circle")) +   # Ensure sapl has a pattern
+# #                                  "total" = "none")) +  
+#   labs(
+#     x = "Cluster",
+#     y = "Commercial Trees Per Acre (TPA)",
+#     title = "Commercial Species 12-60in, 60in to 1in, total (TPA) by Cluster and Treatment",
+#     subtitle = "Growing Season 2023, slash_wall_analyses_2025.Rmd. Figure_C1",
+#     fill = "Treatment",   
+#     pattern = "Height Class"  
+#   ) +
+#   theme_classic() +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+  ggsave("figures/comm_tpa_height-class_cluster_trmt_Figure_C1.jpg", plot = figure_c1, width = 8, height = 6, dpi = 300)
+
+
+```
+
+
+# Merge the TPA data for species x harvest x trmt, assemble into an output file that can be used to make tables.
+```{r}
+
+## Step 1: Select top 5 species within each group
+## there are no calculations here, just sorting the top five spp for each group_by
+top_spp <- species_by_harvest %>%
+  group_by(season, harvest, trmt) %>%
+  arrange(desc(total), .by_group = TRUE) %>%
+  slice_head(n = 5) %>%
+  ungroup()
+
+# Step 2: Calculate remainder for all other species
+remainder <- species_by_harvest %>%
+  group_by(season, harvest, trmt) %>%
+  filter(!spp %in% top_spp$spp) %>%  # Exclude top 5 spp
+  summarize(
+    spp = "Remainder",  # Label for remaining species
+    across(where(is.numeric), sum, na.rm = TRUE),  # Sum numeric variables
+    #(average?)  stems.ramet = mean(stems.ramet)
+    .groups = "drop"
+  )
+
+# Step 3: Calculate total (sum of top 5 + remainder)
+total_row <- bind_rows(top_spp, remainder) %>%
+  group_by(season, harvest, trmt) %>%
+  summarize(
+    spp = "Total",  # Label for total
+    across(where(is.numeric), sum, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Step 4: Combine top 5 species, remainder,  total and add a blank row.
+# use a dummy variable to force the sort given there is no existing variable that
+# would sort ascending or descending.
+
+# Combine and sort Remainder and TOTAL first
+remain_total <- bind_rows(remainder, total_row) %>%
+  arrange(season, harvest, trmt, spp) %>%   # Sort by spp to ensure Remainder comes before TOTAL
+  mutate(spp = case_when(
+        spp %in% c("Total") ~ "TOTAL", # see step 3 above where spp defined as "Total" but could change to "TOTAL"
+        TRUE ~ spp,  # Keeps the existing value of "spp" for all other cases
+    )) %>% 
+  mutate(dummy = case_when(
+        spp == "Remainder" ~ 6,
+        spp == "TOTAL" ~ 7,
+        TRUE ~ NA_real_  # Assign NA for other cases
+  ))
+
+# Assign dummy values to top_spp
+top_spp <- top_spp %>%
+  group_by(season, harvest, trmt) %>%
+  mutate(dummy = row_number()) %>%  # Assign 1 to 5
+  ungroup()
+
+blank_rows <- top_spp %>%
+  group_by(season, harvest, trmt) %>%
+  summarize(spp = "", total = NA, dummy = 8, .groups = "drop")
+
+# Now combine with top_spp
+final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
+  arrange(harvest, season, trmt, dummy) %>%  # Sort by dummy for correct order
+  mutate(
+    date = "19 feb 2025",
+    across(
+      c(wall_count, growingseasons, stems.ramet, firstgrow, year, denom, height, 
+        pct_points_any, pct_points_seedl, pct_points_GTR5ft, freq_by_grouping),
+      ~ if_else(dummy %in% c(6, 7), NA_real_, .x)  # Correct syntax
+    )
+  ) %>%  
+  select(-x1, -x2, -denom) %>%  
+  select(filename, date, harvest, trmt, season, wall_count, growingseasons, spp, everything())
+
+
+
+
+
+# final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
+#   arrange(harvest, season, trmt, dummy) %>%    # Sort by dummy for correct order
+#   mutate(
+#     date = "19 feb 2025",
+#     across(
+#       c(wall_count, growingseasons, 
+#         stems.ramet, firstgrow, year, denom, height, pct_points_any, pct_points_seedl,
+#            pct_points_GTR5ft, freq_by_grouping),
+#       ~ if_else(dummy %in% c(6, 7), NA_real_, .)# this code removes the values for these variables # for the Remainder and Total rows, for which they are nonsensical
+#     ) %>% 
+#   select(-x1, -x2, -denom)%>% 
+#   select(filename, date, harvest, trmt, season, wall_count, growingseasons, spp, everything())
+ 
+
+
+output_file <- file.path(output_folder, paste0("top_spp_by_harvest_x_trmt_x_season(19feb2025)", ".xlsx"))
+write_xlsx(final_result, output_file)
+
+
+
+
+
+
+
+```
+
+
+
+
+
+```

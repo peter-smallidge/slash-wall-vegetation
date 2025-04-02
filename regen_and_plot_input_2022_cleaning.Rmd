@@ -1,0 +1,755 @@
+str---
+title: "Regen and Plot Input of 2020 Data and Cleaning/Tidy"
+author: "Peter Smallidge"
+date: "10/17/2020"
+output: github_document
+```
+
+<!-- README
+
+File Description: The purpose of this file is to:
+- input data from the 2021 growing season regeneration plots (code 01)
+- input the plot site characteristics (code 02)
+- A separate file will read/input the seedling height data. 
+- standardize the names of the harvests (code 02)
+- count the number of sample plots and compare to number of veg plots (code 03)
+- insert "empty" veg plots where no veg occurred, using spp code "001" (code 04)
+- convert stem counts to stems per acre (code 05)
+- convert harvest names to consistent usage across years (code 05)
+- convert species numeric to alphabetic abbrev (code 05)
+- convert untidy to tidy data, alphabetic species (code 06)
+
+
+exported data files include:
+plot_data_2022_untidy.csv (line 237)
+regen_per_acre_2022_numeric_point_untidy.csv (line 353)
+regen_point_per_acre_2022_alpha_tidy.csv (line 530)
+
+ -->
+
+
+```{r}
+# code from one of Maria's "notes" pages
+# TOC may only work with html output
+
+# title: "Lesson 13: Factors"
+# output: 
+#  html_document:
+#    keep_md: yes 
+#    toc: true
+#    toc_depth: 2 
+```
+
+
+```{r setup, include=FALSE}
+```
+
+### Analysis of slash wall regeneation plot data - 2022
+
+###Initialize Libraries
+```{r, include=FALSE}
+
+#library(ggplot2)
+#library(ggpubr)
+#library(readr)
+library(readxl)
+#library(skimr)
+library(tidyr)
+library(tidyverse)
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+```
+
+
+### read data from csv file, check variables and data structure
+
+<!-- note to self: in the "read_csv" code, after the file location the code
+for 'col..." etc ensures that the specified column is adjusted to correct data type
+the file "cheat sheet data-import" has details -->
+
+<!--     -->
+
+### code 01
+###Input Regen Data (code 01) 
+
+```{r, input regen data}
+# Seedling data, located in the same folder as this 
+# the initial read of the data revealed that some columns were incorrectly
+# recognized when inputted. the code for "col_types=" was added in a second pass
+# of "read_csv" to clarify the desired data type.
+
+#new raw date at "slash.wall.data.2022.7february2023_incomplete.xlsx"
+
+# the 2022 growing season data file still needs data input from DECKER plot and 
+# plot data to be collected from red pine and camp ridge
+
+
+
+regen2022 <-  read_excel("slash.wall.data.2022.16may2023_final.xlsx", 
+    sheet = "regen", col_types = c("text", 
+        "numeric", "text", "numeric", "numeric", 
+        "text", "text", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "skip")) %>% # replace missing values before changing character variables to factor variables
+
+    replace_na(list(date = "other",  origin = "u", location = 0,
+                  sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0,
+                  top4 = 0
+                  )) %>%   #need to change missing values to real values while variable as character
+    mutate(
+    location = point
+      ) %>% 
+mutate(
+  point = as.character(point),
+  location = as.character(location)
+) %>% 
+   mutate_at(
+    vars(harvest),
+    list(factor))    %>% 
+   
+    mutate(harvest = fct_recode(harvest,
+        "circle1" = "cricle1")) %>% 
+        
+           mutate(harvest = fct_recode(harvest,
+                             "gas_line" = "gasline",
+                              "red_pine" = "redpine",
+                              "sta_rd" = "stationrd",
+                              "recknagel" = "rectangle1",
+                              "recknagel" = "rectangle2",
+                              "recknagel" = "rectangle3",
+                              "recknagel" = "rectangle4",
+                              "circle" = "circle1",
+                              "circle" = "circle2",
+                              "circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+
+   )) %>% 
+   arrange(harvest, point, spp)
+   
+# RUN table(regen2022$harvest) to look for NA values
+table(regen2022$harvest)
+
+
+ # EX = mutate(mid_spp = recode(mid_spp, "swm" = "rhus")) %>%  #old = new
+
+
+ # change the value of "location" of the regen data,which was set equal "point", to one of the values: control, interior or perimeter
+ # point and location correspondance found in file "regen.data.2021_cleaned.xlsx" in worksheet "point_by_location"
+
+ 
+point_location <- read_excel("~/R/slash-wall-vegetation/location_by_point.xlsx")%>% 
+   mutate(harvest = fct_recode(harvest,
+                             "gas_line" = "gasline",
+                              "red_pine" = "redpine",
+                              "sta_rd" = "stationrd",
+                              "recknagel" = "rectangle1",
+                              "recknagel" = "rectangle2",
+                              "recknagel" = "rectangle3",
+                              "recknagel" = "rectangle4",
+                              "circle" = "circle1",
+                              "circle" = "circle2",
+                              "circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+
+   )) %>% 
+   mutate(
+   point = as.character(point)
+    ) %>% 
+   arrange(harvest, point)
+
+table(point_location$harvest)
+
+        
+
+```
+
+
+    # full join allowed matching of the location=treatment with the location which was temporarily (see above) set equal
+    # to point#.  Variables harvest and point as characters. Full join created duplicate variables of "location.x" and "location.y"
+
+
+```{r}
+veg_data1 <- full_join(regen2022, point_location, by = (c("harvest", "point"))) %>% 
+    select(!"location.x") %>%  
+    mutate(
+    season = 2022
+    ) %>% 
+        # this code selects all variables except "location.x" which was set to the point number, 
+        # retaining "location.y" which is i, p, or c
+        
+    rename("location" = "location.y") %>% 
+    replace_na(list(date = "other",  origin = "s", location = "u", spp = "001",
+           sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+           exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0,
+           top4 = 0
+           )) %>%   
+    arrange(harvest, point, spp) %>% 
+    select(harvest, season, date, point, location, wall, everything())
+   
+# for "rename", "newname" = "old name"
+# for fct_recode, newname = oldname
+  
+```
+
+```{r}
+
+plot_data01  <- read_excel("~/R/slash-wall-vegetation/slash.wall.data.2022.16may2023_final.xlsx", 
+    sheet = "site-plot", col_types = c("text", 
+        "text", "text", "text", "numeric", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "text", "text", "text", "text", "text", 
+        "numeric", "skip"), skip = 6) %>% 
+        select(harvest, season, date, location, point, comm_sdl) %>% 
+  replace_na(list(comm_sdl = 0)) %>%
+  mutate(spp = "004", origin = "s") %>% 
+  mutate(
+    location = as.character(location),
+    point = as.character(point)
+) %>% 
+  mutate(location = point) %>% 
+  mutate(harvest = fct_recode(harvest,
+                              "gas_line" = "gasline",
+                              "recknagel" = "rectangle1",
+                              "recknagel" = "rectangle2",
+                              "recknagel" = "rectangle3",
+                              "recknagel" = "rectangle4",
+                              "circle" = "circle1",
+                              "circle" = "circle2",
+                              "circle" = "circle3",
+                              "sta_rd" = "boot",
+                              "sta_rd" = "wedge"
+  )) %>% 
+  arrange(harvest, point, spp)
+  
+  
+  plot_data <- full_join(plot_data01, point_location, by = (c("harvest", "point"))) %>% 
+      select(!"location.x") %>% 
+      rename("location" = "location.y") %>% 
+      arrange(harvest, point, spp) %>% 
+      mutate(
+      season = as.numeric(season)
+)
+      # select(harvest, date, season, point, location, spp, origin, comm_sdl)
+
+# the missing values in df=plot_data are created because some plot data haven't been entered ("plot_data")
+# but there are data for the location assignment of the point ("point_location"), In full_join
+# all entries are included.
+
+write_csv(plot_data, "plot_data_2022_untidy.csv")
+
+```
+
+
+
+<!--
+The following code creates two new variables. One to identify the year the slash wall was finished, and the other calculate the
+number of growing seasons represented by the data as "numb_yrs_grow"
+
+
+-->
+```{r}
+
+# the code for "filter_at" looks for missing values in spp or (?) origin and if missing that observation is removed via "!(is.na)"
+
+   harvested2017 <- full_join(veg_data1, plot_data,  
+        by = (c("harvest", "point", "location", "origin", "spp", "season", "date"))) %>%
+        select(-wall.y) %>% 
+        rename("wall" = "wall.x") %>% 
+      filter(harvest %in% c("boot", "gas_line", "red_pine", "wedge", "sta_rd")) %>% 
+      filter_at(vars(spp, origin), all_vars(!(is.na(.)))) %>% 
+      replace_na(list(origin = "s", 
+                  sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0,
+                  top4 = 0, comm_sdl = 0
+                  )) %>% 
+      mutate(
+          cut = 2017,
+          year = season,
+          numb_yrs_grow = year - cut
+          ) %>% 
+      select(harvest, year, date, location, wall, point, spp, origin, season, cut, numb_yrs_grow,
+        sup.seed01, sup.seed02, sup.seed03, sup.sapl, exp.seed01,exp.seed02, exp.seed03, exp.sapl,
+        top4, comm_sdl) %>% 
+      arrange(harvest, point, spp)
+
+
+  harvested2019 <- full_join(veg_data1, plot_data,  
+      by = (c("harvest", "point", "location", "origin", "spp", "season", "date"))) %>% 
+         select(-wall.y) %>% 
+        rename("wall" = "wall.x") %>% 
+      filter_at(vars(spp, origin), all_vars(!(is.na(.)))) %>% 
+      filter(harvest %in% c("campridge", "circle", "decker","recknagel")) %>% 
+      replace_na(list(origin = "s", 
+                  sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0,
+                  top4 = 0, comm_sdl = 0
+                  )) %>% 
+      mutate(
+          cut = 2019,
+          year = season,
+          numb_yrs_grow = year - cut
+          ) %>% 
+      select(harvest, year, date, location, wall, point, spp, origin, season, cut, numb_yrs_grow,
+        sup.seed01, sup.seed02, sup.seed03, sup.sapl, exp.seed01,exp.seed02, exp.seed03, exp.sapl,
+        top4, comm_sdl) %>% 
+      arrange(harvest, point, spp)
+# 
+# plot_data (486 obs) primarily contains the counts of commercial seedlings at each plot, coded as spp=004 other hdwd
+# veg_data1 (1416 obs) has the stem counts by species and height class.
+# veg_data increases the number of rows for points that had both comm_sdl and other stem data (e.g., #299, 300), 
+# but not for points that were otherwise empty (e.g., #334 - 344)
+
+veg_data <- 
+  bind_rows(harvested2017, harvested2019) %>% 
+    mutate(location = recode(location,
+    "c" = "control", "i" = "interior", "p" = "perimeter"
+    )) %>% 
+         select(harvest, location, point, season, cut, year, numb_yrs_grow,
+         origin, spp, comm_sdl, sup.seed01, sup.seed02, sup.seed03, sup.sapl, 
+          exp.seed01, exp.seed02, exp.seed03, exp.sapl,
+           top4, date)
+
+
+```
+
+
+#str(veg_data)  - this shows data structure
+#table(veg_data$harvest) - this shows table of count of each level of the variable "harvest"
+# use str and table code in the console to verify mis coded data, counts of points by harvest, etc.
+#
+# compare to file "count_of_points_harvest_x_location in R>slash-wall-vegetation
+
+
+### code 02
+###Input Plot Data (code 02)
+
+
+
+```{r, input plot data}
+
+
+```
+
+
+### code 03
+###Count Number of Sample Points (code 03)
+```{r, count number of sample points}
+
+point_count_01 <-  point_location %>% # create variable for total plots for denominator of average density
+  group_by(harvest, location, point) %>% 
+  summarize(
+    n =n()
+    ) %>% 
+  mutate(count = n/n) %>% 
+  arrange(point) %>% 
+  select(harvest, location, point, count)
+  
+  
+# counts the number of points by each location: interior, perimeter, control
+point_count_location <- point_count_01 %>%    #denominator for harvest x location, number of plots
+  group_by(harvest, location) %>% 
+  summarize(
+    location_denom = sum(count))
+
+# counts the number of points by inside the wall ("protected") vs. outside the wall ("control")
+point_count_inside <- point_count_location %>% 
+      filter(location %in% c("i", "p")) %>% 
+      mutate(wall = "protected")%>% 
+      group_by(harvest, wall) %>% 
+      summarize(
+        wall_denom = sum(location_denom))
+
+point_count_outside <- point_count_location %>% 
+      filter(location %in% c("c")) %>% 
+      mutate(wall = "control")%>% 
+      group_by(harvest, wall) %>% 
+      summarize(
+        wall_denom = sum(location_denom))
+
+point_count_wall <- bind_rows(point_count_inside, point_count_outside) %>% 
+arrange(harvest, desc(wall))
+
+
+write_csv(point_count_location, "count_of_points_harvest_x_location.csv")
+write_csv(point_count_wall, "count_of_points_harvest_x_treatment.csv")
+
+# for mutate/recode which changes values, oldname=newname
+
+# for each point, the value of "count" = 1
+```
+
+
+### code 04
+###Create plots for regen with no observations (code 04)
+
+```{r, filling out empty sample points}
+
+#There are 486 plots locations in 2020. 
+
+#The missing points would cause an error for calculation
+#of the number of stems per acre as an average of points.
+#
+#  IGNORE IGNORE
+#  code 04 not needed. Expansion of veg_data occurred at prior step. 486 unique plots
+#  there are now no missing point
+#  assess using console "unique(veg_data$point)
+#  IGNORE dataframe = site_data, rather use dataframe = "veg_data"
+
+site_data01 <- full_join(point_location, veg_data, by = "point") %>% 
+  select(!c(harvest.y, location.y)) %>% 
+  rename(harvest = harvest.x, location = location.x)   
+
+site_data <- site_data01 %>% 
+  # select(!c(season.y, date.y, location.y, spp.y, origin.y, comm_sdl.y)) %>% 
+  # rename( location = location.x, date = date.x, season = season.x, spp = spp.x, comm_sdl = comm_sdl.x, origin = origin.x) %>% 
+  replace_na(list(date = "other",  origin = "u", spp = "001",
+                  sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0,
+                  top4 = 0, comm_sdl = 0
+                  )) %>%    #need to change missing values to real values with variable as character
+    mutate(location = recode(location,
+    "c" = "control", "i" = "interior", "p" = "perimeter"
+    ))  #"old value" = "new value"
+
+
+#renames a variable label from new = old
+
+# 2022 data
+# confirmed that all plot numbers are unique
+#date = character
+#spp, origin, location and point are all character
+#all other = numeric
+
+
+```
+
+```{r}
+
+### this code is not needed, do not run
+inside <- veg_data %>% 
+    filter(location %in% c("interior", "perimeter")) %>% 
+    droplevels %>% 
+    mutate(
+      wall = "protected"
+    )
+
+outside <- veg_data %>% 
+    filter(location %in% c("control")) %>% 
+    droplevels %>% 
+    mutate(
+      wall = "control"
+    )
+
+```
+
+
+### code 05
+###data manipulations - per acre calculations & spp names
+### output csv files of untidy data with spp numeric and spp alphabetic
+```{r, regen per acre at points - calculations}
+#
+#height classes: 
+#   00 = 4" to 12", within 3.7 ft radius ("less than" "LT" seedlings)
+#   01 = 12" to 4.5ft, within 3.7 ft radius
+#   02 = 4.5 ft to 9ft, within 6 ft radius
+#   03 = 9 ft. to 1" dbh, within 6 ft radius
+#   winners = top4, identification of the 4 stems deemed winners, within 6 ft radius
+  #following code calculates the number of seedlings per acre
+  #by species for each height class. Not yet tidy.
+        #exclude winners, which would double count
+
+
+regen_per_acre <- site_data %>% 
+    mutate(  #convert plot count of stems to stems/acre
+    LT_seedling = comm_sdl * (43560 /((3.14156) * (3.7 * 3.7))),
+    sup_short = sup.seed01 * (43560 /((3.14156) * (3.7 * 3.7))),
+    sup_med = sup.seed02 * (43560 /((3.14156) * (6 * 6))),
+    sup_tall = sup.seed03 * (43560 /((3.14156) * (6 * 6))),
+    sup_sapl = sup.sapl * (43560 /((3.14156) * (6 * 6))),
+    exp_short = exp.seed01 * (43560 /((3.14156) * (3.7 * 3.7))),
+    exp_med = exp.seed02 * (43560 /((3.14156) * (6 * 6))),
+    exp_tall = exp.seed03 * (43560 /((3.14156) * (6 * 6))),
+    exp_sapl = exp.sapl * (43560 /((3.14156) * (6 * 6))),
+    ) %>% 
+  mutate(
+    suppressed = sup_short + sup_med + sup_tall + sup_sapl,
+    exposed = exp_short + exp_med + exp_tall + exp_sapl,
+    total = suppressed + exposed, 
+    winners = top4 * (43560 /((3.14156) * (6 * 6))) 
+    ) %>% 
+    select(!c(sup.seed01, sup.seed02, sup.seed03, sup.sapl,
+            exp.seed01, exp.seed02, exp.seed03, exp.sapl,
+            date, top4, comm_sdl)) %>% 
+  
+#unify/aggregate values of a factor, "new" = "old"
+
+  mutate(origin = fct_recode(origin,
+                             "veg" = "v",
+                             "singl/unk" = "s",
+                             "singl/unk" = "u"
+    ))
+    
+write_csv(regen_per_acre, "regen_per_acre_2022_numeric_point_untidy.csv")
+
+  
+  regen_alpha <- regen_per_acre %>% 
+   mutate(spp = fct_recode(spp,   #comment out species not present in data
+                         "empty" = "1",
+                          "empty" = "001",
+                          "ohw" = "004",
+                          "ab" = "531",
+                          "stm" = "315",
+                          "sm" = "318",
+                          "rm" = "316",
+                          "rp" = "125",
+                          "wp" = "129",
+                          "he" = "261",
+                          #"svb" = "356",
+                          "svb" = "355",
+                          #"yb" = "371",
+                          "sb" = "372",
+                          "pb" = "375",
+                          #"gb" = "379",
+                          "ah" = "391",
+                          "haw" = "500",
+                          "wa" = "541",
+                          "yp" = "621",
+                          #"cu" = "651",
+                          "app" = "660",
+                          "la" = "70",
+                          "eh" = "701",
+                          #"asp" = "740",
+                          "bta" = "743",
+                          "qa" = "746",
+                          "pc" = "761",
+                          "bc" = "762",
+                          "cc" = "763",
+                          "wo" = "802",
+                          "co" = "832",
+                          "ro" = "833",
+                          #"bl" = "901",
+                          "wi" = "920",
+                          "ba" = "951",
+                          "sp" = "90", 
+                          "sa" = "931",
+                          "wh" = "585",
+                          "sh" = "407",
+                          #"ns" = "91",
+                          "bh" = "402",
+                          #"au" = "535",
+                          #"ec" = "742",
+                          #"unk" = "999",
+                          
+#recode data entry errors (avoids repeated fixes with data file updates)
+# These numeric codes were entered, and because the raw data file is repeatedly updated, the
+# errors would have to be correct each time. This lacks finesse but is more effecient.
+                          "sb" = "273",
+                          "ab" = "331",
+                          "ab" = "351"
+                          ))
+
+table(regen_alpha$spp)
+table(regen_alpha$harvest)
+#view(regen.per.acre)
+
+write_csv(regen_alpha, "regen_per_acre_2022_alpha_point_untidy.csv")
+
+
+
+
+
+```
+
+
+### code 06
+
+
+
+### making data tidy - comm/regen
+```{r, making data tidy commercial species}
+# commercial regeneration species
+# 316 318 372 541 621 762  802 832 833 951 
+# 129, 261, 371,407, 402
+# maple, yeb, swb, wa, yp, oaks, ba , bh, sh
+# no populus 740, 743, 746, no pab 375
+
+
+comm <- regen_alpha %>% 
+  
+  filter(spp %in% c("wp", "he", "rm", "sm","yb", "sb", "wa", "yp",
+                     "bc", "wo", "co", "ro", "ba", "bl", "rp", "cu", "sh", "bh", "ohw"
+                    )) %>% 
+  mutate(
+    type = as.factor("commercial")
+  ) %>% 
+  pivot_longer(c(LT_seedling, sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total, winners),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+###making data tidy - diverse/regen
+```{r, making data tidy diverse}
+
+# desirable diversity species (no interfering, no commercial, but includes Populus, paper birch, not pin cherry)
+# 129 261 316 318 356 372 375 500 541 621 743 746 762 802 832 833  90 920 951, 407, 931
+
+diverse <- regen_alpha %>% 
+  
+  filter(spp %in% c("svb", "pb", "gb", "haw", "asp", "bta", "qa",
+                    "wi", "sh", "wh","sa","ec"
+                    )) %>% 
+  #
+
+  mutate(
+    type = as.factor("diversity")
+  ) %>% 
+  pivot_longer(c(LT_seedling, sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total, winners),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+###making data tidy - interfering species/regen
+```{r, tidy for interfering species}
+
+# interfering species
+
+interfere <- regen_alpha %>% 
+  
+  filter(spp %in% c("ab", "stm", "eh", "pc", "au")) %>% 
+  mutate(
+    type = as.factor("interfering")
+  ) %>% 
+  pivot_longer(c(LT_seedling, sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total, winners),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+###making data tidy - other species
+```{r}
+# other species
+
+other <- regen_alpha %>% 
+  
+  filter(spp %in% c("empty", "ah", "la", "sp", "unk", "cc", "ns"
+                    )) %>% 
+  mutate(
+    type = as.factor("other")
+  ) %>% 
+  pivot_longer(c(LT_seedling, sup_short, sup_med, sup_tall, sup_sapl,
+                 exp_short, exp_med, exp_tall, exp_sapl,
+                 suppressed, exposed, total, winners),
+               names_to = "size",
+               values_to = "stems.per.acre") %>% 
+  
+   mutate_at(vars(size),
+            list(factor))
+
+
+```
+
+ 
+
+###Write tidy data for each point
+```{r, tidy regen and plot data, assign stocking label to each point}
+
+tidy_regen_point <- 
+  bind_rows(comm, diverse, interfere, other)
+ 
+ 
+write_csv(tidy_regen_point, "regen_point_per_acre_2022_alpha_tidy.csv")
+
+```
+
+
+
+
+###Make Plot Data Tidy
+
+
+
+```{r}
+
+# not ready to run this code
+# not ready to run this code
+# not ready to run this code
+# not ready to run this code
+
+# 
+plot_data_tidy <- #read the csv file having basal area calculations %>% 
+
+# (need to input the calculated values of plot variables 
+#  such as basal area per acre.  
+  
+  select(!c(baf,
+            low_spp, inv_spp, mid_spp, upper_spp, vine_spp)) %>% 
+  
+  pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                  comm_stock, pre_comm_stock, diver_stock,
+                  pre_diver_stock,  interf_woody_stock, fern_stock, all_intf,
+                 winner_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val") %>% 
+  
+  replace_na(list("attrib_val" = "no", comm_per_acre = 0, pre_comm_per_acre = 0,
+                  diver_per_acre = 0, pre_diver_per_acre = 0, interfere_per_acre = 0,
+                  pre_interfere_per_acre = 0))
+
+write_csv(plot.data_tidy, "tidy_plot_2019.csv")
+
+
+
+
+```
+
+
+
+<!-- 
+ includes factor and number variables...can't blend via "pivot_longer"
+ pivot_longer(c(disturb, slash, fern, herb, 
+                 low_cov, inv_cov, mid_cov, upper_cov, vine_cov,
+                 ba, seedling_numb, comm_per_acre, comm_stock,
+                 pre_comm_per_acre, pre_comm_stock,diver_per_acre, diver_stock,
+                 pre_diver_per_acre, pre_diver_stock, interfere_per_acre, interfere_stock,
+                 pre_interfere_per_acre, pre_interfere_stock
+                 ),
+               names_to = "plot_attrib",
+               values_to = "attrib_val")
+-->

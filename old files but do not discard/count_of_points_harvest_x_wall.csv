@@ -1,0 +1,14 @@
+harvest,wall,wall_denom
+sta_rd,protected,61
+sta_rd,unprotected,34
+campridge,protected,94
+circle,protected,24
+decker,protected,37
+decker,unprotected,15
+gas_line,protected,77
+gas_line,unprotected,17
+recknagel,protected,38
+recknagel,unprotected,32
+red_pine,protected,28
+red_pine,unprotected,29
+recknagel_north,protected,15

@@ -1,0 +1,787 @@
+---
+title: "seedling_ht_analysis"
+output: github_document
+---
+
+```{r setup, include=FALSE, show_col_types=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Initialize libraries
+```{r message = FALSE, include=FALSE}
+library(tidyverse)
+#library(skimr)        ## install.packages("skimr")
+library(readr)
+library(readxl)
+library(ggplot2)
+library(ggpubr)
+library(ggpattern)
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+
+```
+
+<!-- 
+DATA ORIGINS
+"heights_seedlings_summary.csv" = "seedling_ht_analysis_stats.Rmd"
+"heights_seedlings_raw.csv" = "seedling_ht_analysis_stats.Rmd"
+
+
+-->
+
+
+
+###Input Data
+```{r, input data}
+
+height01 <- read_csv("heights_seedlings_summary.csv") %>% 
+  rename(TRMT = wall) %>% 
+  mutate(TRMT = fct_recode(TRMT,
+                           "browsed" = "control",
+                           "unbrowsed" = "protected"))
+  
+
+height_raw <- read_csv("heights_seedlings_raw.csv") %>% 
+  rename(TRMT = wall) %>% 
+  mutate(TRMT = fct_recode(TRMT,
+                           "browsed" = "control",
+                           "unbrowsed" = "protected"))
+
+
+```
+
+
+```{r}
+fig_z1 <- height_raw %>% 
+  filter(spp == "ab" | spp == "wa" | spp == "sb" | spp == "rm" | 
+           spp == "ro" | spp == "sm" | spp == "eh") %>% 
+  select(harvest, TRMT, point, spp, number_yrs_grow,origin2,ht_inch, ht_cm) %>% 
+#    slice_max(number_yrs_grow, n=1, with_ties=FALSE) %>% 
+  group_by(harvest, TRMT, spp, number_yrs_grow) %>% 
+  summarize(
+    ht_in_avg = mean(ht_inch),
+    ht_cm_avg = mean(ht_cm)
+    ) %>% 
+    slice_max(number_yrs_grow)
+
+ggplot(data=fig_z1, mapping = aes(x=number_yrs_grow, y = ht_in_avg, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method=lm, se=F, aes(linetype = as.factor(TRMT))) +
+  facet_wrap(~spp, nrow=2) +
+  theme_bw() +
+  labs(
+    x= "Number of Growing Seasons",
+    y = "Average Annual Seedling Height (inches)",
+    title = "All Harvests - all origin unweighted",
+    subtitle = "Average Annual Seedling Heights, fig_z1, seedling_height_analysis_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/FIG_z1.jpg")
+
+
+
+```
+
+
+```{r}
+# fig_z2 <- height01 %>% 
+#   filter(spp == "ab" ) %>% 
+#   group_by(TRMT, origin, numb_yrs_grow) %>% 
+#   summarize(
+#     ht_avg = mean(ht_avg),
+#     ht_cm_avg = mean(ht_cm_avg)
+#     )
+# 
+# ggplot(data=fig_z2, mapping = aes(x=numb_yrs_grow, y = ht_avg, group = TRMT)) +
+#   geom_point(mapping = aes(color = TRMT), shape = 1) +
+#   geom_smooth(method=lm, se=F, aes(linetype = as.factor(TRMT))) +
+#   facet_wrap(~origin, nrow=2) +
+#   theme_bw() +
+#   labs(
+#     x= "Number of Growing Seasons",
+#     y = "Average Annual Beech Seedling Height (inches)",
+#     title = "All Harvests - all origin unweighted",
+#     subtitle = "Annual Heights of Beech Seedlings by Origin, fig_z2, seedling_height_analysis_2018-2022.Rmd"
+#   ) 
+#   
+# ggsave("figures/FIG_z2.jpg")
+```
+
+
+```{r}
+#consider annual seedling height only inside good walls and without interference
+
+fig_z3 <- height_raw %>% 
+  filter(spp == "ab" | spp == "wa" | spp == "sb" | spp == "rm" | 
+           spp == "ro" | spp == "sm" | spp == "eh") %>% 
+  filter(harvest == "campridge" | harvest == "gas_line" | harvest == "recknagel" | harvest == "red_pine") %>% 
+  
+    filter(spp == "ab" |  
+           spp == "ro" | spp == "sm" | spp == "eh") %>% 
+  filter(harvest ==  "gas_line" | harvest == "recknagel") %>% 
+
+ 
+  # excludes harvest = circle, decker, and station road
+  
+   group_by(harvest, TRMT, spp, number_yrs_grow) %>% 
+  summarize(
+    ht_in_avg = mean(ht_inch),
+    ht_cm_avg = mean(ht_cm)
+    )
+
+ggplot(data=fig_z3, mapping = aes(x=number_yrs_grow, y = ht_in_avg, group = spp)) +
+  geom_point(mapping = aes(color = spp), shape = 1) +
+  geom_smooth(method=lm, se=F, aes(linetype = as.factor(spp))) +
+  facet_wrap(~harvest + TRMT, nrow=2) +
+  theme_bw() +
+  labs(
+    x= "Number of Growing Seasons",
+    y = "Average Annual Seedling Height (inches)",
+    title = "Effective Walls - all origin unweighted",
+    subtitle = "Average Annual Seedling Heights, fig_z3, seedling_height_analysis_stats_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/FIG_z3.jpg")
+
+```
+
+
+
+```{r}
+
+fig_z4 <- height_raw %>% 
+  group_by(harvest, TRMT, spp, origin2, number_yrs_grow) %>% 
+  summarize(
+    ht_inch_avg = mean(ht_inch),
+    ht_cm_avg = mean(ht_cm)
+    )
+
+# fig_z4_spp <- height_raw %>% 
+#   group_by(TRMT, numb_yrs_grow, spp, origin)
+# 
+#  summarize(
+#    ht_avg = mean(ht),
+#    ht_cm_avg = mean(ht_cm)
+#    )
+
+#testing copied z4 (this creates a line for each level of the "group" factor (e.g., origin))
+# ggplot(data=fig_z4, mapping = aes(x=number_yrs_grow, y = ht_avg, group=origin)) +
+#   geom_point(mapping = aes(color = TRMT), shape = 1) +
+#   geom_smooth(method=lm, se=F, aes(linetype = as.factor(origin))) +
+#   facet_wrap(~harvest, nrow=2) +
+#     theme_bw() +
+#   labs(
+#     x= "Number of Growing Seasons",
+#     y = "Average Annual Beech Seedling Height (inches)",
+#     title = "All Harvests - all origin unweighted",
+#     subtitle = "Annual Heights of Beech Seedlings by Harvest, fig_z4, seedling_ht_analysis_2018-2022.Rmd"
+#   ) 
+# 
+#end testing
+
+fig_z4_ab <- fig_z4 %>% filter (spp == "ab")
+
+ggplot(data=fig_z4_ab, mapping = aes(x=number_yrs_grow, y = ht_inch_avg, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method=lm, se=F, aes(linetype = as.factor(TRMT))) +
+  facet_wrap(~harvest, nrow=2) +
+  theme_bw() +
+  labs(
+    x= "Number of Growing Seasons",
+    y = "Average Annual Beech Seedling Height (inches)",
+    title = "All Harvests - all origin unweighted",
+    subtitle = "Annual Heights of Beech Seedlings by Harvest, fig_z4, seedling_ht_analysis_stats_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/FIG_z4_ab.jpg")
+
+
+q1_hdwds <- fig_z4_spp %>% 
+  filter(spp =="sm" | spp == "ro" | spp == "ab" | 
+           spp == "wa" | spp == "rm" | spp == "eh") %>% 
+  filter(!origin == "sprout") %>%  # less difference between inside and outside in growth rate of sprouts
+  group_by(number_yrs_grow, TRMT, spp) %>% 
+  mutate(
+    ht_cm = ht * 2.54
+  )
+
+q1_hdwds_all <- fig_z4 %>% 
+  filter(spp =="sm" | spp == "ro" | spp == "ab" | 
+           spp == "wa" | spp == "rm" | spp == "eh") %>% 
+  #filter(!origin == "sprout") %>%  # less difference between inside and outside in growth rate of sprouts
+  group_by(number_yrs_grow, TRMT, spp) %>% 
+  mutate(
+    ht_cm = ht * 2.54
+  )
+
+
+q1_sm <- q1_hdwds_all %>% 
+  filter(spp == "sm") %>% 
+ggplot((q1_sm), 
+       mapping = aes(x=numb_yrs_grow, y = ht, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method=lm, se=F, aes(linetype = as.factor(origin))) +
+  #facet_wrap(~spp, nrow=2) +
+    stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+    stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x= "Number of Growing Seasons",
+      y = "Seedling Height by Yrs Post-Harvest (inches)",
+    title = "Seedling Heights, Origin = Single/Unknown",
+    subtitle = "Arnot Forest Slash Walls fig_q1_sm, seedling_ht_analysis_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/seedling_height_fig_q1_sm.jpg")
+
+q1_rm <- q1_hdwds %>% 
+  filter(spp == "rm") %>% 
+ggplot((q1_rm), 
+       mapping = aes(x=numb_yrs_grow, y = ht, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  #facet_wrap(~spp, nrow=2) +
+    stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+    stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x= "Number of Growing Seasons",
+      y = "Seedling Height by Yrs Post-Harvest (inches)",
+    title = "Seedling Heights Red Maple, Origin = Single/Unknown",
+    subtitle = "Arnot Forest Slash Walls fig_q1_rm, seedling_ht_analysis_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/seedling_height_fig_q1_rm.jpg")
+
+q1_ro <- q1_hdwds %>% 
+  filter(spp == "ro") %>% 
+ggplot((q1_ro), 
+       mapping = aes(x=numb_yrs_grow, y = ht, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  #facet_wrap(~spp, nrow=2) +
+    stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+    stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x= "Number of Growing Seasons",
+      y = "Seedling Height by Yrs Post-Harvest (inches)",
+    title = "Seedling Heights Red Oak, Origin = Single/Unknown",
+    subtitle = "Arnot Forest Slash Walls fig_q1_ro, seedling_height_analysis_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/seedling_height_fig_q1_ro.jpg")
+
+q1_ab <- q1_hdwds %>% 
+  filter(spp == "ab") %>% 
+ggplot((q1_ab), 
+       mapping = aes(x=numb_yrs_grow, y = ht, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  #facet_wrap(~spp, nrow=2) +
+    stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+    stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x= "Number of Growing Seasons",
+      y = "Seedling Height by Yrs Post-Harvest (inches)",
+    title = "Seedling Heights American Beech, Origin = Single/Unknown",
+    subtitle = "Arnot Forest Slash Walls fig_q1_ab, seedling_height_analysis_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/seedling_height_fig_q1_ab.jpg")
+
+q1_wa <- q1_hdwds %>% 
+  filter(spp == "wa") %>% 
+ggplot((q1_wa), 
+       mapping = aes(x=numb_yrs_grow, y = ht, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  #facet_wrap(~spp, nrow=2) +
+    stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+    stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x= "Number of Growing Seasons",
+      y = "Seedling Height by Yrs Post-Harvest (inches)",
+    title = "Seedling Heights White Ash, Origin = Single/Unknown",
+    subtitle = "Arnot Forest Slash Walls fig_q1_wa, seedling_height_analysis_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/seedling_height_fig_q1_wa.jpg")
+
+q1_eh <- q1_hdwds %>% 
+  filter(spp == "eh") %>% 
+ggplot((q1_eh), 
+       mapping = aes(x=numb_yrs_grow, y = ht, group = TRMT)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method="lm", se=F) +
+  #facet_wrap(~spp, nrow=2) +
+    stat_cor(label.x.npc="left",label.y.npc = "top", 
+           method="pearson", r.digits=2, p.digits=4, p.accuracy = 0.001)+
+    stat_regline_equation(label.x.npc="center",label.y.npc = "top")+  
+          #stat_cor and stat_regline within library(ggpubr)
+    theme_classic()+
+  labs(
+    x= "Number of Growing Seasons",
+      y = "Seedling Height by Yrs Post-Harvest (inches)",
+    title = "Seedling Heights E. Hophornbeam, Origin = Single/Unknown",
+    subtitle = "Arnot Forest Slash Walls fig_q1_eh, seedling_height_analysis_2018-2022.Rmd"
+  ) 
+  
+ggsave("figures_seedlings_heights/seedling_height_fig_q1_eh.jpg")
+
+q1_hdwds_avg <- q1_hdwds %>% 
+  group_by(numb_yrs_grow, TRMT, spp) %>% 
+  summarize(
+    ht = mean(ht),
+    ht_cm = mean(ht_cm)
+  )
+  
+q1_hdwds_all_avg <- q1_hdwds_all %>% 
+  group_by(numb_yrs_grow, TRMT, spp) %>% 
+  summarize(
+    ht = mean(ht),
+    ht_cm = mean(ht_cm)
+  )
+
+
+
+col01 <- q1_hdwds_avg %>% 
+    ungroup %>% 
+    select(numb_yrs_grow, TRMT, spp, ht) %>% 
+    mutate(
+      age = as.character(numb_yrs_grow),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "protected",
+      "control" = "control"
+    )) %>% 
+    group_by(numb_yrs_grow, TRMT, spp) %>% 
+    ggplot()+
+    geom_col(aes(x=numb_yrs_grow, y = ht, fill = TRMT), position = "dodge2") +
+    facet_wrap(~spp)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "Seedling Height by Yrs Post-Harvest (inches)",
+      title = "Seedling Heights, Origin = Single/Unknown",
+      subtitle = "Arnot Forest Slash Walls, seedling_height_analysis_2018-2022.Rmd, fig=col01"
+    )
+
+  set_palette(col01, "uchicago")
+  ggsave("figures_seedlings_heights/seedling_height_hdwds_fig_col01.jpg")
+
+```
+
+```{r}
+col01.b <- height_raw %>%
+    ungroup %>% 
+    filter(spp == "ab" | spp == "sm" | spp == "ro" | spp == "eh") %>%
+    filter(harvest == "recknagel") %>% 
+#   filter(harvest == "gas_line" | harvest == "recknagel" | harvest == "red_pine") %>% 
+    group_by(harvest, spp, TRMT, number_yrs_grow) %>% 
+  summarize(
+    ht_in_avg = mean(ht_inch),
+    ht_cm_avg = mean(ht_cm)
+    ) %>% 
+    slice_max(number_yrs_grow, n=1, with_ties=FALSE) %>% 
+    mutate(
+      age = as.character(number_yrs_grow)
+      ) 
+
+    ggplot(data=col01.b, aes(x = spp, y = ht_in_avg))+
+     geom_col_pattern(
+        aes(pattern = spp, pattern_angle = spp, pattern_spacing = spp),
+    fill = "white",
+    color = "black",
+    pattern_density = 0.35,
+    pattern_fill = "black",
+    pattern_color = "black" ,
+    position = position_dodge(0.8)) +
+      
+    scale_pattern_spacing_discrete(range = c(0.01, 0.05))+  
+    facet_wrap(~harvest + TRMT)+
+     theme_minimal() +
+    labs(
+      x = "Beech, Hophornbeam, Red Oak, Sugar Maple",
+      y = "Seedling Height (inches)",
+      title = "Seedling Heights @ Rechnagel, Origin = all stems, 3 Growing Seasons",
+      subtitle = "Arnot Forest Slash Walls, seedling_height_analysis_stats_2018-2022.Rmd, fig=col01.b"
+    )
+
+      ggsave("figures_seedlings_heights/seedling_height_recknagel_fig_col01.b.all_stems.jpg")
+
+    
+# code from https://stackoverflow.com/questions/76534065/substitute-color-with-patterns-stripes-lines-in-bar-ggplot-clustered-data/76534891#76534891 
+    
+
+col01c <- col01.b
+
+    ggplot(data=col01c)+
+    geom_col(aes(x=spp, y = ht_in_avg, fill = age), position = "dodge2") +
+    facet_wrap(~harvest + TRMT)+
+     theme_pubr() +
+    labs(
+      x = "Beech, Red Oak, Sugar Maple",
+      y = "Seedling Height (inches)",
+      title = "Seedling Heights by Harvest, Spp, and Number of Years Growing, Origin = all stems",
+      subtitle = "Arnot Forest Slash Walls, seedling_height_analysis_2018-2022.Rmd, fig=col01c"
+    )
+
+  set_palette(col01.b, "uchicago")
+  ggsave("figures_seedlings_heights/seedling_height_recknagel_fig_col01c.all_stems.jpg")
+  
+
+
+
+```
+
+
+
+
+#American Beech
+```{r}
+
+q1_ab_avg <- q1_hdwds %>% 
+  filter(spp == "ab") %>% 
+  filter(numb_yrs_grow < 5) %>% 
+  group_by(numb_yrs_grow, TRMT) %>% 
+  summarize(
+    ht = mean(ht),
+    ht_cm = mean(ht_cm)
+  )
+  
+col01_ab <- fig_z4_ab %>%  #double check that DF is correct
+    ungroup %>% 
+    select(numb_yrs_grow, TRMT, ht) %>% 
+    mutate(
+      age = as.character(number_yrs_grow),
+      ) %>%
+    mutate(TRMT = fct_recode(TRMT,
+      "protected" = "protected",
+      "control" = "control"
+    )) %>% 
+    group_by(numb_yrs_grow, TRMT) %>% 
+    ggplot()+
+    geom_col(aes(x=numb_yrs_grow, y = ht, fill = TRMT), position = "dodge2") +
+    #facet_wrap(~spp)+
+     theme_pubr() +
+    labs(
+      x = "Number of Growing Seasons Post Harvest (yrs)",
+      y = "Seedling Height (inches)",
+      title = "American Beech Seedling Heights, Origin = Single/Unknown",
+      subtitle = "Arnot Forest Slash Walls, seedling_ab_height_analysis_2018-2022.Rmd, fig=col01_ab"
+    )
+
+  set_palette(col01_ab, "uchicago")
+  ggsave("figures_seedlings_heights/seedling_height_fig_col01_ab.jpg")
+
+```
+
+
+
+```{r}
+
+fig_z5 <- height_raw %>% 
+  filter(spp == "ab" | spp == "wa" | spp == "sb" | spp == "rm" | 
+           spp == "ro" | spp == "sm" | spp == "eh") %>% 
+  filter(numb_yrs_grow >3) %>% 
+  group_by(TRMT, spp) %>% 
+  summarize(
+    ht_avg = mean(ht_avg),
+    ht_cm_avg = mean(ht_cm_avg)
+    )
+
+
+#testing code for two lines per facet copied from z4 (this works!)
+ggplot(data=fig_z5, mapping = aes(x=basal, y = ht, group=wall)) +
+  geom_point(mapping = aes(color = TRMT), shape = 1) +
+  geom_smooth(method=lm, se=F, aes(linetype = as.factor(wall))) +
+  facet_wrap(~spp, nrow=2) +
+    theme_bw() +
+  labs(
+    x= "Stem Diameter at Base (inches)",
+    y = "Stem Height (inches)",
+    title = "All Harvests - all origin unweighted",
+    subtitle = "Basal Diameter and Height Stems > 3 Growing Seasons, fig_z5, seedling_height_analysis_2018-2022.Rmd"
+  ) 
+
+#end testing
+
+## don't run this code ggplot(data=fig_z5, mapping = aes(x=numb_yrs_grow, y = ht_avg)) +
+#  geom_point(mapping = aes(color = TRMT), shape = 1) +
+#  geom_smooth(method="lm", se=F) +
+#  facet_wrap(~harvest, nrow=2) +
+#  theme_bw() +
+#  labs(
+#    x= "Number of Growing Seasons",
+#    y = "Average Annual Beech Seedling Height (inches)",
+#    title = "All Harvests - all origin unweighted",
+#    subtitle = "Annual Heights of Beech Seedlings by Harvest, fig_z4, seedling_height_analysis_2018-2022.Rmd"
+#  ) 
+  
+ggsave("figures/FIG_z5.jpg")
+
+
+```
+
+
+
+
+
+code below is leftover from other files
+
+
+
+###Group Means
+```{r, group means}
+
+height_summ <- tidy_heights %>% 
+    filter(spp %in% 
+             c("ab", "ba", "bc", "co", "pb", "rm", "ro", "sb", "sm", "wa", "wp", "eh", "bh")) %>% #spp less than n=50 removed
+    droplevels() %>%  #removes the factor levels excluded by the filter
+  rename("ht" = "height") %>% 
+  mutate(
+    ht_cm = ht * 2.54,
+    basal_cm = basal * 2.54
+  ) %>% 
+  group_by(harvest, TRMT, location,origin, spp, year) %>% 
+  summarise(
+    ht_avg = mean(ht),
+    ht_cm_avg = mean(ht_cm),
+    basal_avg = mean(basal),
+    basal_cm_avg = mean(basal_cm),
+    n = n()
+  ) %>% 
+  filter(n>0) %>% 
+  filter(!c(year =="2017")) %>%   
+  arrange(harvest, spp, year, origin, TRMT, location)
+
+write_csv(height_summ, "heights_seedlings_summary.csv")
+
+
+```
+
+```{r}
+####
+#### (8feb2023) I'm not sure this code is useful
+### use the "heights_seedlings_summary.csv" and sort by year
+
+height_summ_subset2019 <- height_summ %>% 
+  filter(year %in% c("2019")) %>% 
+  droplevels() %>%
+  group_by(location, originx2, spp) %>% 
+  summarise(
+    ht_avg = mean(ht_avg),
+    ht_cm_avg = mean(ht_cm_avg),
+    n = sum(n)
+  )
+
+height_summ_subset2018 <- height_summ %>% 
+  filter(year %in% c("2018")) %>% 
+  droplevels() %>%
+  group_by(location, originx2, spp) %>% 
+  summarise(
+    ht_avg = mean(ht_avg),
+    ht_cm_avg = mean(ht_cm_avg),
+    n = sum(n)
+  )
+  
+#write_csv(height_summ_subset2018, "heights_seedlings_summ_subset_2018.csv")
+#write_csv(height_summ_subset2019, "heights_seedlings_summ_subset_2019.csv")
+
+```
+
+
+
+
+
+### calculate average heights and average annual growth
+#### stems not selected randomly. Selected as free to grow
+```{r}
+
+heights <- full_join(height_summ_subset2018, height_summ_subset2019, 
+                     by = c("location", "originx2", "spp")) %>% 
+  rename("ht_in18" = "ht_avg.x", "ht_in19" = "ht_avg.y",
+         "ht_cm18" = "ht_cm_avg.x", "ht_cm19" = "ht_cm_avg.y") %>% 
+  mutate(
+  grow_in = ht_in19 - ht_in18,
+  grow_cm = ht_cm19 - ht_cm18
+) %>% 
+  arrange(spp, originx2, location)
+
+write_csv(heights, "heights_growth_seedlings_2018_2019.csv")
+```
+
+
+
+### calculate average height differences between bee and other by year (table 8 of mss)
+```{r}
+wide_2018_cm <- height_summ_subset2018 %>% 
+  pivot_wider(names_from = spp, values_from = ht_cm_avg) %>% 
+  select(location, originx2, ab, rm, ro, sb, sm, wa) %>% 
+  replace_na(list(ab = 0, rm = 0, ro = 0, sb = 0, sm = 0, wa = 0)) %>% 
+  group_by(location, originx2) %>% 
+  summarise(
+    ab_cm_2018 = sum(ab),
+    rm_cm_2018 = sum(rm),
+    ro_cm_2018 = sum(ro),
+    sb_cm_2018 = sum(sb),
+    sm_cm_2018 = sum(sm),
+    wa_cm_2018 = sum(wa),
+    
+  )
+
+wide_2019_cm <- height_summ_subset2019 %>% 
+  pivot_wider(names_from = spp, values_from = ht_cm_avg) %>% 
+  select(location, originx2, ab, rm, ro, sb, sm, wa) %>% 
+  replace_na(list(ab = 0, rm = 0, ro = 0, sb = 0, sm = 0, wa = 0)) %>% 
+  group_by(location, originx2) %>% 
+  summarise(
+    ab_cm_2019 = sum(ab),
+    rm_cm_2019 = sum(rm),
+    ro_cm_2019 = sum(ro),
+    sb_cm_2019 = sum(sb),
+    sm_cm_2019 = sum(sm),
+    wa_cm_2019 = sum(wa),
+    
+  )
+
+wide_hts <- full_join(wide_2018_cm, wide_2019_cm, by = c("location", "originx2")) %>% 
+  mutate(
+  ab_rm_18 = ab_cm_2018 - rm_cm_2018,
+  ab_ro_18 = ab_cm_2018 - ro_cm_2018,
+  ab_sb_18 = ab_cm_2018 - sb_cm_2018,
+  ab_sm_18 = ab_cm_2018 - sm_cm_2018,
+  ab_wa_18 = ab_cm_2018 - wa_cm_2018,
+  
+  ab_rm_19 = ab_cm_2019 - rm_cm_2019,
+  ab_ro_19 = ab_cm_2019 - ro_cm_2019,
+  ab_sb_19 = ab_cm_2019 - sb_cm_2019,
+  ab_sm_19 = ab_cm_2019 - sm_cm_2019,
+  ab_wa_19 = ab_cm_2019 - wa_cm_2019,
+) %>% 
+  mutate(
+    avg_be_other18 = (ab_rm_18 + ab_ro_18 + ab_sb_18 + ab_sm_18 + ab_wa_18)/5,
+    avg_be_other19 = (ab_rm_19 + ab_ro_19 + ab_sb_19 + ab_sm_19 + ab_wa_19)/5,
+    annual_change =  avg_be_other18 - avg_be_other19
+  ) %>% 
+  select(location, originx2,ab_cm_2018, rm_cm_2018, ro_cm_2018, sb_cm_2018, sm_cm_2018, wa_cm_2019,
+         ab_cm_2019, rm_cm_2019, ro_cm_2019, sb_cm_2019, sm_cm_2019, wa_cm_2019,
+         avg_be_other18, avg_be_other19, annual_change
+         ) %>% 
+  arrange(originx2, location)
+
+write_csv(wide_hts, "seedling_hts_average_differences.csv")
+
+```
+
+
+###Filter to common species and collapse vegetative vs. unk origin
+```{r}
+
+#only spp common to origins, locations and harvests were included
+#removed yb, co, bc, ba
+#beech was primary data for origin=root, so collapsed root & stump to vegetative
+height_common <- tidy_heights %>% 
+   rename("ht" = "height") %>% 
+ filter(year %in% c("2018", "2019")) %>% 
+  filter(spp %in% c("ab", "eh", "ro", "sm", "rm", "wa", "sb") #uncommon spp removed
+) %>% 
+  mutate(
+    originx2 = recode(origin, "root" = "sprout", "stump" = "sprout")
+  )
+
+#Fig=height_graph01
+  height_graph <- ggplot(data=height_common, aes(x = spp, y = ht_cm, color = location)) +
+    geom_point() +
+    facet_grid (originx2~harvest)+
+      theme_classic() +
+  labs(
+    x= "species and location",
+    y = "seedling height (cm)",
+    title = "All Harvests - all origin unweighted",
+    subtitle = "2018 & 2019 Seedling Heights, FIG=height_graph01, seedling_ht_analysis_stats.Rmd"
+  ) 
+
+
+height_graph
+
+ggsave("figures/seedling_height_graph.jpg")
+
+
+```
+
+
+```{r}
+
+ht_2018_2019_mod <- lm(ht_cm~spp*harvest + spp*originx2 + spp*location + spp*year, data=height_common)
+
+hist(residuals(ht_2018_2019_mod)) #tests for normal distribution
+plot(predict(ht_2018_2019_mod), residuals(ht_2018_2019_mod)) #tests heteroscedasticity, thus log
+
+library(emmeans)
+emmeans(ht_2018_2019_mod, ~spp+harvest+originx2+location+year, type="response")
+#this calculates the mean and SE for all factor combinations, type=...reverse transformed
+
+
+emmip(ht_2018_2019_mod, year ~ spp | harvest + location, CIs = TRUE)
+#plots the data from emmeans to help visualize interactions
+# emmip(model name, color ~, xaxis | panel1 + panel2
+
+
+emmeans(ht_2018_2019_mod, pairwise ~ spp | harvest * location * originx2 * year, type = "response")
+#calculates the contrasts
+#assess if spp (height) matters as a function of harvest*location*originx2*year
+
+
+
+
+```
+
+
+```{r}
+emmeans(ht_2019_mod, pairwise ~ location | harvest * spp * originx2, type = "response")
+
+emmip(ht_2019_mod, harvest ~ spp | location + originx2, CIs = TRUE)
+# emmip = estimated marginal means interaction plot
+# emmip(model name, color ~, xaxis | panel1 + panel2
+# emmip(ht_2019_mod, harvest ~ spp | location + originx2, CIs = TRUE)
+
+```
+
+
+```{r}
+emmip(ht_2019_mod, harvest ~ location | spp + originx2, CIs = TRUE)
+#plots the data from emmeans to help visualize interactions
+# emmip(model name, color ~, xaxis | row_panel1 + column_panel2
+
+
+```
+
+
+
+
+
+
+
+
+
+

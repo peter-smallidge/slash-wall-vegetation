@@ -1,0 +1,13 @@
+harvest,location,plot_attrib,attrib_val,n,freq
+gas_line,control,fern_stock,intf_stkd,1,0.058823529411764705
+gas_line,control,fern_stock,not,16,0.9411764705882353
+gas_line,interior,fern_stock,intf_stkd,2,0.047619047619047616
+gas_line,interior,fern_stock,not,40,0.9523809523809523
+gas_line,perimeter,fern_stock,not,34,1
+red_pine,control,fern_stock,not,29,1
+red_pine,interior,fern_stock,not,15,1
+red_pine,perimeter,fern_stock,not,13,1
+sta_rd,control,fern_stock,not,34,1
+sta_rd,interior,fern_stock,intf_stkd,1,0.02857142857142857
+sta_rd,interior,fern_stock,not,34,0.9714285714285714
+sta_rd,perimeter,fern_stock,not,26,1
