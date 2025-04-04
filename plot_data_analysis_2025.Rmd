@@ -37,9 +37,11 @@ library(openxlsx)
 file paths, input and output
 ```{r}
 #complete data
-file_path_site2019_2023 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_plot_data_2019_2023(19feb2025)(readme).xlsx"
+file_path_site2019_2023 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_plot_data_2019_2023(19feb2025)(readme FINAL PLOT).xlsx"
+# written from "slash_veg_complete.Rmd"
 
 file_path_site2019_2022 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\plotdata_all_years_3april2023.xlsx"
+#written from "plot_summary_all_years.Rmd"
 
 file_path_labels <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme).xlsx"
 

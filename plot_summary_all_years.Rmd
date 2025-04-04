@@ -152,7 +152,9 @@ plotdata_all <- bind_rows(plot2019, plot2020, plot2021, plot2022) %>%
         mutate(
         filename = "plot_summary_all_years.Rmd",
         df = "plotdata_final"
-)
+) %>% 
+select(-c("location_old", "harvest_original", "wall", "comments", "height", "trmt", "forest_type",
+            "brush"))
   
 
 location_by_point <- read_excel("~/R/slash-wall-vegetation/summary output/point_labels_all(readme).xlsx")
