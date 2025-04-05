@@ -19,6 +19,7 @@ Analysis of  Vegetation Data from the slash wall project. Back up copies of the 
 
 ** 7. The df that processes the raw regeneration data, from the first growing season is "slash_veg_complete.Rmd"
     This same df processes the plot data from 2019 - 2023, but misses some variable 
+    (I need to be deliberate by annotating my code!)
     
 8. The df "plot_data_analysis_2025.Rmd merges the two "plot" databases."
 
