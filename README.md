@@ -10,7 +10,7 @@ Analysis of  Vegetation Data from the slash wall project. Back up copies of the 
 
 3. DF slash_veg_complete makes the data complete such that all species are included in every wall even when missing.
 
-4. Read the code for slash_veg_complete to confirm if the spp are complete for the wall or the harvest area. (4/4/2025, data are "complete" for each wall)
+4. Read the code for slash_veg_complete to confirm if the spp are complete for the wall or the harvest area. (4/4/2025, data are "complete" for each *wall*)
 
 
 5. DF = "slash_wall_analyses_2025" is the analysis of the complete vegetation data.
@@ -19,7 +19,7 @@ Analysis of  Vegetation Data from the slash wall project. Back up copies of the 
 
 ** 7. The df that processes the raw regeneration data, from the first growing season is "slash_veg_complete.Rmd"
     This same df processes the plot data from 2019 - 2023, but misses some variable 
-    (I need to be deliberate by annotating my code!)
+    (I need to be more deliberate by annotating my code!)
     
 8. The df "plot_data_analysis_2025.Rmd merges the two "plot" databases."
 
