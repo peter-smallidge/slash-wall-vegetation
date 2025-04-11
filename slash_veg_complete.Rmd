@@ -77,7 +77,11 @@ file_path_2021 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old fi
     # line 179
 file_path_2022 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\slash.wall.data.2022.15february2025.xlsx"
   # this includes cafri and non-cafri data
-  # 
+ 
+file_path_2024 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data_2024_FINAL.xlsx"
+    # the 2024 growing season vegetation data added on 10april2025
+     
+ # 
     # line 221  
     # 
     # slash.wall.data.2022.11february2025.xlsx has worksheets for (note 3/27/2025 - file "15february" has all the 2022 data)
@@ -86,7 +90,7 @@ file_path_2022 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old fi
     #   regen = regeneration data from cafri and non-cafri sites, but not yet 6_6 as of 11feb2025
     #   site-traits = cafri plot data. only 6_9 as of 11feb2025
 
-file_path_points <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme)"
+file_path_points <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme).xlsx"
 
 
 #plot data for the 4" to 12" seedling data
@@ -100,6 +104,9 @@ file_path_2022_plot <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\o
 #  does not include any CAFRI data
 
 file_path_2023_plot <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data.2023.23july2024(maybe FINAL).xlsx"
+
+file_path_2024_plot <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data_2024_FINAL.xlsx"
+    # the 2024 growing season plot data added on 10april2025
     
 
 output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
@@ -152,44 +159,6 @@ folder = R\\slash-wall-vegetation\\old files but do not discard
 input point attributes, "point_label_all" this is the new data file of attributes by point
 ```{r}
 point_labels <- read_excel(file_path_points, sheet = "Sheet1") %>% 
-  #   select(-harvest.1) %>% 
-  #   mutate(
-  #       height = 10,
-  #       height = if_else(location == "c", 0, height) #if location = c, then height is set to 0, otherwise it remains as "height"
-  #   )%>% 
-  #   mutate(
-  #   point = as.character(point),
-  #   harvest = case_when(
-  #     harvest == "b" ~ "sta_rd",
-  #     harvest == "boot" ~ "sta_rd",
-  #     harvest == "cgl" ~ "gas_line",
-  #     harvest == "circle1" ~ "circle",
-  #     harvest == "circle2" ~ "circle",
-  #     harvest == "circle3" ~ "circle",
-  #     harvest == "cricle1" ~ "circle",
-  #     harvest == "crp" ~ "red_pine",
-  #     harvest == "cwb" ~ "sta_rd",
-  #     harvest == "gasline" ~ "gas_line",
-  #     harvest == "gl" ~ "gas_line",
-  #     harvest == "recksouth" ~ "recknagel",
-  #     harvest == "rect1" ~ "recknagel",
-  #     harvest == "rect2" ~ "recknagel",
-  #     harvest == "rect3" ~ "recknagel",
-  #     harvest == "rect4" ~ "recknagel",
-  #     harvest == "rectangle1" ~ "recknagel",
-  #     harvest == "rectangle2" ~ "recknagel",
-  #     harvest == "rectangle3" ~ "recknagel",
-  #     harvest == "rectangle4" ~ "recknagel",
-  #     harvest == "rp" ~ "red_pine",
-  #     harvest == "redpine" ~ "red_pine",
-  #     harvest == "stationrd" ~ "sta_rd",
-  #     harvest == "w" ~ "sta_rd",
-  #     harvest == "wb" ~ "sta_rd",
-  #     harvest == "wedge" ~ "sta_rd",
-  #     harvest == "old" ~ "new",
-  #     TRUE ~ harvest  # Keeps other values unchanged
-  #   )
-  # )  %>% 
     arrange(harvest, wall, trmt, point)
 ```
 
@@ -232,30 +201,13 @@ raw2019 <- read_excel(file_path_2019, sheet = "seedling", skip = 0 ) |>
   )
 
 #separate the clumps to create a variable count for calculation of tpa and also to calculate ramet (number sprouts / clump)
-# The first "pivot_longer" was to replicate rows that had multiple data values. In some years, multiple clumps were
-# recorded on the same row on the tally sheet.
-# 
-# The "pivot_wider" recreates the tally sheet format to allow the data to be made complete.
+# I'm sure there is a more graceful way to code this, without creating two df and then binding them back together.
 clump2019 <- raw2019 |> 
     filter(origin == "clump") |> 
     mutate(
         count = 1,
         numb.clumps = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
     )
-
-    
-  #   
-  #       pivot_longer(cols = matches("^(su|ex)"), names_to = "variable", values_to = "count") |> 
-  #   filter(count > 0) %>% 
-  #   mutate(
-  #       presence =1
-  #   ) %>% 
-  #   pivot_wider(
-  #      names_from = variable, 
-  #      values_from = presence,
-  #      values_fn = list  # This ensures we create lists of count values for each variable
-  # ) %>%
-  #   unnest(cols = starts_with("exp") | starts_with("sup"))   # Unnest any lists of count values to separate rows
 
     
 single2019 <- raw2019 %>% 
@@ -269,9 +221,13 @@ regen2019 <- bind_rows(clump2019, single2019) %>%
     mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
     mutate(across(starts_with("su"), ~replace_na(., 0))) %>%    # Replace NA with 0 for "su" variables, the "supressed" variables
     mutate(across(starts_with("ex"), ~replace_na(., 0))) %>%       # Replace NA with 0 for "ex" variables, the "exposed" variables
-    left_join(point_labels) %>% 
-    filter(harvest %in% c("boot", "gasline", "redpine", "stationrd", "wedge")) %>% 
-    #filter(is.na(spp)) %>% 
+    mutate(harvest = case_when(
+        harvest %in% c("boot", "wedge", "stationrd") ~ "sta_rd",
+        harvest %in% c("gasline") ~ "gas_line",
+        harvest %in% c("redpine") ~ "red_pine",
+        TRUE ~ harvest, # keeps the existing value of "harvest" if none of the cases are true
+    )) %>% 
+        left_join(point_labels, by = c("harvest", "point")) %>% 
     select(-wall, -trmt, -height) %>% 
     mutate(
         season = if_else(is.na(spp), "2019", season),
@@ -315,21 +271,7 @@ clump2020 <- raw2020 |>
         numb.clumps = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
     )
    
-    
-  #    pivot_longer(cols = matches("^(su|ex)"), names_to = "variable", values_to = "count") |> 
-  #   filter(count > 0) %>% 
-  #   mutate(
-  #       presence =1
-  #   ) %>% 
-  #   pivot_wider(
-  #      names_from = variable, 
-  #      values_from = presence,
-  #      values_fn = list  # This ensures we create lists of count values for each variable
-  # ) %>%
-  #   unnest(cols = starts_with("exp") | starts_with("sup"))   # Unnest any lists of count values to separate rows
-
-    
-single2020 <- raw2020 %>% 
+ single2020 <- raw2020 %>% 
     filter(origin == "single") %>% 
     mutate(
         count = 1,
