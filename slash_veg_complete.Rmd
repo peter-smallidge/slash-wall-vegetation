@@ -79,7 +79,7 @@ file_path_2022 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old fi
   # this includes cafri and non-cafri data
  
 file_path_2024 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data_2024_FINAL.xlsx"
-    # the 2024 growing season vegetation data added on 10april2025
+    # the 2024 growing season vegetation data added to main folder on 10april2025
      
  # 
     # line 221  
@@ -206,7 +206,7 @@ clump2019 <- raw2019 |>
     filter(origin == "clump") |> 
     mutate(
         count = 1,
-        numb.clumps = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
+        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
     )
 
     
@@ -214,7 +214,7 @@ single2019 <- raw2019 %>%
     filter(origin == "single") %>% 
     mutate(
         count = 1,
-        numb.clumps = 0
+        numb.per.clump = 0
     )
 
 regen2019 <- bind_rows(clump2019, single2019) %>% 
@@ -269,14 +269,14 @@ clump2020 <- raw2020 |>
     filter(origin == "clump") %>% 
     mutate(
         count = 1,
-        numb.clumps = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
+        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
     )
    
  single2020 <- raw2020 %>% 
     filter(origin == "single") %>% 
     mutate(
         count = 1,
-        numb.clumps = 0
+        numb.per.clump = 0
     )
 
 regen2020 <- bind_rows(clump2020, single2020) %>% 
@@ -314,28 +314,15 @@ clump2021 <- raw2021 |>
     filter(origin == "clump") |> 
   mutate(
         count = 1,
-        numb.clumps = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
+        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
     )
 
-  #       pivot_longer(cols = matches("^(su|ex)"), names_to = "variable", values_to = "count") |> 
-  #   filter(count > 0) %>% 
-  #   mutate(
-  #       presence =1,
-  #       location = as.character(location)
-  #   ) %>% 
-  #   pivot_wider(
-  #      names_from = variable, 
-  #      values_from = presence,
-  #      values_fn = list  # This ensures we create lists of count values for each variable
-  # ) %>%
-  #   unnest(cols = starts_with("exp") | starts_with("sup"))   # Unnest any lists of count values to separate rows
 
-    
 single2021 <- raw2021 %>% 
     filter(origin == "single") %>% 
    mutate(
         count = 1,
-        numb.clumps = 0
+        numb.per.clump = 0
     )
 
 regen2021 <- bind_rows(clump2021, single2021) %>% 
@@ -382,28 +369,15 @@ clump2022 <- raw2022 |>
     filter(origin == "clump") |> 
    mutate(
         count = 1,
-        numb.clumps = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
+        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
     )
 
-    
-  #       pivot_longer(cols = matches("^(su|ex)"), names_to = "variable", values_to = "count") |> 
-  #   filter(count > 0) %>% 
-  #   mutate(
-  #       presence =1
-  #   ) %>% 
-  #   pivot_wider(
-  #      names_from = variable, 
-  #      values_from = presence,
-  #      values_fn = list  # This ensures we create lists of count values for each variable
-  # ) %>%
-  #   unnest(cols = starts_with("exp") | starts_with("sup"))   # Unnest any lists of count values to separate rows
-
-    
+ 
 single2022 <- raw2022 %>% 
     filter(origin == "single") %>% 
    mutate(
         count = 1,
-        numb.clumps = 0
+        numb.per.clump = 0
     )
 
 regen2022 <- bind_rows(clump2022, single2022) %>% 
@@ -433,18 +407,22 @@ regen2023 <- read_excel(file_path_2023_veg, sheet = "Sheet1", skip = 0 ) %>%
         expD = exp.seed03ac,
         expP = exp.saplac
     ) %>% 
-    mutate(type = "blank") %>% 
-    mutate(type = case_when(
-    spp %in% c("ba", "bc", "bih", "bl", "co", "he", "rm", "ro", "sa", 
-               "sb", "sh", "sm", "wa", "wo", "wp", "yb", "yp") ~ "commercial",
     
+    
+    mutate(type = "blank") %>%
+    mutate(type = case_when(
+    spp %in% c("ba", "bc", "bih", "bl", "co", "he", "rm", "ro", "sa",
+               "sb", "sh", "sm", "wa", "wo", "wp", "yb", "yp") ~ "commercial",
+
     spp %in% c("ab", "eh", "pc", "stm", "toh" ) ~ "interfere",
 
     spp %in% c("app", "bta", "haw", "brs", "dws", "la", "ns", "pb", "qa", "rp", "scp", "smc", "svb", "wh", "wi" ) ~ "diversity",
 
     spp %in% c("ah", "cc", "unk" ) ~ "other",
     TRUE ~ type,  # Keeps the existing value of "type" for all other cases
-    )) %>% 
+    )) %>%
+    
+    
     mutate(
         seedA = supA + expA
     ) %>% 
@@ -452,18 +430,68 @@ regen2023 <- read_excel(file_path_2023_veg, sheet = "Sheet1", skip = 0 ) %>%
     mutate(harvest = if_else(harvest =="gasline", "gas_line", harvest))
 
 regen2023seedl <- regen2023 %>%  # extract the data for the 4" to 12" seedlings to merge into the site data permanent file
-    select(harvest, wall, point,type, seedA) %>% 
+    select(harvest, wall, type, point,seedA) %>% 
     filter(!harvest == "recknagel_north") %>%
     filter(type == "commercial") %>% 
-    group_by(harvest, wall, point, type) %>% 
+    group_by(harvest, wall, type, point) %>% 
     summarize(
         seedA = sum(seedA)
     ) %>% 
     mutate(
         season = "2023"
     ) %>% 
-    select(-type) 
+   select(-type) 
 
+```
+
+
+2024 vegetation
+```{r}
+regen2024 <- read_excel(file_path_2024, sheet = "regen", skip = 2 ) %>% 
+    rename(
+        supA = sup.seed01,
+        supB = sup.seed02,
+        supD = sup.seed03,
+        supP = sup.sapl,
+        expA = exp.seed01,
+        expB = exp.seed02,
+        expD = exp.seed03,
+        expP = exp.sapl
+    ) %>%   #  need to check this coded, added on 4/16/2025 but not tested
+        mutate(
+    stems.ramet = if_else(origin == "clump",  #TODO need to double check this calculation #DONE, calculation confirmed 2/13/2025
+                          rowMeans(across(starts_with("sup") | starts_with("exp"), 
+                                          ~ if_else(. > 0, ., NA_real_)), na.rm = TRUE), #within a row, assess if >0, then calculates mean of clump size 
+                          NA_real_)
+   ) %>%
+    
+#Next, convert plot counts to "per acre" values
+       mutate( #converts plot count to count per acre
+        count = if_else(is.na(count), 1, count), # if count missing (it's a single) then make count = 1
+        stems.ramet = if_else(is.na(stems.ramet), 0, stems.ramet), # if variable is NA, change to 0, otherwise leave as is
+        radius01 = 3.7,
+        radius02 = 6,
+        radius03 = 16,
+        radius = if_else(season == "2023", radius03, radius02),  # Dynamically assign the correct radius (no 2023 data included as of 2/13/2025)
+        supB = count * (supB * (43560 / (pi * radius02^2))),
+        supC1 = count * (supC1 * (43560 / (pi * radius02^2))),
+        supC2 = count * (supC2 * (43560 / (pi * radius02^2))),
+        supP = count * (supP * (43560 / (pi * radius^2))),  # Uses the new "radius" variable here
+        expB = count * (expB * (43560 / (pi * radius02^2))),
+        expC1 = count * (expC1 * (43560 / (pi * radius02^2))),
+        expC2 = count * (expC2 * (43560 / (pi * radius02^2))),
+        expP = count * (expP * (43560 / (pi * radius^2)))   # Uses the new "radius" variable here
+    ) %>%
+    ungroup() %>% 
+  mutate(  #if there is concern there are blank spaces in the grouping variable that cause grouping problems
+    season = str_trim(season),
+    harvest = str_trim(harvest),
+    point = str_trim(point),
+    spp = str_trim(spp),
+    origin = str_trim(origin)
+  )
+
+    
 ```
 
 
@@ -894,7 +922,8 @@ merge2019_2022_b <- merge2019_2022_a %>%
     select(harvest, season, wall, trmt, point, height, origin, spp, everything()) %>% 
     arrange(harvest, season, wall, point) %>%  
 
-#Next, calculate the average # stems per ramet
+#Next, calculate the average # stems per ramet.
+#Do this before the values are converted to a "per acre" basis in the next code chunk
     mutate(
     stems.ramet = if_else(origin == "clump",  #TODO need to double check this calculation #DONE, calculation confirmed 2/13/2025
                           rowMeans(across(starts_with("sup") | starts_with("exp"), 
