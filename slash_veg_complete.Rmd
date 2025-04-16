@@ -168,7 +168,7 @@ point_labels <- read_excel(file_path_points, sheet = "Sheet1") %>%
 ```{r eval=T}
 
 raw2019 <- read_excel(file_path_2019, sheet = "seedling", skip = 0 ) |>
-    select(! c(top4, other, radius.01, radius.other)) |> 
+    select(!c(top4, other, radius.01, radius.other)) |> 
     mutate(
         season = "2019",
         sup.seed03 = as.numeric(sup.seed03),
@@ -227,14 +227,15 @@ regen2019 <- bind_rows(clump2019, single2019) %>%
         harvest %in% c("redpine") ~ "red_pine",
         TRUE ~ harvest, # keeps the existing value of "harvest" if none of the cases are true
     )) %>% 
-        left_join(point_labels, by = c("harvest", "point")) %>% 
-    select(-wall, -trmt, -height) %>% 
-    mutate(
-        season = if_else(is.na(spp), "2019", season),
-        origin = if_else(is.na(spp), "single", origin),
-        date = if_else(is.na(spp), "000", date),
-        spp = if_else(is.na(spp), "001", spp)
-  ) %>% 
+        left_join(point_labels, by = c("harvest", "point", "location")) %>% 
+    select(-wall, -trmt, -height, -harvest_original, -forest_type, -brush) %>% 
+#    filter(is.na(date))
+  #   mutate(               ## it's unclear why this code is here.  It isn't needed as there are no missing values
+  #       season = if_else(is.na(spp), "2019", season),
+  #       origin = if_else(is.na(spp), "single", origin),
+  #       date = if_else(is.na(spp), "000", date),
+  #       spp = if_else(is.na(spp), "001", spp)
+  # ) %>% 
       mutate(across(
         where(is.numeric),  # Select all numeric columns
         ~ if_else(is.na(spp), 0, .x)  # Set to 0 when spp is NA, otherwise keep original values
