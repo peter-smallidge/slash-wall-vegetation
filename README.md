@@ -12,7 +12,6 @@ Analysis of  Vegetation Data from the slash wall project. Back up copies of the 
 
 4. Read the code for slash_veg_complete to confirm if the spp are complete for the wall or the harvest area. (4/4/2025, data are "complete" for each *wall*)
 
-
 5. DF = "slash_wall_analyses_2025" is the analysis of the complete vegetation data.
 
 6. DF = "plot_data_analysis_2025" is the file that analyzes the plot data.  It includes data from DF "plot_summary_all_years.Rmd"
