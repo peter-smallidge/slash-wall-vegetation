@@ -80,6 +80,9 @@ file_path_2022 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old fi
  
 file_path_2024 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data_2024_FINAL.xlsx"
     # the 2024 growing season vegetation data added to main folder on 10april2025
+    # 
+    # NOTE - for the state forest stands (danby_block_2, fairfied_a5, fairfield_a6, goundry_a17, and decker
+    # set location = "control")
      
  # 
     # line 221  

@@ -40,6 +40,7 @@ file paths, input and output
 ```{r}
 #complete data
 file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2023_complete(19feb2025)(read_me).xlsx"
+
 file_path_denom <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\count_of_points_stand_by_protection.xlsx"
 
 
@@ -81,7 +82,7 @@ denom_stand_trmt <- denom %>%
     ) %>% 
     select(filename, everything())
 
-output_file <- file.path(output_folder, paste0("sample_size_table(16feb2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("sample_size_table(27may2025)", ".xlsx"))
 write_xlsx(denom_stand_trmt, output_file)
 
 
@@ -89,7 +90,7 @@ write_xlsx(denom_stand_trmt, output_file)
 
 
 #Notes
-# Input raw data - data are complete at the level of the wall
+# Input raw data - data are "complete" at the level of the wall
 ```{r}
 d0 <- read_excel(file_path_veg_complete, sheet = "data", skip = 2) %>% 
     left_join(denom_stand_trmt, by = c("harvest", "trmt")) %>% 
