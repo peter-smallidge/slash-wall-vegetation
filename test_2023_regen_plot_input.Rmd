@@ -182,7 +182,7 @@ location_by_point <- read_excel("location_by_point.xlsx") |>
    )) |> 
 #   filter(stand %in% c("gas_line", "campridge", "recknagel")) |> 
    mutate(
-   stand = fct_drop(stand)  
+   stand = fct_drop(stand)  # I assume this changes the variable stand from "factor" back to "character"
    ) #|> 
    # filter(stand == "gasline")
 

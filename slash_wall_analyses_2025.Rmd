@@ -30,6 +30,13 @@ library(openxlsx)
 
 ```
 
+```{r eval=FALSE}
+
+# the purpose of this code is to take the tablulated data from 2019 through 2023 and produce output tables and graphs
+# that evaluate the effectiveness of slash walls.
+# 
+# Data from 2024, especially the controls from state forests will be merged. The file slash_veg_complete.Rmd will incorporate the 2024 growing season data.
+```
 
 
 

@@ -27,7 +27,7 @@ xxx
 
 ###Initialize Libraries
 
-```{r }
+```{r message=FALSE}
 
 #library(ggplot2)
 #library(ggpubr)
@@ -78,8 +78,9 @@ file_path_2021 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old fi
 file_path_2022 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\slash.wall.data.2022.15february2025.xlsx"
   # this includes cafri and non-cafri data
  
-file_path_2024 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data_2024_FINAL.xlsx"
-    # the 2024 growing season vegetation data added to main folder on 10april2025
+file_path_2024 <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\raw_data\\slash.wall.data_2024_FINAL_1june2025.xlsx"
+    # the FINAL 2024 growing season vegetation data added to main folder on 1june2025
+    # This file path  includes worksheets for "regen" and "plot"
     # 
     # NOTE - for the state forest stands (danby_block_2, fairfied_a5, fairfield_a6, goundry_a17, and decker
     # set location = "control")
@@ -108,10 +109,7 @@ file_path_2022_plot <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\o
 
 file_path_2023_plot <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data.2023.23july2024(maybe FINAL).xlsx"
 
-file_path_2024_plot <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\slash.wall.data_2024_FINAL.xlsx"
-    # the 2024 growing season plot data added on 10april2025
-    # I'm not certain this file path is needed given "file_path_2024" which includes worksheets for "regen" and "plot"
-    
+# 2024 plot data is within "file_path_2024"
 
 output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
 
@@ -158,9 +156,9 @@ folder = R\\slash-wall-vegetation\\old files but do not discard
 
 
 
-
-
 input point attributes, "point_label_all" this is the new data file of attributes by point
+
+
 ```{r}
 point_labels <- read_excel(file_path_points, sheet = "Sheet1") %>% 
     arrange(harvest, wall, trmt, point)
@@ -204,24 +202,14 @@ raw2019 <- read_excel(file_path_2019, sheet = "seedling", skip = 0 ) |>
     )
   )
 
-#separate the clumps to create a variable count for calculation of tpa and also to calculate ramet (number sprouts / clump)
-# I'm sure there is a more graceful way to code this, without creating two df and then binding them back together.
-clump2019 <- raw2019 |> 
-    filter(origin == "clump") |> 
-    mutate(
-        count = 1,
-        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
-    )
+  
+# clumps were not separated on the tally sheet. 
+# It isn't possible to  the number of clumps per acre
+# It would be possible to represent the % of total stems present in clumps 
+# (e.g.) 40% of stem density is of clump origin
+# 
 
-    
-single2019 <- raw2019 %>% 
-    filter(origin == "single") %>% 
-    mutate(
-        count = 1,
-        numb.per.clump = 0
-    )
-
-regen2019 <- bind_rows(clump2019, single2019) %>% 
+regen2019 <- raw2019 %>% 
     mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
     mutate(across(starts_with("su"), ~replace_na(., 0))) %>%    # Replace NA with 0 for "su" variables, the "supressed" variables
     mutate(across(starts_with("ex"), ~replace_na(., 0))) %>%       # Replace NA with 0 for "ex" variables, the "exposed" variables
@@ -233,13 +221,6 @@ regen2019 <- bind_rows(clump2019, single2019) %>%
     )) %>% 
         left_join(point_labels, by = c("harvest", "point", "location")) %>% 
     select(-wall, -trmt, -height, -harvest_original, -forest_type, -brush) %>% 
-#    filter(is.na(date))
-  #   mutate(               ## it's unclear why this code is here.  It isn't needed as there are no missing values
-  #       season = if_else(is.na(spp), "2019", season),
-  #       origin = if_else(is.na(spp), "single", origin),
-  #       date = if_else(is.na(spp), "000", date),
-  #       spp = if_else(is.na(spp), "001", spp)
-  # ) %>% 
       mutate(across(
         where(is.numeric),  # Select all numeric columns
         ~ if_else(is.na(spp), 0, .x)  # Set to 0 when spp is NA, otherwise keep original values
@@ -267,23 +248,14 @@ raw2020 <- read_excel(file_path_2020, sheet = "regen", skip = 0 ) |>
   )) |> 
     select(harvest, season, point, location, spp, origin, everything())
 
-# in 2020, clump data were located on the same row, 
-#separate the clumps to create a variable count for calculation of tpa and also to calculate ramet (number sprouts / clump)
-clump2020 <- raw2020 |> 
-    filter(origin == "clump") %>% 
-    mutate(
-        count = 1,
-        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
-    )
-   
- single2020 <- raw2020 %>% 
-    filter(origin == "single") %>% 
-    mutate(
-        count = 1,
-        numb.per.clump = 0
-    )
+  
+# clumps were not separated on the tally sheet. 
+# It isn't possible to  the number of clumps per acre
+# It would be possible to represent the % of total stems present in clumps 
+# (e.g.) 40% of stem density is of clump origin
+# 
 
-regen2020 <- bind_rows(clump2020, single2020) %>% 
+regen2020 <- raw2020 %>% 
     mutate(point = as.character(point)) %>% 
     mutate(across(where(is.numeric), ~replace_na(., 0))) %>% 
     mutate(across(starts_with("su"), ~replace_na(., 0))) %>%    # Replace NA with 0 for "su" variables
@@ -312,24 +284,14 @@ raw2021 <- read_excel(file_path_2021, sheet = "regen", skip = 2 ) |>
     ) %>% 
     select(harvest, season, point, location, spp, origin, everything()) 
   
-    
-#separate the clumps to create a variable count for calculation of tpa and also to calculate ramet (number sprouts / clump)
-clump2021 <- raw2021 |> 
-    filter(origin == "clump") |> 
-  mutate(
-        count = 1,
-        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
-    )
+  
+# clumps were not separated on the tally sheet. 
+# It isn't possible to  the number of clumps per acre
+# It would be possible to represent the % of total stems present in clumps 
+# (e.g.) 40% of stem density is of clump origin
+# 
 
-
-single2021 <- raw2021 %>% 
-    filter(origin == "single") %>% 
-   mutate(
-        count = 1,
-        numb.per.clump = 0
-    )
-
-regen2021 <- bind_rows(clump2021, single2021) %>% 
+regen2021 <- raw2021 %>% 
     mutate(
         location = as.character(location),
         point = as.character(point)
@@ -367,24 +329,13 @@ raw2022 <- read_excel(file_path_2022, sheet = "regen", skip = 0 ) |>
     ) %>% 
     select(harvest, season, point, location, spp, origin, everything()) 
   
-    
-#separate the clumps to create a variable count for calculation of tpa and also to calculate ramet (number sprouts / clump)
-clump2022 <- raw2022 |> 
-    filter(origin == "clump") |> 
-   mutate(
-        count = 1,
-        numb.per.clump = rowSums(across(c(starts_with("sup"), starts_with("exp")), ~ if_else(. > 0, 1, 0)), na.rm = TRUE)
-    )
+# clumps were not separated on the tally sheet. 
+# It isn't possible to  the number of clumps per acre
+# It would be possible to represent the % of total stems present in clumps 
+# (e.g.) 40% of stem density is of clump origin
+# 
 
- 
-single2022 <- raw2022 %>% 
-    filter(origin == "single") %>% 
-   mutate(
-        count = 1,
-        numb.per.clump = 0
-    )
-
-regen2022 <- bind_rows(clump2022, single2022) %>% 
+regen2022 <- raw2022 %>% 
     mutate(
         location = as.character(location)
     ) %>% 
@@ -400,6 +351,7 @@ regen2022 <- bind_rows(clump2022, single2022) %>%
 2023 veg data
 ```{r}
  # values are already on a per acre basis
+ # data for "clumps" for 2023 are verified as legitimate
 regen2023 <- read_excel(file_path_2023_veg, sheet = "Sheet1", skip = 0 ) %>% 
     rename("harvest" = "stand",
         supA = sup.seed01ac,
@@ -411,7 +363,6 @@ regen2023 <- read_excel(file_path_2023_veg, sheet = "Sheet1", skip = 0 ) %>%
         expD = exp.seed03ac,
         expP = exp.saplac
     ) %>% 
-    
     
     mutate(type = "blank") %>%
     mutate(type = case_when(
@@ -436,7 +387,7 @@ regen2023 <- read_excel(file_path_2023_veg, sheet = "Sheet1", skip = 0 ) %>%
 
 regen2023seedl <- regen2023 %>%  # extract the data for the 4" to 12" seedlings to merge into the site data permanent file
     select(harvest, wall, type, season, point,seedA) %>% 
-    filter(!harvest == "recknagel_north") %>%
+    filter(!harvest == "recknagel_north") %>% # remove data for reck north, not a research site
     filter(type == "commercial") %>% 
     group_by(harvest, wall, type, point) %>% 
     summarize(
@@ -476,13 +427,13 @@ regen2024 <- read_excel(file_path_2024, sheet = "regen", skip = 2 ) %>%
     rename(
         supA = sup.seed01, # 4 to 12", radius = 3.7 ft
         supB = sup.seed02, # 12 to 60", radius = 6 ft
-        supD = sup.seed03, # 60" to 1"dbh, radius = 6 ft
+        supD = sup.seed03, # 60" to 1"dbh, radius = 6 ft  #elsewhere, label "C" is for stems 60" to 9 ft
         supP = sup.sapl, # 1" to 5" dbh, radius = 16 ft
         expA = exp.seed01,
         expB = exp.seed02,
         expD = exp.seed03,
         expP = exp.sapl
-    ) %>%   #  need to check this coded, added on 4/16/2025 but not tested
+    ) %>%   #  need to check this code, added on 4/16/2025 but not tested
 
     mutate(
       origin = case_when(
@@ -546,7 +497,7 @@ regen2024 <- read_excel(file_path_2024, sheet = "regen", skip = 2 ) %>%
       harvest == "stand_5.1" ~ "5_1",
       TRUE ~ harvest  # Keeps other values unchanged
     )
-  )
+  )  
 
 # use this df to merge the seedling data 4"to 12" with the plot attribute data. See line 785
 # or search for the df name
@@ -565,7 +516,7 @@ regen2024seedl <- regen2024 %>%
 ```
 
 
-site/plot data read and manipulate
+###  site/plot data read and manipulate
 
 ```{r}
 plot2019 <- read.csv(file_path_2019_plot) %>% 
@@ -605,8 +556,10 @@ plot2019 <- read.csv(file_path_2019_plot) %>%
            native_spp,  invasive_cov,  invasive_spp,  mid_cov,  mid_spp,  upper_cov,  upper_spp,  vine_cov,  
            vine_spp,  baf,  oakhick,  beech,  maple,  birch,  hdwd,  conifer,  comm_sdl,    seedA, )    # ba_acre, cut,  year,  numb_yrs_grow,
  #   filter( point == "338" & season == "2019")
+```
 
 
+```{r}
 plot2020 <- read.csv(file_path_2020_plot) %>%  # this has data for boot, wedge and sta_rd separately presented
     mutate(across(c(comm_sdl), ~ replace_na(., 0))) %>% 
     mutate(
@@ -632,7 +585,10 @@ plot2020 <- read.csv(file_path_2020_plot) %>%  # this has data for boot, wedge a
         select(harvest,  season,  date,  location,  point,  disturb,  slash,  fern,  herb,  native_cov,  
            native_spp,  invasive_cov,  invasive_spp,  mid_cov,  mid_spp,  upper_cov,  upper_spp,  vine_cov,  
            vine_spp,  baf,  oakhick,  beech,  maple,  birch,  hdwd,  conifer,  comm_sdl,    seedA, ) # ba_acre, cut,  year,  numb_yrs_grow,
+```
 
+
+```{r}
 plot2021 <- read_excel(file_path_2021_plot, sheet = "site-plot", skip = 6) %>%  
     mutate(across(c(comm_sdl), ~ replace_na(., 0))) %>% 
     mutate(
@@ -654,8 +610,10 @@ plot2021 <- read_excel(file_path_2021_plot, sheet = "site-plot", skip = 6) %>%
         select(harvest,  season,  date,  location,  point,  disturb,  slash,  fern,  herb,  native_cov,  
            native_spp,  invasive_cov,  invasive_spp,  mid_cov,  mid_spp,  upper_cov,  upper_spp,  vine_cov,  
            vine_spp,  baf,  oakhick,  beech,  maple,  birch,  hdwd,  conifer,  comm_sdl,    seedA, ) # ba_acre, cut,  year,  numb_yrs_grow,
+```
 
 
+```{r}
 plot2022_original <- read_excel(file_path_2022, sheet = "site-plot", skip = 6) %>% 
     mutate(
         point = as.character(point)
@@ -680,7 +638,7 @@ plot2022  <- read_excel(file_path_2022, sheet = "site-traits", skip = 1) %>% #re
     )
   ) %>% 
    mutate(seedA = seedA *(43560 / (pi * 3.7 * 3.7))) %>% 
-        select(harvest,  season,  date,  location,  point,  comm_sdl,    seedA ) # ba_acre, cut,  year,  numb_yrs_grow,
+   select(harvest,  season,  date,  location,  point,  comm_sdl,    seedA ) # ba_acre, cut,  year,  numb_yrs_grow,
 ```
 
 
@@ -717,37 +675,9 @@ plot2023cafri <- read_excel(file_path_2023_plot, sheet = "cafri_site", skip = 3)
         point = as.character(point)
     ) %>% 
    full_join(cafri_point_labels, by = c("harvest", "wall", "point"), suffix = c("_cafri", "_labels")) %>% 
- #   select(harvest, wall, season, date, point, location, trmt) %>% 
     arrange(harvest, point)
 
-# mismatches <- plot2023cafri %>% filter(is.na(harvest_cafri) | is.na(harvest_labels))
-#     #after cafri labels were joined in
-# 
-# # Rows in plot2023cafri but not in cafri_point_labels
-# extra_in_plot <- plot2023cafri %>% anti_join(cafri_point_labels, by = c("harvest", "wall", "point"))
-# 
-# # Rows in cafri_point_labels but not in plot2023cafri
-# extra_in_labels <- cafri_point_labels %>% anti_join(plot2023cafri, by = c("harvest", "wall", "point"))
-# 
-# # Print the results
-# print("Rows in plot2023cafri but not in cafri_point_labels:")
-# print(extra_in_plot)
-# 
-# print("Rows in cafri_point_labels but not in plot2023cafri:")
-# print(extra_in_labels)
-# 
-# data entry had created points in some of the cafri walls
-# 
-# 
-duplicates_in_plot <- plot2023cafri %>% group_by_all() %>% filter(n() > 1)
-print("Duplicates in plot2023cafri:")
-print(duplicates_in_plot)
-# 
-# 
-extra_in_cafriplot <- plot2023cafri %>% anti_join(cafri_point_labels, by = c("harvest", "wall", "point"))
-extra_in_labels <- cafri_point_labels %>% anti_join(plot2023cafri, by = c("harvest", "wall", "point"))
-duplicates_in_cafri <- plot2023cafri %>% group_by_all() %>% filter(n() > 1)
-duplicates_in_labels <- cafri_point_labels %>% group_by_all() %>% filter(n() > 1)
+
 
 
 plot2023other <- read_excel(file_path_2023_plot, sheet = "other_site_baf10", skip = 2) %>% 
@@ -766,7 +696,7 @@ plot2023other <- read_excel(file_path_2023_plot, sheet = "other_site_baf10", ski
 plot2023_overstory <- plot2023other %>% 
     select(harvest, wall, location, season, date, point, spp, dbh, in16ft, status,crown, logs)
 
-output_file <- file.path(output_folder, paste0("campridge_overstory_by_point_2023data(13feb2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("campridge_overstory_by_point_2023data(29may2025)", ".xlsx"))
 write_xlsx(plot2023_overstory, output_file)
 
 
@@ -793,8 +723,8 @@ plot2024_orig <- read_excel(file_path_2024, sheet = "site data", skip = 3 ) %>%
     mutate(
         season = "2024"
     ) %>% 
-        mutate(harvest = case_when(
-      harvest == "boot" ~ "sta_rd",
+      mutate(harvest = case_when(
+      harvest == "boot" ~ "sta_rd",  #this changes "harvest" from boot to sta_rd
       harvest == "recknagel south" ~ "recknagel",
       harvest == "wedge" ~ "sta_rd",
       harvest == "wedge control" ~ "sta_rd",
@@ -819,7 +749,7 @@ plot2024 <- left_join(plot2024_orig, regen2024seedl, by = c("harvest", "point"))
   )
 
 
-# note 5may2025 the data from the 2023 overstory sampling including distance to tree and status as
+# note 5may2025 - the data from the 2023 overstory sampling including distance to tree and status as
 # marginal needs to be amended to the worksheet "2024 overstory data."  Once amended, the overstory data needs to be joined into the df=plot2024
 # before it can be joined into df=site_data.
 ```
@@ -840,7 +770,7 @@ site_data <- bind_rows(plot2019, plot2020, plot2021, plot2022, plot2023) %>%
     filter(!(harvest == "gas_line" & point %in% c(866, 864)))  %>%  #corrected code selects for either point at the intersection of harvest and point
     mutate(across(c(oakhick, beech, maple, birch, hdwd, conifer), ~ replace_na(., 0))) %>% 
     mutate(across(c(baf), ~ replace_na(., 10))) %>% 
-    mutate(
+    mutate( #this might replace "basalarea" in df=plot2024
         basalarea = baf * (oakhick + beech + maple + birch + hdwd + conifer)
     ) %>% 
     mutate( 

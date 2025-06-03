@@ -93,6 +93,8 @@ the file "cheat sheet data-import" has details -->
 # plot data to be collected from red pine and camp ridge
 
 
+# need to change the df to /old files but do not discard/slash.wall.data.2022.15february2025.xlsx
+
 
 regen2022 <-  read_excel("slash.wall.data.2022.16may2023_final.xlsx", 
     sheet = "regen", col_types = c("text", 
@@ -205,6 +207,7 @@ veg_data1 <- full_join(regen2022, point_location, by = (c("harvest", "point"))) 
 ```
 
 ```{r}
+# need to change the df to /old files but do not discard/slash.wall.data.2022.15february2025.xlsx
 
 plot_data01  <- read_excel("~/R/slash-wall-vegetation/slash.wall.data.2022.16may2023_final.xlsx", 
     sheet = "site-plot", col_types = c("text", 
@@ -217,6 +220,8 @@ plot_data01  <- read_excel("~/R/slash-wall-vegetation/slash.wall.data.2022.16may
         select(harvest, season, date, location, point, comm_sdl) %>% 
   replace_na(list(comm_sdl = 0)) %>%
   mutate(spp = "004", origin = "s") %>% 
+        # (5/29/2025, I'm not sure what this does. Creates a new variable spp and sets it equal to "004".
+        # and a new variable origin and sets in equal to "s".)
   mutate(
     location = as.character(location),
     point = as.character(point)
