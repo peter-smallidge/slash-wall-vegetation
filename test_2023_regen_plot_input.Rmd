@@ -103,6 +103,8 @@ the file "cheat sheet data-import" has details -->
 # file_path_input <- "C:\\Users\\pjs23\\Documents\\R\\MFO Annual Summary\\Renewal data\\renewal_2025\\database_2024.xlsx"
 file_path_input <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\regen_per_acre_all_alpha_tidy_1june2023.xlsx"
 
+file_path_point_labels <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme).xlsx"
+
 #output_folder <- "C:\\Users\\pjs23\\Documents\\R\\MFO Annual Summary\\Renewal data\\renewal_2025"
 output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
 
@@ -134,58 +136,36 @@ input_veg01 <-  read_excel("slash.wall.data.2023_1_feb_2024_regen(north, south, 
 #    filter(!harvest =="recknagel_north") %>% 
     replace_na(list(date = "other", count = 1,
                   sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
-                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0, wall = "99"
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0
                   )) %>%   #need to change missing values to real values while variable is a character type
     mutate(
-     location = point,
-      origin = "clump", 
-      stand = as.factor(stand), 
-      season = as.numeric(season),
-      status = "vacant"
-      ) %>% 
-   mutate(stand = fct_recode(stand,
-      "recknagel" = "recknagel_south",  #"new" = "old"
-      "recknagel" = "rectangle",
-      "gasline" = "gas_line"
+      origin = case_when(
+      count < 2 ~ "single",
+      count >= 2 ~ "clump"
       )) %>% 
-    select(stand, wall, season, date, point, location, spp, origin, count, everything()) %>% 
-   arrange(stand, point, location, spp)
 
+    rename(
+        harvest = stand
+    ) %>% 
+    
+    mutate(harvest = case_when(
+      harvest == "gasline" ~ "gas_line",  #this changes "harvest" from gasline to gas_line
+      harvest == "recknagel south" ~ "recknagel",
+      harvest == "rectangle" ~ "recknagel",
+    TRUE ~ harvest  # Keeps other values unchanged
+    )
+  ) %>% 
+    
+   select(-wall) %>% 
+   select(harvest,  season, date, point, spp, origin, count, everything()) %>% 
+   arrange(harvest, point,  spp)
 
-input_veg01$origin[input_veg01$count < 1.1] <- "single" #in "replace_na" above, missing values of "count" changed to 1. Here
-#    if the value of count is less than 1.1, then the variable origin is assigned the value of "single"
-#    see line 228 for an equal but different coding option for use within the DF
-#    
-input_veg01$location[input_veg01$stand == "recknagel_north"] <- "p"
-input_veg01$status[input_veg01$stand == "recknagel_north"] <- "protected"
-
-# the above code changes the value of the variable "origin" based on the value of the variable "count"
-# if "count" is less than 1, then "origin" is changed to "single"
 ```
 
 load the file used to assign treatment labels to the slash wall plots in the early slash walls.
 
 ```{r assign treatment class to each point}
-location_by_point <- read_excel("location_by_point.xlsx") |> 
-    mutate(
-        stand = harvest,
-        status = wall,
-        wall = "99",
-        point = as.character(point)
-    ) |> 
-    select(stand, status, point, location) |> 
-     mutate(stand = fct_recode(stand,
-          "recknagel" = "rectangle1",
-          "recknagel" = "rectangle2",
-          "recknagel" = "rectangle3",
-          "recknagel" = "rectangle4"
-   )) |> 
-#   filter(stand %in% c("gas_line", "campridge", "recknagel")) |> 
-   mutate(
-   stand = fct_drop(stand)  # I assume this changes the variable stand from "factor" back to "character"
-   ) #|> 
-   # filter(stand == "gasline")
-
+location_by_point <- read_excel(file_path_point_labels, sheet = "Sheet1", skip = 0) 
 
 ```
 
@@ -196,20 +176,12 @@ The first DF needed to treat Recknagel North differently, otherwise treatment la
 The second DF counts the number of sample points in Recknagel North for use in calculating average per acre
 
 ```{r}
-walls01 = left_join(input_veg01, location_by_point, by = c("stand", "point")) |> 
-    filter(stand %in% c("gasline", "campridge", "recknagel", "recknagel_north")) |> 
-    mutate(stand = fct_drop(stand)) |> 
-    mutate(location.y = if_else(stand == "recknagel_north", location.x, location.y)) |> #when stand is reck north, assign the value of location.x to location.y
-    mutate(status.y = if_else(stand == "recknagel_north", status.x, status.y)) |> 
-    select(!c(location.x, status.x )) |> 
-    rename(
-        status = status.y,
-        location = location.y
-    )
+walls01 = left_join(input_veg01, location_by_point, by = c("harvest", "point")) |> 
+    filter(harvest %in% c("gasline", "campridge", "recknagel", "recknagel_north")) 
 
-table(walls01$stand, walls01$status)
-table(walls01$stand, walls01$location)
-table(walls01$status, walls01$location)
+table(walls01$harvest, walls01$trmt)
+table(walls01$harvest, walls01$location)
+table(walls01$trmt, walls01$location)
 ```
 
 
@@ -217,33 +189,31 @@ table(walls01$status, walls01$location)
 code 02 - input regen data for campridge and cafri
 
 ```{r}
-
+#this df includes harvest - 6_6, 6_9, and campridge
 
 input_veg02 <- read_excel("slash.wall.data.2023.23july2024(maybe FINAL).xlsx", 
     sheet = "regen", col_types = c("text", 
-        "text", "numeric", "text", "text", 
+        "text", "text", "text", "text", 
         "text", "numeric", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
         "skip"), skip = 2) |> 
+    rename(
+        harvest = stand
+    ) %>% 
     replace_na(list(date = "other", count = 1,
                   sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
-                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0, wall = "99"
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0
                   )) |>   #need to change missing values to real values while variable is a character type 
-   mutate(
-        origin = "clump",
-        location = point, 
-        stand = as.factor(stand),
-        status = "vacant",
-        origin = as.factor(origin)
-        ) |> 
     mutate(origin = case_when(
         count >=2 ~ "clump",
         count <2 ~ "single"
     )) |> 
-   select(stand, wall, season, date, point, location, spp, origin, count, everything())
+   select(-wall) %>% 
+   select(harvest, season, date, point, spp, origin, count, everything()) %>% 
+    left_join(location_by_point, by = c("harvest", "point"))
    
-#   input_veg02$origin[input_veg01$count == 1] <- "single" #in "replace_na" above, missing values of "count" changed to 1. Here
+
 
    
    
@@ -253,7 +223,9 @@ input_veg02 <- read_excel("slash.wall.data.2023.23july2024(maybe FINAL).xlsx",
 ```
 
 #read in the cafri categories and treatments for joining to the cafri veg data to assign treatment labels
-```{r}
+
+not needed
+```{r eval=FALSE}
 
 cafri_label <- read_excel("CAFRI Treatment & Plot Location 8-2024.xlsx", 
     sheet = "merged", skip = 6) |> 
@@ -273,9 +245,11 @@ cafri_label$status[cafri_label$height == "0"] <- "control" #this changes status 
 cafri_label$location[cafri_label$height == "0"] <- "c" #this changes status from protected to control for walls with a height = 0 ft
   
 ```
+not needed
+```{r eval=FALSE}
 
-```{r}
-cafri01 = left_join(input_veg02, cafri_label, by = c("stand", "wall", "point")) |> 
+# not needed. Left join added to input_veg02
+cafri01 = left_join(input_veg02, location_by_point, by = c("harvest", "point")) |> 
     filter(stand %in% c("6_6", "6_9")) |> 
     select(!c("status.x", "location.y")) |> 
     rename(
@@ -293,8 +267,10 @@ table(cafri01$stand, cafri01$status)
 table(cafri01$stand, cafri01$location)
 table(cafri01$status, cafri01$location)
 ```
+not needed
+```{r eval=FALSE}
 
-```{r}
+#not needed.  data frame configured within input_veg02
 campridge = left_join(input_veg02, location_by_point, by = c("stand", "point")) |> 
     filter(stand == "campridge") |> 
     select(!c("location.x", "status.x")) |> 
@@ -307,14 +283,16 @@ campridge = left_join(input_veg02, location_by_point, by = c("stand", "point")) 
 
 ```
 
+merge vegetation input files for raw 2023 veg data
 ```{r}
 ## merge the datafiles and retain the regen data
 
-data01 = bind_rows(walls01, cafri01, campridge) |> 
-    select(stand, wall, season, date, point, spp, origin, count,
+data01 = bind_rows(walls01, input_veg02) |> 
+    select(harvest, wall, season, date, trmt, location, point, spp, origin, count,
         sup.seed01, sup.seed02, sup.seed03, sup.sapl,
         exp.seed01, exp.seed02, exp.seed03, exp.sapl,
-        status, location) |> 
+        harvest_original, forest_type, brush
+        ) |> 
 mutate(spp = fct_recode(spp, 
                           "rp" = "125",  # change spp from numeric to alpha, "new" = "old"
                           "wp" = "129",
@@ -374,23 +352,25 @@ mutate(spp = fct_recode(spp,
                           #"au" = "535",
                           #"ec" = "742",
                           )) |> 
-    arrange(stand, wall, point) # |> 
+    arrange(harvest, wall, point) # |> 
   #     filter(if_any(everything(), is.na))
 
 
- origin_test <- data01 %>% 
-     group_by(stand, origin) |> 
-     summarize(
-     test_clump = mean(count)  # this should be the average number of stems per clump in each stand. 
-     #Note the older harvest have a lower average number
- )
+ # origin_test <- data01 %>% 
+ #     group_by(stand, origin) |> 
+ #     summarize(
+ #     test_clump = mean(count)  
+     
+     # this should be the average number of stems per clump in each stand. 
+     #Note the older harvests have a lower average number
+ 
 
-table(data01$stand, data01$status)
-table(data01$stand, data01$location)
-table(data01$status, data01$location)
+table(data01$harvest, data01$trmt)
+table(data01$harvest, data01$location)
+table(data01$trmt, data01$location)
 
 test_output <- data01 |> 
-    filter(stand == "6_6" & wall == "11")
+    filter(harvest == "6_6" & wall == "11")
 
 #write.xlsx(test_output, "point_data_test_calcs.xlsx")  
 ```
@@ -493,6 +473,7 @@ veg2023raw <- data01 %>%
         multip_sapl  = 43560 / (pi * (16^2)) # = 43560 / 256 = 170.1
     ) |> 
 mutate(
+  spp = as.character(spp),
   sup.seed01ac = sup.seed01 * multip01 * count,
   sup.seed02ac = sup.seed02 * multip02_03 * count,
   sup.seed03ac = sup.seed03 * multip02_03 * count,
@@ -506,10 +487,24 @@ mutate(
 ) %>% 
 select(
   !c(sup.seed01, sup.seed02, sup.seed03, sup.sapl,
-  exp.seed01, exp.seed02, exp.seed03, exp.sapl, multip01, multip02_03, multip_sapl, date)
+  exp.seed01, exp.seed02, exp.seed03, exp.sapl, multip01, multip02_03, multip_sapl)
 ) %>% 
-mutate(spp = fct_relevel(spp, sort(levels(spp)))) |>
-arrange(stand, wall, status, origin, spp, point)
+#mutate(spp = fct_relevel(spp, sort(levels(spp)))) |>
+mutate(
+    filename = "test_2023_regen_plot_input.Rmd",
+    df = "veg2023raw"
+) %>% 
+arrange(harvest, wall, trmt, origin, spp, origin, point) %>% 
+select(filename, df, harvest, wall, location, trmt, point, spp, origin, everything())
+
+output_file <- file.path(output_folder, paste0("veg2023raw(27june2025)", ".xlsx"))
+write_xlsx(veg2023raw, output_file)
+
+output_file <- file.path(output_folder, paste0("campridge_overstory_by_point_2023data(29may2025)", ".xlsx"))
+write_xlsx(plot2023_overstory, output_file)
+
+
+
 #mutate_if(is.numeric, round, 0) 
 
 ##
