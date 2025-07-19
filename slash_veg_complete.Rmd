@@ -396,6 +396,21 @@ regen2022 <- raw2022 %>%
 ```
 
 
+# origin_test <- data01 %>% 
+#     group_by(stand, origin) |> 
+#     summarize(
+#     test_clump = mean(count)  
+     
+# this code should produce the average number of stems per clump in each stand. 
+#Note the older harvests have a lower average number
+
+veg2023_peracre_calc <- data01 %>% 
+    mutate(
+        multip01 = 43560 / (pi * (3.7^2)),  # = 1012.79
+        multip02_03 = 43560 / (pi * (6^2)), # = 43560/113.1 = 385.15
+        multip_sapl  = 43560 / (pi * (16^2)) # = 43560 / 256 = 170.1
+    ) |> 
+
 
 2023 veg data
 ```{r}

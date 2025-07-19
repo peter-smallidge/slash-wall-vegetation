@@ -150,7 +150,7 @@ input_veg01 <-  read_excel("slash.wall.data.2023_1_feb_2024_regen(north, south, 
     
     mutate(harvest = case_when(
       harvest == "gasline" ~ "gas_line",  #this changes "harvest" from gasline to gas_line
-      harvest == "recknagel south" ~ "recknagel",
+      harvest == "recknagel_south" ~ "recknagel",
       harvest == "rectangle" ~ "recknagel",
     TRUE ~ harvest  # Keeps other values unchanged
     )
@@ -165,7 +165,7 @@ input_veg01 <-  read_excel("slash.wall.data.2023_1_feb_2024_regen(north, south, 
 load the file used to assign treatment labels to the slash wall plots in the early slash walls.
 
 ```{r assign treatment class to each point}
-location_by_point <- read_excel(file_path_point_labels, sheet = "Sheet1", skip = 0) 
+point_labels <- read_excel(file_path_point_labels, sheet = "Sheet1", skip = 0) 
 
 ```
 
@@ -176,8 +176,8 @@ The first DF needed to treat Recknagel North differently, otherwise treatment la
 The second DF counts the number of sample points in Recknagel North for use in calculating average per acre
 
 ```{r}
-walls01 = left_join(input_veg01, location_by_point, by = c("harvest", "point")) |> 
-    filter(harvest %in% c("gasline", "campridge", "recknagel", "recknagel_north")) 
+walls01 = left_join(input_veg01, point_labels, by = c("harvest", "point")) %>% 
+    filter(harvest %in% c("gas_line", "campridge", "recknagel", "recknagel_north")) 
 
 table(walls01$harvest, walls01$trmt)
 table(walls01$harvest, walls01$location)
@@ -211,7 +211,7 @@ input_veg02 <- read_excel("slash.wall.data.2023.23july2024(maybe FINAL).xlsx",
     )) |> 
    select(-wall) %>% 
    select(harvest, season, date, point, spp, origin, count, everything()) %>% 
-    left_join(location_by_point, by = c("harvest", "point"))
+    left_join(point_labels, by = c("harvest", "point"))
    
 
 
@@ -287,7 +287,7 @@ merge vegetation input files for raw 2023 veg data
 ```{r}
 ## merge the datafiles and retain the regen data
 
-data01 = bind_rows(walls01, input_veg02) |> 
+veg2023_raw = bind_rows(walls01, input_veg02) |> 
     select(harvest, wall, season, date, trmt, location, point, spp, origin, count,
         sup.seed01, sup.seed02, sup.seed03, sup.sapl,
         exp.seed01, exp.seed02, exp.seed03, exp.sapl,
@@ -351,9 +351,13 @@ mutate(spp = fct_recode(spp,
                           #"sp" = "90", 
                           #"au" = "535",
                           #"ec" = "742",
-                          )) |> 
-    arrange(harvest, wall, point) # |> 
-  #     filter(if_any(everything(), is.na))
+                          )) %>%  
+    arrange(harvest, wall, point) %>% 
+    mutate(
+        filename = "test_2023_regen_plot_input.Rmd",
+        df = "veg2023_raw"
+) %>% 
+    select(filename, df, harvest, wall, season, date, trmt, location, point, spp, origin, count, everything())
 
 
  # origin_test <- data01 %>% 
@@ -374,6 +378,17 @@ test_output <- data01 |>
 
 #write.xlsx(test_output, "point_data_test_calcs.xlsx")  
 ```
+
+```{r}
+
+output_file <- file.path(output_folder, paste0("veg2023_raw(19july2025)", ".xlsx"))
+write_xlsx(veg2023_raw, output_file)
+
+
+
+```
+
+
 
 wrangle data to create wall denominators with output file for future use
 
@@ -466,7 +481,7 @@ pi = 3.141593
 #
 # this code for veg2023raw expands the plot data to an acre scale. the data are "per acre"
 #
-veg2023raw <- data01 %>% 
+veg2023_peracre_calc <- data01 %>% 
     mutate(
         multip01 = 43560 / (pi * (3.7^2)),  # = 1012.79
         multip02_03 = 43560 / (pi * (6^2)), # = 43560/113.1 = 385.15
@@ -492,13 +507,13 @@ select(
 #mutate(spp = fct_relevel(spp, sort(levels(spp)))) |>
 mutate(
     filename = "test_2023_regen_plot_input.Rmd",
-    df = "veg2023raw"
+    df = "veg2023_peracre_calc"
 ) %>% 
 arrange(harvest, wall, trmt, origin, spp, origin, point) %>% 
 select(filename, df, harvest, wall, location, trmt, point, spp, origin, everything())
 
-output_file <- file.path(output_folder, paste0("veg2023raw(27june2025)", ".xlsx"))
-write_xlsx(veg2023raw, output_file)
+output_file <- file.path(output_folder, paste0("veg2023_peracre(19july2025)", ".xlsx"))
+write_xlsx(veg2023_peracre_calc, output_file)
 
 output_file <- file.path(output_folder, paste0("campridge_overstory_by_point_2023data(29may2025)", ".xlsx"))
 write_xlsx(plot2023_overstory, output_file)
