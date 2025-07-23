@@ -107,6 +107,8 @@ file_path_point_labels <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation
 
 #output_folder <- "C:\\Users\\pjs23\\Documents\\R\\MFO Annual Summary\\Renewal data\\renewal_2025"
 output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
+output_folder_raw <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\raw_data\\"
+
 
 ```
 
@@ -381,7 +383,7 @@ test_output <- data01 |>
 
 ```{r}
 
-output_file <- file.path(output_folder, paste0("veg2023_raw(19july2025)", ".xlsx"))
+output_file <- file.path(output_folder_raw, paste0("veg2023_raw(22july2025)", ".xlsx"))
 write_xlsx(veg2023_raw, output_file)
 
 
