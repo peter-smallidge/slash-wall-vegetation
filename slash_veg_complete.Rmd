@@ -623,7 +623,7 @@ regen2024 <- read_excel(file_path_2024, sheet = "regen", skip = 2 ) %>%
 # create this df to merge its seedling data (i.e., stems 4"to 12") with the plot attribute data. See line 785
 # or search for the df name = site_data
 regen2024seedl <- regen2024 %>% 
-    filter(type == "commercial") %>% 
+    filter(type == "commercial") %>%  #retains only commercial species to calculate "seedA"
     mutate(
         comm_sdl = supA + expA
     ) %>% 
@@ -969,7 +969,7 @@ plot2023 <- bind_rows(plot2023cafri, plot2023_site) %>%
     select(-date)
 ```
 
-2024 plot
+2024 plot (includes state forest plots)
 ```{r}
 plot2024_orig <- read_excel(file_path_2024, sheet = "site data", skip = 3 ) %>% 
     select(-location, -wall, -comments) %>% 
@@ -1074,6 +1074,7 @@ P = 1" to 4" (saplings)
 
 
 #Merge Site/Plot Data
+df=site_data_early (2019 - 2022)
 ```{r}
 site_data_early <- bind_rows(plot2019, plot2020, plot2021, plot2022) %>% 
     select(-c(location)) %>% 
@@ -1185,14 +1186,16 @@ seedlingspre2023 <- site_data %>% #from counts of seedlings onto site tally shee
     ) # %>% 
 #    filter(harvest == "red_pine" & season == "2019")
 
-seedlings2019_2024 <- bind_rows(regen2023seedl, regen2024seedl) %>% 
+seedlings2019_2024 <- bind_rows(regen2023seedl, regen2024seedl) %>%  # these df include only commercial species stem counts < 12" tall
     #this is the count of commercial seedlings 4" to 12" from the 2023 and 2024 veg data
     bind_rows(seedlingspre2023) %>% #seedlings before 2023
     mutate(
         spp = "004",
         origin = "single"
     )%>% 
-    select(harvest, wall, point, season, spp, seedA, richness, origin)
+    select(harvest, wall, point, season, spp, seedA, richness, origin) # %>% 
+#   filter(seedA >0)
+    
 #    filter(harvest == "red_pine"  & season == "2019")
 #    
 #    (24july2025) for 2023 and 2024, seedA was collected in veg plots as "seed01". in 2023, only commercial species and sweet birch
@@ -1201,20 +1204,25 @@ seedlings2019_2024 <- bind_rows(regen2023seedl, regen2024seedl) %>%
 
 
 #df=merge2019_2022_a
-
+this df standarizes the labels for seedling height classes for years 2019 thru 2022
 ```{r}
 #convert regen data to "per acre" for 2019 - 2022 before merging with 2023 and 2024
 #regen2019-regen2022 data are stems counts per point
-# regen2023 adn regen2024 are stem counts per acre at each point.
+# regen2023 and regen2024 are stem counts per acre at each point.
 
 merge2019_2022_a <- bind_rows(regen2019, regen2020, regen2021, regen2022) %>% 
     filter(!(harvest == "gas_line" & point %in% c(866, 864)))  %>%  
         #correct - code selects for either point at the intersection of harvest and point
     select(harvest, season, location, point, origin, spp, date, sup.seed01, sup.seed02, sup.seed03, 
            sup.sapl, exp.seed01, exp.seed02, exp.seed03, exp.sapl) %>% 
-#next, standardize the seedling labels for variance across years
+
+    bind_rows(seedlings2019_2024) %>%  #, by = c("harvest", "point", "season", "origin")) %>% 
+    select(-wall, -richness, -location) %>% 
+    filter(!season %in% c("2023", "2024")) %>% 
+    
+    #next, standardize the seedling labels for variance across years
         rename(
-        supB = sup.seed01, #prior to 2023, 01 was 12" to 60"
+        supB = sup.seed01, #prior to 2023, seed01 was 12" to 60" and 4" to 12" was collected as site data
         supC1 = sup.seed02, #60" to 9ft
         supC2 = sup.seed03, # 9 ft to 1" dbh
         supP = sup.sapl, # 1" to 5" dbh
@@ -1223,6 +1231,7 @@ merge2019_2022_a <- bind_rows(regen2019, regen2020, regen2021, regen2022) %>%
         expC2 = exp.seed03,
         expP = exp.sapl
     ) %>% 
+    mutate(across(where(is.numeric), ~ replace_na(., 0))) %>% 
 #next, standardize harvest names
     mutate(
     harvest = case_when(
@@ -1261,7 +1270,8 @@ merge2019_2022_a <- bind_rows(regen2019, regen2020, regen2021, regen2022) %>%
 
 
 
-Merge veg data, assign attributes, and convert to per acre values at each point (clump data not available for 2019 to 2022)
+this df converts to per acre values at each point (clump data not available for 2019 to 2022)
+note that clump data were not distinct in 2019 through 2022, such that no estimates of ramets/clump or clump/acre are possible
 #df=merge2019_2022_b
 ```{r}
 #Next, calculate per acre values for regen 2019 through 2022
@@ -1316,11 +1326,12 @@ merge2019_2022_b <- merge2019_2022_a %>%
         n = n(),
 #        height = first(height),
 #        wall = first(wall),
-        location = first(location),
+#        location = first(location),
 #        brush = first(brush),
 #        trmt = first(trmt),
 #        harvest_original = first(harvest_original),
 #        forest_type = first(forest_type),
+        seedA = seedA,
         supB = sum(supB),
         supC1 = sum(supC1),
         supC2 = sum(supC2),
@@ -1338,7 +1349,7 @@ merge2019_2022_b <- merge2019_2022_a %>%
 #Next, aggregate numeric values by harvest, season, point, spp, and origin. 
 
 df=merge2019_2022_c
-```{r}
+```{r relationship = "many-to-many}
 
 merge2019_2022_c <- merge2019_2022_b %>% 
     
@@ -1348,6 +1359,7 @@ merge2019_2022_c <- merge2019_2022_b %>%
 
         group_by(season, harvest, point, spp, origin) %>% 
         summarize(
+            seedA = seedA,
             supB = sum(supB),
             supC1 = sum(supC1),
             supC2 = sum(supC2),
@@ -1372,6 +1384,13 @@ merge2019_2022_c <- merge2019_2022_b %>%
     
     left_join(seedlings2019_2024, by = c("harvest", "season", "wall", "spp", "point", "origin")) %>% 
 
+    mutate(
+        seedA = coalesce(seedA.x, seedA.y),
+        spp = if_else(is.na(spp), "empty", spp)
+    ) %>% 
+    select(
+        -seedA.x, -seedA.y
+    ) %>% 
     
 # change numeric spp to alpha
 mutate(
@@ -1392,7 +1411,7 @@ mutate(
     "dws" = "Devil's Walking Stick",
     #data recording errors or previously missed
     "sb" = "273", "gb" = "379", "au" = "535", "ec" = "742",
-    "sp" = "90", "ohw" = "001", "ohw" = "1", "ab" = "331",
+    "sp" = "90", "empty" = "001", "empty" = "1", "ab" = "331",
     "unk" = "ush"
   ))
  ) 
@@ -1459,7 +1478,7 @@ veg_2019_2022_complete <- merge2019_2022_c %>%
 species_per_wall <- merge2019_2022_c %>%
   group_by(wall) %>%
   summarize(all_species = list(unique(spp)), .groups = "drop")
-
+# rethink how spp = "empty" displays
 
 # Step 2: Create all combinations of `harvest`, `season`, `wall`, `point`, and `all_species`
 all_combinations <- merge2019_2022_c %>%
@@ -1485,15 +1504,37 @@ left_join(merge2019_2022_c, by = c("harvest", "season", "wall", "point", "spp"))
 ```
 
 
+make veg data complete for 2019 thru 2022 for spp=04 in all seasons and walls
+```{r eval=FALSE}
 
-# df=veg01, builds from veg2019-2022, plus seedlings <12"
+
+these two steps are likely not needed because in merge2019_2022a I included the seedA data for 2019 to 2022.
+
+# Step 1: Define all combinations where you want "04" to appear
+spp04_needed <- veg_2019_2022_complete %>%
+  distinct(harvest, season, wall, point, origin) %>%
+  mutate(spp = "04", seedA = 0)
+
+# Step 2: Combine the original regen data with the supplemental "04" rows
+veg_complete_with_04 <- veg_2019_2022_complete %>%
+  filter(!harvest == "5_1") %>%
+  bind_rows(spp04_needed)
+
+```
+
+
+# df=veg01, builds from veg2019-2022_complete, plus seedlings <12"
 ```{r}
 veg01 <- veg_2019_2022_complete %>% 
-    filter(!harvest == "5_1") %>% 
-    select(-seedA) %>%  #seedA doesn't exist in the input df. 
-    full_join(seedlings2019_2024, by = c("harvest", "season", "wall", "point", "spp", "origin")) %>% 
+#     filter(!harvest == "5_1") %>% 
+# #    filter(seedA > 0) %>% 
+#     select(-seedA) %>%  #seedA doesn't exist in the input df...ooops 7/28 seedA is present in input df but all values are 0
+#     left_join(seedlings2019_2024, by = c("harvest", "season", "wall", "point", "spp", "origin")) %>%  
+#     filter(seedA > 0) %>% 
+    
         # I'm not sure why this isn't left_join given the base is 2019-2022
         # in df=veg01, seasons 2023 and 2024 are present only due to the seedA data
+        # #testing "left join 7/28/025" full_join was n=56345 of 28 var, same result from Left join as full join. Leaving as left join
     arrange(harvest, season, wall, point, spp,  origin) %>% 
     select(harvest, season, wall, point, spp, origin, seedA, everything()) %>% 
     select(-height) %>% 
@@ -1537,9 +1578,11 @@ veg01 <- veg_2019_2022_complete %>%
 
 
 test of seedling2019_2024
-```{r}
-seedling_test <- seedlings2019_2024 %>% 
-    filter(season == "2023")
+```{r eval=FALSE}
+#joined_df <- left_join(df1, df2, by = c("harvest", "season"))
+
+veg01 %>%
+  filter(seedA.x != seedA.y & !is.na(seedA.x) & !is.na(seedA.y))
 ```
 
 
@@ -1558,10 +1601,12 @@ regen2023_updated <- regen2023 %>%
     type == "commercial" ~ supA + expA,
     TRUE ~ NA_real_
   )) %>% 
+    
+# this "mutate" results in a variable seedA that have values when type = commercial and is NA for other types.
 
 #(july 23 2025) create metric for number of clumps by species
 #each clump represents the "multiplier" based on plot size as the clumps per acre
-# the sum of supA::expP is because there is only one value, the others are zero
+# the sum of supA::expP is because there is only one value among those variables, the others are zero
 # dividing the number of stems by count = the plot multiplier
 # 
   mutate(clump_per_acre_each = if_else
@@ -1597,6 +1642,8 @@ group_by(harvest, point, spp, origin) %>%
 
 # df = regen2024_updated, same code as regen2023_updated
 ```{r}
+#all this code basically identical to the previous chunch for "df=regen2023_updated"
+#
 regen2024_updated <- regen2024 %>% 
     select(-wall, -multip01, -multip02_03, -multip_sapl) %>% 
     filter(!harvest == "5_1") %>% 
@@ -1744,21 +1791,35 @@ all_labels <- point_labels_revision %>%
 
 ```
 
-create a df that is based on the complete 2019-2022 data, expanded by 2023 and 2024 data, plus adds attributes.
+
+notes:
+- veg01 has "seedA" but no species= "comm_sdl"
+
+
+create a df that is based on the complete 2019-2022 data, 
+but expanded by 2023 and 2024 data, plus adds attributes.
+
+# df=yay
 ```{r}
 # yay1 <- bind_rows(veg01, regen2023_updated, regen2024_updated) %>% 
 #     filter(!harvest == "5_1")
 
-# I tested the similarity of yay1 and yay2. they appear identical based on these two table statements, and the subsequent R chunk that graphs the mean of seedA
+# I tested the similarity of yay1 and yay2. they appear identical based on these two table statements, 
+# and the subsequent (below) R chunk that graphs the mean of seedA
 # table(yay1$season, yay1$harvest)
 # table(yay2$season, yay2$harvest)
 
 #yay2 becomes...
-yay <- full_join(veg01, regen2023_updated, by = c("harvest", "point", "spp", "origin", "wall",
+yay <- (veg01) %>% 
+  
+#seedA already exists in veg01
+    
+    full_join(regen2023_updated, by = c("harvest", "point", "spp", "origin", "wall",
                                                   "season", "type", "trmt", "location", "height", "harvest_original",
                                                   "forest_type", "brush", "residual", "seedA",
                                                   "supB", "supD", "supP", "expB", "expD", "expP" )) %>% 
-    filter(!harvest == "5_1") %>% 
+    filter(!harvest == "5_1") %>%
+    
     full_join(regen2024_updated, by = c("harvest", "point", "spp", "origin", "wall",
                                                   "season", "type", "trmt", "location", "height", "harvest_original",
                                                   "forest_type", "brush", "residual", "seedA", "stems_per_ramet", 
@@ -1798,6 +1859,10 @@ yay <- full_join(veg01, regen2023_updated, by = c("harvest", "point", "spp", "or
           harvest %in% c("sta_rd") ~ 2018,
           harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2020,
           harvest %in% c("6_6", "6_9") ~ 2022,
+          harvest %in% c("danby_block_2") ~ 2018,
+          harvest %in% c("fairfield_a5") ~ 2022,
+          harvest %in% c("fairfield_a6") ~ 2010,
+          harvest %in% c("goundry") ~ 2018,
           TRUE ~ firstgrow  # Keeps the existing value of "firstgrow" for all other cases
     ),
         year = as.numeric(season),
@@ -1825,13 +1890,24 @@ yay <- full_join(veg01, regen2023_updated, by = c("harvest", "point", "spp", "or
         total = (supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP)
     ) %>% 
     mutate(
-        filename = slash_veg_complete.Rmd,
+        filename = "slash_veg_complete.Rmd",
         df = "yay"
     ) %>% 
     select(filename, df, harvest, season, growingseasons, wall, trmt, point, spp, origin, seedA, supB, supC1, supC2, supP,
            expB, expC1, expC2, expP, total, everything())  
  #   filter(if_any(everything(), is.na))
 ```
+
+determine if there are seedA data (= commercial species < 12" tall) for cafri in 2022 and 2023
+
+# df=seedA_test 
+```{r}
+seedA_test <- seedlings2019_2024 %>% 
+    filter(point %in% c("176", "740", "56", "486")) %>% 
+    select(harvest, wall, season, point, spp, seedA) %>% 
+    arrange(harvest, point, season, spp)
+```
+
 
 testing yay1 vs yay2
 ```{r eval=FALSE}
