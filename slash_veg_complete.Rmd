@@ -213,7 +213,11 @@ write_xlsx(point_labels_revision, output_file)
 import the revised point label data file
 ```{r}
 
-point_labels <- read_excel(file_path_points, sheet = "sheet_with_residual", skip = 0)
+point_labels <- read_excel(file_path_points, sheet = "all_sites", skip = 0)
+# the sheet="all_sites" includes the state forest sites. 
+# there is potential within this code for circularity such that the df=point_labels
+# here includes residuals, but that point_labels_residuals is created within this code.
+
 
 ```
 
@@ -1715,7 +1719,7 @@ new_sites <- regen2024_updated %>%
 point_labels2 <- bind_rows(point_labels_revision, new_sites)
 ```
 
-
+#output point_lables to include state forests
 ```{r eval=FALSE}
 output_file <- file.path(output_folder, paste0("point_labels_all(24july2025)", ".xlsx"))
 
@@ -1724,6 +1728,7 @@ write_xlsx(point_labels2, output_file)
 ```
 
 
+#all_labels adapted to give plot count by wall/brush combination
 ```{r}
 # all_labels %>%
 #   count(harvest, wall, height, location, trmt) %>%
@@ -1741,27 +1746,57 @@ all_labels <- point_labels_revision %>%
 
 create a df that is based on the complete 2019-2022 data, expanded by 2023 and 2024 data, plus adds attributes.
 ```{r}
-yay <- bind_rows(veg01, regen2023_updated, regen2024_updated) %>% 
-    #check variables of df=regen2024 and add to bind_rows. Check on ramet types of variables and seedA vs. comm_seedl
+# yay1 <- bind_rows(veg01, regen2023_updated, regen2024_updated) %>% 
+#     filter(!harvest == "5_1")
+
+# I tested the similarity of yay1 and yay2. they appear identical based on these two table statements, and the subsequent R chunk that graphs the mean of seedA
+# table(yay1$season, yay1$harvest)
+# table(yay2$season, yay2$harvest)
+
+#yay2 becomes...
+yay <- full_join(veg01, regen2023_updated, by = c("harvest", "point", "spp", "origin", "wall",
+                                                  "season", "type", "trmt", "location", "height", "harvest_original",
+                                                  "forest_type", "brush", "residual", "seedA",
+                                                  "supB", "supD", "supP", "expB", "expD", "expP" )) %>% 
+    filter(!harvest == "5_1") %>% 
+    full_join(regen2024_updated, by = c("harvest", "point", "spp", "origin", "wall",
+                                                  "season", "type", "trmt", "location", "height", "harvest_original",
+                                                  "forest_type", "brush", "residual", "seedA", "stems_per_ramet", 
+                                                  "clumps_per_acre", "date","supB", "supD", "supP", "expB", "expD", "expP",
+                                                  "supA", "expA")) %>% 
+
+
+#the creation of df=yay results in the same number or rows and columns by either code bind and join. 
+    
+        #check variables of df=regen2024 and add to bind_rows. Check on ramet types of variables and seedA vs. comm_seedl
     arrange(harvest, season, wall, point, spp) %>% 
     select(harvest, season, wall, spp, point, seedA, everything()) %>% 
     filter(!(harvest == "gas_line" & point %in% c(866, 864)))  %>%  #corrected code selects for either point at the intersection of harvest and point
             # these points dropped because they were uncut in 2017 and heavy to beech.
 
     #anti_join(yay, all_labels, by = c("harvest",  "point", "wall", "height", "location", "trmt", "brush"))
-    left_join(all_labels, by = c("harvest",  "wall", "height", "location", "trmt")) %>% 
+    left_join(all_labels, by = c("harvest",  "wall", "height", "location", "trmt", "brush")) %>% 
 
 # df=all_labels doesn't appear to have any function in df=yay. since df=all_labels
 # counts by point, and filters n>1, the df is empty. 
 # when "point" is removed, this provides a count of the sample size for each combination of attributes   
 
+# Fairfield and Danby = Region 7, Petit, Travis D (DEC) <Travis.Petit@dec.ny.gov> 
+# fairfield SF A5, contract open sept 2020 - november 2025, first growing season = 2022 (need to confirm)
+# fairfield SF a6 (aka A-6.1) cut 2009, first growing season = 2010 confirmed (logging finished 2009)
+# Danby SF block 2, contract open november 2016 to october 2019, first growing season = 2018 (need to confirm)
+# 
+# Goundry Hill SF = Region 8, Cicora, Gretchen L (DEC) <gretchen.cicora@dec.ny.gov>
+# Goundry hill SF , goundry_a17, contract open december 2016 to january 2020, first growing season = 2018 (need to confirm)
+# 
+# 
         select(-present, -success) %>% 
      mutate(
         firstgrow = 2035, # default value for the first growing season
         firstgrow = case_when(
           harvest %in% c("gas_line", "red_pine") ~ 2017,
           harvest %in% c("sta_rd") ~ 2018,
-          harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2021,
+          harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2020,
           harvest %in% c("6_6", "6_9") ~ 2022,
           TRUE ~ firstgrow  # Keeps the existing value of "firstgrow" for all other cases
     ),
@@ -1789,15 +1824,56 @@ yay <- bind_rows(veg01, regen2023_updated, regen2024_updated) %>%
         seedA = if_else(is.na(seedA), 0, seedA),
         total = (supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP)
     ) %>% 
-    select(harvest, season, growingseasons, wall, trmt, point, spp, origin, seedA, supB, supC1, supC2, supP,
+    mutate(
+        filename = slash_veg_complete.Rmd,
+        df = "yay"
+    ) %>% 
+    select(filename, df, harvest, season, growingseasons, wall, trmt, point, spp, origin, seedA, supB, supC1, supC2, supP,
            expB, expC1, expC2, expP, total, everything())  
  #   filter(if_any(everything(), is.na))
 ```
 
+testing yay1 vs yay2
+```{r eval=FALSE}
+combined_df <- bind_rows(yay1, yay2, .id = "source")  # 'source' will be "1" or "2"
+
+combinded_df <- combined_df %>% 
+    mutate(source = recode(source, `1` = "yay1", `2` = "yay2"))
+    
+summary_df <- combined_df %>%
+  group_by(source, season, harvest) %>%
+  summarize(mean_seedA = mean(seedA, na.rm = TRUE), .groups = "drop")
+
+library(ggplot2)
+
+ggplot(summary_df, aes(x = season, y = mean_seedA, color = source)) +
+  geom_point() +
+  geom_line(aes(group = source)) +
+  facet_wrap(~harvest, scales = "free_y") +
+  labs(
+    title = "Mean SeedA by Harvest and Season",
+    x = "Season",
+    y = "Mean seedA"
+  ) +
+  theme_minimal()
+
+ggplot(summary_df, aes(x = season, y = mean_seedA, color = source)) +
+  geom_point(position = position_dodge(width = 0.3)) +
+  geom_line(aes(group = source), position = position_dodge(width = 0.3)) +
+  facet_wrap(~harvest, scales = "free_y") +
+  labs(title = "Mean SeedA by Harvest and Season", x = "Season", y = "Mean seedA") +
+  theme_minimal()
+
+```
+
+
+
+
+
 
 ```{r}
 # Define the output file path
-output_file <- file.path(output_folder, paste0("veg_data_2019to2023_complete(19feb2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("veg_data_2019to2024_complete(25july2025)", ".xlsx"))
 #write_xlsx(yay, output_file)
 
 # Create a new workbook and add a worksheet
