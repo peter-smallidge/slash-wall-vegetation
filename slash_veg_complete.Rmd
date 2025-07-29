@@ -1331,6 +1331,7 @@ merge2019_2022_b <- merge2019_2022_a %>%
 #        trmt = first(trmt),
 #        harvest_original = first(harvest_original),
 #        forest_type = first(forest_type),
+        date = first(date),
         seedA = seedA,
         supB = sum(supB),
         supC1 = sum(supC1),
@@ -1359,6 +1360,7 @@ merge2019_2022_c <- merge2019_2022_b %>%
 
         group_by(season, harvest, point, spp, origin) %>% 
         summarize(
+            date = first(date),
             seedA = seedA,
             supB = sum(supB),
             supC1 = sum(supC1),
@@ -1420,15 +1422,15 @@ mutate(
 ```
 
 
-
+create "numeric_vars"
 #create a stand alone reference to the numeric variables that will be in the "complete" datafile
 ```{r}
 numeric_vars <- c( "supB", "supC1", "supC2","height", 
                   "supP", "expB", "expC1", "expC2", "expP", "seedA", "stemcount", 
                   "upperexposed", "present", "success")
 
-numeric_vars.2 <- c("supB", "supC1", "supC2", "seedA",
-                  "supD", "expD", "supP", "expB", "expC1", "expC2", "expP")
+numeric_vars.2 <- c("supA", "supB", "supC1", "supC2", "seedA",
+                  "supD", "expD", "supP", "expA", "expB", "expC1", "expC2", "expP")
 
 ```
 
@@ -1471,9 +1473,9 @@ veg_2019_2022_complete <- merge2019_2022_c %>%
 
 ```
 
-
+ignore...look for df=all_seasons
 #attempt #3 - make the data complete (this worked!)
-```{r}
+```{r eval=FALSE}
 # Step 1: Create a full list of unique species (spp) per wall
 species_per_wall <- merge2019_2022_c %>%
   group_by(wall) %>%
@@ -1504,6 +1506,8 @@ left_join(merge2019_2022_c, by = c("harvest", "season", "wall", "point", "spp"))
 ```
 
 
+
+
 make veg data complete for 2019 thru 2022 for spp=04 in all seasons and walls
 ```{r eval=FALSE}
 
@@ -1524,7 +1528,7 @@ veg_complete_with_04 <- veg_2019_2022_complete %>%
 
 
 # df=veg01, builds from veg2019-2022_complete, plus seedlings <12"
-```{r}
+```{r eval=FALSE}
 veg01 <- veg_2019_2022_complete %>% 
 #     filter(!harvest == "5_1") %>% 
 # #    filter(seedA > 0) %>% 
@@ -1536,9 +1540,11 @@ veg01 <- veg_2019_2022_complete %>%
         # in df=veg01, seasons 2023 and 2024 are present only due to the seedA data
         # #testing "left join 7/28/025" full_join was n=56345 of 28 var, same result from Left join as full join. Leaving as left join
     arrange(harvest, season, wall, point, spp,  origin) %>% 
-    select(harvest, season, wall, point, spp, origin, seedA, everything()) %>% 
+    select(harvest, season, wall, point, spp, origin, everything()) %>% 
     select(-height) %>% 
+    
 #anti_join(veg01, all_labels, by = c("harvest",  "point", "wall"))
+#
     left_join(point_labels_revision, by = c("harvest", "wall", "point")) %>% 
     arrange(harvest, season, wall, trmt, point, location, spp, origin) %>% 
     mutate(
@@ -1559,7 +1565,7 @@ veg01 <- veg_2019_2022_complete %>%
         ) %>% 
     mutate(type = case_when(
     spp %in% c("ba", "bc", "bih", "bl", "co", "he", "ohw", "rm", "ro", "sa", 
-                "sh", "sm", "wa", "wo", "wp", "yb", "yp") ~ "commercial",
+                "sh", "sm", "wa", "wo", "wp", "yb", "yp", "comm_sdl") ~ "commercial",
     
     spp %in% c("sb") ~ "sb",
     
@@ -1569,10 +1575,20 @@ veg01 <- veg_2019_2022_complete %>%
 
     spp %in% c("ah", "cc", "unk", "sp" ) ~ "other",
     TRUE ~ type,  # Keeps the existing value of "type" for all other cases
-    )) #%>% 
-#    filter(harvest == "red_pine" & point == "338" & season == "2019")
+    ))# %>% 
+#    filter(type == "blank")
 
 
+```
+
+check each point with spp="empty" for additional species.  If present, delete the record with "empty".  At the initial pass, there were 1770 points with "empty"
+```{r eval=FALSE}
+veg02 <- veg01 %>% 
+  group_by(harvest, point) %>%  # or just point if harvest isn't relevant
+  mutate(n_non_empty = sum(spp != "empty")) %>%
+  ungroup() %>%
+  filter(!(spp == "empty" & n_non_empty > 0)) %>%
+  select(-n_non_empty)  # optional cleanup    
 ```
 
 
@@ -1775,6 +1791,160 @@ write_xlsx(point_labels2, output_file)
 ```
 
 
+disregard the earlier "complete" coding.
+bind all data into one df and then make complete for all species in a wall for each season
+the df below, yay, lacked completeness for the 2023 and 2024 data.
+#df = all_seasons (to be made complete)
+```{r}
+data_2019_2022 <- merge2019_2022_c %>% 
+    select(harvest, season, wall, point, spp, origin, supB, supC1, supC2, supP, expB, expC1, 
+           expC2, expP, seedA)
+
+data_2023 <- regen2023_updated %>% 
+        select(harvest, season, wall, point, spp, origin, date, supA, supB, supD, supP, expA, expB,  
+               expD, expP, seedA, stems_per_ramet, clumps_per_acre)
+
+data_2024 <- regen2024_updated %>% 
+        select(harvest, season, wall, point, spp, origin, date, supA, supB, supD, supP, expA, expB,  
+               expD, expP, seedA, stems_per_ramet, clumps_per_acre)
+
+spp_lookup <- read_csv("../species table.csv", skip = 1, col_names = c("spp_code", "spp_name"))
+
+
+all_seasons <- bind_rows(data_2019_2022, data_2023, data_2024) %>% 
+  mutate(spp = as.character(spp)) %>%
+  left_join(spp_lookup, by = c("spp" = "spp_code")) %>%
+  mutate(
+    spp = coalesce(spp_name, spp),
+    spp = as.character(spp)
+  ) %>%
+  select(-spp_name)
+
+
+
+table(all_seasons$spp)
+```
+
+make complete 2019 through 2024
+#df= all_seasons that results in df=yay2
+```{r}
+# step 1 - make a list of all species for each combination of season and wall
+
+species_per_wall <- all_seasons %>%
+  group_by(season, wall) %>%
+  summarize(
+      all_species = list(unique(spp)), # this must make a narrow-long list of species
+      .groups = "drop")
+
+# Step 2 - build all combinations
+
+all_combinations <- all_seasons %>%
+  select(harvest, season, wall, point) %>%
+  distinct() %>%
+  left_join(species_per_wall, by = c("season", "wall")) %>% # the list of all possible harvest/season/wall/point is long, and replicated across the list of species
+  unnest(all_species) %>%
+  rename(spp = all_species)
+
+# Step 3 - combine the df and make the numeric_vars complete
+
+yay2 <- all_combinations %>%
+  left_join(all_seasons, by = c("harvest", "season", "wall", "point", "spp")) %>%
+  mutate(
+    across(all_of(numeric_vars.2), ~ replace_na(.x, 0)),
+    origin = replace_na(origin, "unknown"),
+    date = replace_na(date, "unknown")
+  ) %>%
+  arrange(harvest, season, wall, point, spp, origin) %>% 
+  
+  mutate(harvest = case_when(
+      harvest == "rectangle" ~ "recknagel",
+    TRUE ~ harvest  # Keeps other values unchanged
+  )) %>% 
+  
+     mutate(
+        firstgrow = 2035, # default value for the first growing season
+        firstgrow = case_when(
+          harvest %in% c("gas_line", "red_pine") ~ 2017,
+          harvest %in% c("sta_rd") ~ 2018,
+          harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2020,
+          harvest %in% c("6_6", "6_9") ~ 2022,
+          harvest %in% c("danby_block_2") ~ 2018,  #see comments after this chunk about the State Forest "firstgrow"
+          harvest %in% c("fairfield_a5") ~ 2022,
+          harvest %in% c("fairfield_a6") ~ 2010,
+          harvest %in% c("goundry_a17") ~ 2018,
+          TRUE ~ firstgrow  # Keeps the existing value of "firstgrow" for all other cases
+    ),
+        year = as.numeric(season),
+        growingseasons = (year - firstgrow) + 1
+  ) %>% 
+    
+    mutate(
+        type = "blank"
+        ) %>% 
+    mutate(type = case_when(
+    spp %in% c("ba", "bc", "bih", "bl", "co", "he", "ohw", "rm", "ro", "sa", 
+                "ph","sh", "sm", "wa", "wo", "wp", "yb", "yp", "comm_sdl") ~ "commercial",
+    
+    spp %in% c("sb") ~ "sb",
+    
+    spp %in% c("ab", "eh", "pc", "stm", "toh", "au" ) ~ "interfere",
+
+    spp %in% c("app", "bta", "haw", "brs", "dws", "ec", "la", "ns", "cu", "erc", "ows","amc",
+               "pb", "gb", "qa", "rp", "scp", "smc", "svb", "wh", "wi" ) ~ "diversity",
+
+    spp %in% c("ah", "cc", "unk", "sp", "empty" ) ~ "other",
+    TRUE ~ type,  # Keeps the existing value of "type" for all other cases
+    )) %>% 
+    
+
+    mutate(
+    stemcount = coalesce(supB, 0) + coalesce(supC1, 0) + coalesce(supC2, 0) + coalesce(supP, 0) + 
+                coalesce(expB, 0) + coalesce(expC1, 0) + coalesce(expC2, 0) + coalesce(expP, 0),
+
+    upperexposed = coalesce(expC1, 0) + coalesce(expC2, 0) + coalesce(expP, 0),
+
+    present = if_else(stemcount > 0, 1, 0),  # Ensures output is never NA
+
+    success = if_else(upperexposed > 0, 1, 0),  # Ensures output is never NA
+
+
+    stems_per_ramet = if_else(is.na(stems_per_ramet), 0, stems_per_ramet)
+    ) %>% 
+    mutate(
+        across(all_of(numeric_vars.2), ~ ifelse(seedA > 0 & is.na(.), 0, .)),
+        across(all_of(numeric_vars.2), ~ ifelse(is.na(.), 0, .)), 
+        across(all_of(numeric_vars.2), ~ ifelse(seedA <1 & spp == "004", 0, .)),
+        seedA = if_else(is.na(seedA), 0, seedA),
+        total = (supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP) #bracket D = C1 + C2
+    ) %>% 
+    mutate(
+        filename = "slash_veg_complete.Rmd",
+        df = "yay2"
+    )
+```
+
+checking for errors
+
+```{r}
+error_check <- yay2 %>% 
+    filter(type == "blank")
+
+table(error_check$harvest, error_check$season, error_check$type)
+```
+
+
+
+# Fairfield and Danby = Region 7, Petit, Travis D (DEC) <Travis.Petit@dec.ny.gov> 
+# fairfield SF A5, contract open sept 2020 - november 2025, first growing season = 2022 (need to confirm)
+# fairfield SF a6 (aka A-6.1) cut 2009, first growing season = 2010 confirmed (logging finished 2009)
+# Danby SF block 2, contract open november 2016 to october 2019, first growing season = 2018 (need to confirm)
+# 
+# Goundry Hill SF = Region 8, Cicora, Gretchen L (DEC) <gretchen.cicora@dec.ny.gov>
+# Goundry hill SF , goundry_a17, contract open december 2016 to january 2020, first growing season = 2018 (need to confirm)
+
+
+
+
 #all_labels adapted to give plot count by wall/brush combination
 ```{r}
 # all_labels %>%
@@ -1799,8 +1969,8 @@ notes:
 create a df that is based on the complete 2019-2022 data, 
 but expanded by 2023 and 2024 data, plus adds attributes.
 
-# df=yay
-```{r}
+# df=yay  create a new version of "yay" with the complete data from df=all_seasons
+```{r eval=FALSE}
 # yay1 <- bind_rows(veg01, regen2023_updated, regen2024_updated) %>% 
 #     filter(!harvest == "5_1")
 
@@ -1810,7 +1980,7 @@ but expanded by 2023 and 2024 data, plus adds attributes.
 # table(yay2$season, yay2$harvest)
 
 #yay2 becomes...
-yay <- (veg01) %>% 
+yay <- (veg02) %>% 
   
 #seedA already exists in veg01
     
@@ -1899,9 +2069,10 @@ yay <- (veg01) %>%
 ```
 
 determine if there are seedA data (= commercial species < 12" tall) for cafri in 2022 and 2023
+this test was competed on 27 july 2025, no longer needed. The issue was resolved.
 
 # df=seedA_test 
-```{r}
+```{r eval=FALSE}
 seedA_test <- seedlings2019_2024 %>% 
     filter(point %in% c("176", "740", "56", "486")) %>% 
     select(harvest, wall, season, point, spp, seedA) %>% 
@@ -1943,6 +2114,22 @@ ggplot(summary_df, aes(x = season, y = mean_seedA, color = source)) +
 ```
 
 
+testing basic metrics to provide confidence that df=yay2 is complete and ready to go
+```{r}
+yay_test <- yay2 %>% 
+ group_by(harvest, season, wall, point) %>%
+  summarize(
+      n_spp = n_distinct(spp), 
+      .groups = "drop") %>% 
+      group_by(harvest, season, wall) %>%
+  mutate(max_spp = max(n_spp),
+         min_spp = min(n_spp),
+         n_points = n(),
+         is_deviant = n_spp != max_spp | n_spp != min_spp) %>%
+  ungroup() %>%
+  filter(is_deviant) %>% 
+  arrange(harvest, season, wall)
+```
 
 
 
