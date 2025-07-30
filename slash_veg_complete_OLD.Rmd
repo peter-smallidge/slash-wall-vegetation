@@ -200,6 +200,28 @@ point_labels_revision <- read_excel(file_path_points, sheet = "all_sites", skip 
 ```
 
 
+```{r eval=FALSE}
+
+
+output_file <- file.path(output_folder, paste0("point_labels_all", ".xlsx"))
+write_xlsx(point_labels_revision, output_file)
+
+
+
+```
+
+import the revised point label data file
+```{r}
+
+point_labels <- read_excel(file_path_points, sheet = "all_sites", skip = 0)
+# the sheet="all_sites" includes the state forest sites. 
+# there is potential within this code for circularity such that the df=point_labels
+# here includes residuals, but that point_labels_residuals is created within this code.
+
+
+```
+
+
 
 2019 vegetation data
 ```{r eval=T}
@@ -381,6 +403,14 @@ regen2022 <- raw2022 %>%
 
 ```
 
+
+# origin_test <- data01 %>% 
+#     group_by(stand, origin) |> 
+#     summarize(
+#     test_clump = mean(count)  
+     
+# this code should produce the average number of stems per clump in each stand. 
+#Note the older harvests have a lower average number
 
 veg2023_peracre_calc <- data01 %>% 
     mutate(
@@ -622,6 +652,12 @@ mutate(
   )
 )
 ```
+
+```{r eval=FALSE}
+error_check03 <- regen2024 %>% 
+    filter(is.na(spp))
+```
+
 
 
 ###  site/plot data read and manipulate
@@ -1412,6 +1448,173 @@ numeric_vars.2 <- c("supA", "supB", "supC1", "supC2", "seedA",
 
 ```
 
+attempt #1 - make the data complete (failed)
+```{r eval=FALSE}
+veg_2019_2022_complete <- merge2019_2022_c %>%
+  ungroup() %>%
+  select(harvest, season, wall, point, spp, numeric_vars, -location, -origin, -trmt, -type) %>% 
+  arrange(harvest, season, wall, point, spp) %>%
+  group_by(harvest, season, wall, point) %>%
+#    complete(spp, fill = list(!!!setNames(rep(0, length(numeric_vars)), numeric_vars))) %>% 
+    complete(spp, fill = list(!!!setNames(rep(NA, length(numeric_vars)), numeric_vars))) %>% 
+  ungroup() %>% 
+  arrange(harvest, season, wall, spp, origin, point)
+
+```
+
+attempt #2 - make the data complete (failed)
+```{r eval=FALSE}
+# Step 1: Create a full list of unique species (spp) per wall
+species_per_wall <- merge2019_2022_c %>%
+  group_by(wall) %>%
+  summarize(tableall_species = list(unique(spp)), .groups = "drop")
+
+# Step 2: Use `complete()` to expand every point within a wall to include all species
+veg_2019_2022_complete <- merge2019_2022_c %>%
+  left_join(species_per_wall, by = "wall") %>% # Add all_species for each wall
+  unnest(all_species) %>%                     # Expand species for each wall
+  rename(spp_all = all_species) %>%           # Avoid overwriting original spp
+  group_by(harvest, season, wall, point) %>%  # Group by the desired levels
+  complete(
+    spp = spp_all,                            # Ensure all species are present
+    fill = list(
+      !!!setNames(rep(0, length(numeric_vars)), numeric_vars), # Fill numeric columns with 0
+      origin = "unknown"                      # Fill origin with "unknown"
+    )
+  ) %>%
+  ungroup() %>%
+  arrange(harvest, season, wall, spp, origin, point)
+
+```
+
+ignore...look for df=all_seasons
+#attempt #3 - make the data complete (this worked!)
+```{r eval=FALSE}
+# Step 1: Create a full list of unique species (spp) per wall
+species_per_wall <- merge2019_2022_c %>%
+  group_by(wall) %>%
+  summarize(all_species = list(unique(spp)), .groups = "drop")
+# rethink how spp = "empty" displays
+
+# Step 2: Create all combinations of `harvest`, `season`, `wall`, `point`, and `all_species`
+all_combinations <- merge2019_2022_c %>%
+  select(harvest, season, wall, point, -trmt, -location) %>%
+  distinct() %>%
+  left_join(species_per_wall, by = "wall") %>%  # Attach the full species list per wall
+  unnest(all_species) %>%                       # Expand the species list
+  rename(spp = all_species)                     # Rename to match the original dataset
+
+
+# Step 3: Complete the dataset by joining the full combinations with the original data
+veg_2019_2022_complete <- all_combinations %>%
+left_join(merge2019_2022_c, by = c("harvest", "season", "wall", "point", "spp")) %>%
+ select(harvest, season, wall, point, spp, origin, all_of(numeric_vars)) %>%
+      mutate(
+#    height = as.numeric(height),
+          # Fill missing numeric variables with 0
+    across(all_of(numeric_vars), ~ replace_na(.x, 0)),
+    # Fill `origin` with "unknown" if missing
+    origin = replace_na(origin, "unknown")
+  ) %>%
+      arrange(harvest, season, wall, spp, point, origin) 
+```
+
+
+
+
+make veg data complete for 2019 thru 2022 for spp=04 in all seasons and walls
+```{r eval=FALSE}
+
+
+these two steps are likely not needed because in merge2019_2022a I included the seedA data for 2019 to 2022.
+
+# Step 1: Define all combinations where you want "04" to appear
+spp04_needed <- veg_2019_2022_complete %>%
+  distinct(harvest, season, wall, point, origin) %>%
+  mutate(spp = "04", seedA = 0)
+
+# Step 2: Combine the original regen data with the supplemental "04" rows
+veg_complete_with_04 <- veg_2019_2022_complete %>%
+  filter(!harvest == "5_1") %>%
+  bind_rows(spp04_needed)
+
+```
+
+
+# df=veg01, builds from veg2019-2022_complete, plus seedlings <12"
+```{r eval=FALSE}
+veg01 <- veg_2019_2022_complete %>% 
+#     filter(!harvest == "5_1") %>% 
+# #    filter(seedA > 0) %>% 
+#     select(-seedA) %>%  #seedA doesn't exist in the input df...ooops 7/28 seedA is present in input df but all values are 0
+#     left_join(seedlings2019_2024, by = c("harvest", "season", "wall", "point", "spp", "origin")) %>%  
+#     filter(seedA > 0) %>% 
+    
+        # I'm not sure why this isn't left_join given the base is 2019-2022
+        # in df=veg01, seasons 2023 and 2024 are present only due to the seedA data
+        # #testing "left join 7/28/025" full_join was n=56345 of 28 var, same result from Left join as full join. Leaving as left join
+    arrange(harvest, season, wall, point, spp,  origin) %>% 
+    select(harvest, season, wall, point, spp, origin, everything()) %>% 
+    select(-height) %>% 
+    
+#anti_join(veg01, all_labels, by = c("harvest",  "point", "wall"))
+#
+    left_join(point_labels_revision, by = c("harvest", "wall", "point")) %>% 
+    arrange(harvest, season, wall, trmt, point, location, spp, origin) %>% 
+    mutate(
+  # #      seedA = coalesce(seedA.x, seedA.y),
+  #       height = coalesce(height.x, height.y),
+  #       trmt = coalesce(trmt.x, trmt.y),
+  #       location = coalesce(location.x, location.y),
+        height = as.numeric(height),
+        supD = supC1 + supC2,
+        expD = expC1 + expC2
+    ) %>% 
+    select(harvest, season, wall, trmt, point, location, height, spp, origin, everything()) %>%
+    select(-stemcount, -upperexposed) %>% 
+
+# Assign "type" category lables to the species
+    mutate(
+        type = "blank"
+        ) %>% 
+    mutate(type = case_when(
+    spp %in% c("ba", "bc", "bih", "bl", "co", "he", "ohw", "rm", "ro", "sa", 
+                "sh", "sm", "wa", "wo", "wp", "yb", "yp", "comm_sdl") ~ "commercial",
+    
+    spp %in% c("sb") ~ "sb",
+    
+    spp %in% c("ab", "eh", "pc", "stm", "toh", "au" ) ~ "interfere",
+
+    spp %in% c("app", "bta", "haw", "brs", "dws", "ec", "la", "ns", "pb", "gb", "qa", "rp", "scp", "smc", "svb", "wh", "wi" ) ~ "diversity",
+
+    spp %in% c("ah", "cc", "unk", "sp" ) ~ "other",
+    TRUE ~ type,  # Keeps the existing value of "type" for all other cases
+    ))# %>% 
+#    filter(type == "blank")
+
+
+```
+
+check each point with spp="empty" for additional species.  If present, delete the record with "empty".  At the initial pass, there were 1770 points with "empty"
+```{r eval=FALSE}
+veg02 <- veg01 %>% 
+  group_by(harvest, point) %>%  # or just point if harvest isn't relevant
+  mutate(n_non_empty = sum(spp != "empty")) %>%
+  ungroup() %>%
+  filter(!(spp == "empty" & n_non_empty > 0)) %>%
+  select(-n_non_empty)  # optional cleanup    
+```
+
+
+
+test of seedling2019_2024
+```{r eval=FALSE}
+#joined_df <- left_join(df1, df2, by = c("harvest", "season"))
+
+veg01 %>%
+  filter(seedA.x != seedA.y & !is.na(seedA.x) & !is.na(seedA.y))
+```
+
 
 
 
@@ -1572,9 +1775,37 @@ group_by(harvest, point, spp, origin) %>%
 
 ```
 
+#update point labels to include the state forest sites
+```{r eval=FALSE}
+basal2024 <- plot2024_orig %>% 
+    select(harvest, point, basalarea) %>% 
+    filter(! harvest %in% c("5_1", "6_6", "6_9", "recknagel", "sta_rd", "decker")) %>% 
+    group_by(harvest) %>% 
+    summarize(
+        residual = mean(basalarea)
+    ) %>% 
+ mutate_if(is.numeric, round, 0)
+    
+    
+new_sites <- regen2024_updated %>% 
+    select(harvest, point, height, trmt, location, wall, brush, forest_type, harvest_original) %>% 
+    filter(! harvest %in% c("5_1", "6_6", "6_9", "recknagel", "rectangle", "sta_rd", "decker")) %>% 
+    distinct(harvest, point, .keep_all = TRUE) %>% 
+    left_join(basal2024, by = c("harvest"))
+
+point_labels2 <- bind_rows(point_labels_revision, new_sites)
+```
+
+#output point_lables to include state forests
+```{r eval=FALSE}
+output_file <- file.path(output_folder, paste0("point_labels_all(24july2025)", ".xlsx"))
+
+write_xlsx(point_labels2, output_file)
+
+```
 
 
-
+disregard the earlier "complete" coding.
 bind all data into one df and then make complete for all species in a wall for each season
 the df below, yay, lacked completeness for the 2023 and 2024 data.
 #df = all_seasons (to be made complete)

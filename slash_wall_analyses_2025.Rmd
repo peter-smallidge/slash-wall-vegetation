@@ -32,10 +32,10 @@ library(openxlsx)
 
 ```{r eval=FALSE}
 
-# the purpose of this code is to take the tablulated data from 2019 through 2023 and produce output tables and graphs
+# the purpose of this code is to take the tabulated and complete data from 2019 through 2024 and produce output tables and graphs
 # that evaluate the effectiveness of slash walls.
 # 
-# Data from 2024, especially the controls from state forests will be merged. The file slash_veg_complete.Rmd will incorporate the 2024 growing season data.
+# The source file is from slash_veg_complete.Rmd will incorporate the 2024 growing season data.
 ```
 
 
@@ -46,7 +46,7 @@ library(openxlsx)
 file paths, input and output
 ```{r}
 #complete data
-file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2023_complete(19feb2025)(read_me).xlsx"
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(30july2025)(read_me).xlsx"
 
 file_path_denom <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\count_of_points_stand_by_protection.xlsx"
 
