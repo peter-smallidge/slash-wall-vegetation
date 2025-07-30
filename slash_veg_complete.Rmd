@@ -254,7 +254,7 @@ regen2019 <- raw2019 %>%
         harvest %in% c("redpine") ~ "red_pine",
         TRUE ~ harvest, # keeps the existing value of "harvest" if none of the cases are true
     )) %>% 
-        left_join(point_labels, by = c("harvest", "point", "location")) %>% 
+        left_join(point_labels_revision, by = c("harvest", "point", "location")) %>% 
     select(-wall, -trmt, -height, -harvest_original, -forest_type, -brush) %>% 
       mutate(across(
         where(is.numeric),  # Select all numeric columns
@@ -971,7 +971,7 @@ plot2024_orig <- read_excel(file_path_2024, sheet = "site data", skip = 3 ) %>%
     )
   ) %>% 
 
-left_join(point_labels, by = c("harvest", "point")) %>% 
+left_join(point_labels_revision, by = c("harvest", "point")) %>% 
     mutate(
         height = case_when(
         harvest %in% c("danby_block_2", "fairfield_a5", "fairfield_a6", "goundry_a17", "5_1") ~ 0,
@@ -1092,7 +1092,7 @@ site_data_early <- bind_rows(plot2019, plot2020, plot2021, plot2022) %>%
       TRUE ~ harvest  # Keeps other values unchanged
     )
   ) %>% 
-    left_join(point_labels, by = c("harvest", "point")) %>% 
+    left_join(point_labels_revision, by = c("harvest", "point")) %>% 
     mutate(across(c(oakhick, beech, maple, birch, hdwd, conifer), ~ replace_na(., 0))) %>% 
     mutate(across(c(baf), ~ replace_na(., 9.1))) %>% 
     mutate(
@@ -1258,18 +1258,6 @@ note that clump data were not distinct in 2019 through 2022, such that no estima
 merge2019_2022_b <- merge2019_2022_a %>% 
     select(harvest, season, point, origin, spp, everything()) %>% 
 
-#Next, calculate the average # stems per ramet. 
-#WAIT
-#WAIT - clumps were not distinguished within a spp for 2019 - 2022.  
-#All code for ramets, count and clumps will be commented out (20june 2025)
-
-   #  mutate(
-   #  stems.ramet = if_else(origin == "clump",  #TODO need to double check this calculation #DONE, calculation confirmed 2/13/2025
-   #                        rowMeans(across(starts_with("sup") | starts_with("exp"), 
-   #                         ~ if_else(. > 0, ., NA_real_)), na.rm = TRUE), #within a row, assess if >0, then calculates mean of clump size 
-   #                        NA_real_)
-   # ) %>%
-    
 #Next, convert plot counts to "per acre" values
    mutate( #converts plot count to count per acre
         # count = if_else(is.na(count), 1, count), # if count missing (it's a single) then make count = 1
@@ -1302,13 +1290,6 @@ merge2019_2022_b <- merge2019_2022_a %>%
     group_by(harvest, season, point, spp, origin) %>% 
     summarize(
         n = n(),
-#        height = first(height),
-#        wall = first(wall),
-#        location = first(location),
-#        brush = first(brush),
-#        trmt = first(trmt),
-#        harvest_original = first(harvest_original),
-#        forest_type = first(forest_type),
         date = first(date),
         seedA = seedA,
         supB = sum(supB),
@@ -1370,31 +1351,7 @@ merge2019_2022_c <- merge2019_2022_b %>%
     ) %>% 
     select(
         -seedA.x, -seedA.y
-    ) #%>% 
-    
-# # change numeric spp to alpha
-# mutate(
-#   spp = as.character(fct_recode(
-#     factor(spp),"comm_sdl" = "004",
-#     "rp" = "125", "wp" = "129", "scp" = "130", "he" = "261",
-#     "svb" = "356", "sm" = "310", "stm" = "315", "rm" = "316",
-#     "sm" = "318", "ah" = "341", "ab" = "351", "svb" = "355",
-#     "yb" = "371", "sb" = "372", "pb" = "375", "ah" = "391",
-#     "bih" = "402", "sh" = "407", "pc" = "461", "unk" = "492",
-#     "haw" = "500", "ab" = "521", "ab" = "53", "ab" = "531",
-#     "wa" = "541", "wh" = "585", "yp" = "621", "ab" = "631",
-#     "app" = "660", "la" = "70", "eh" = "701", "unk" = "706",
-#     "bta" = "743", "qa" = "746", "pc" = "761", "bc" = "762",
-#     "cc" = "763", "wo" = "802", "co" = "832", "ro" = "833",
-#     "smc" = "866", "ns" = "91", "bl" = "901", "wi" = "920",
-#     "sa" = "931", "ba" = "951", "toh" = "998", "unk" = "999",
-#     "dws" = "Devil's Walking Stick",
-#     #data recording errors or previously missed
-#     "sb" = "273", "gb" = "379", "au" = "535", "ec" = "742",
-#     "sp" = "90", "empty" = "001", "empty" = "1", "ab" = "331",
-#     "unk" = "ush"
-#   ))
-#  ) 
+    ) 
  
  
 ```
@@ -1408,7 +1365,8 @@ numeric_vars <- c( "supB", "supC1", "supC2","height",
                   "upperexposed", "present", "success")
 
 numeric_vars.2 <- c("supA", "supB", "supC1", "supC2", "seedA",
-                  "supD", "expD", "supP", "expA", "expB", "expC1", "expC2", "expP")
+                  "supD", "supP", "expA", "expB", "expC1", "expC2","expD", "expP",
+                  "stems_per_ramet", "clumps_per_acre")
 
 ```
 
@@ -1512,62 +1470,7 @@ group_by(harvest, point, spp, origin) %>%
        .groups = "drop"
     ) %>% 
 
-    
-# 
-# the new df=point_labels_revision includes these sites and attributes.
-# the subsequent mutate statements are not needed.
-
       left_join(point_labels_revision, by = c("harvest", "point")) #%>% 
-    
-#         mutate(
-#         height = case_when(
-#         harvest %in% c("danby_block_2", "fairfield_a5", "fairfield_a6", "goundry_a17", "5_1") ~ 0,
-#         TRUE ~ height
-#   )
-# ) %>% 
-#     mutate(
-#         trmt = case_when(
-#         harvest %in% c("danby_block_2", "fairfield_a5", "fairfield_a6", "goundry_a17", "decker", "rectangle", "5_1") ~ "control",
-#         TRUE ~ trmt
-#   )
-# ) %>% 
-#     mutate(
-#         location = case_when(
-#         harvest %in% c("danby_block_2", "fairfield_a5", "fairfield_a6", "goundry_a17", "5_1") ~ "c",
-#         TRUE ~ location
-#   )
-# ) %>% 
-#     
-#     mutate(
-#         wall = case_when(
-#         harvest %in% c("danby_block_2", "fairfield_a5", "fairfield_a6", "goundry_a17", "5_1") ~ "99",
-#         TRUE ~ wall
-#   )
-# ) %>% 
-# 
-#     mutate(
-#         brush = case_when(
-#         harvest %in% c("fairfield_a5") ~ "b",
-#         harvest %in% c("danby_block_2",  "fairfield_a6", "goundry_a17", "5_1") ~ "u",
-#         TRUE ~ brush
-#   )
-# ) %>% 
-#         
-#     mutate(
-#         forest_type = case_when(
-#         harvest %in% c("danby_block_2", "fairfield_a5", "5_1") ~ "oak_hdwd",
-#         harvest %in% c("fairfield_a6", "goundry_a17") ~ "n_hdwd",
-#         TRUE ~ forest_type
-#   )
-# ) %>% 
-# 
-#     mutate(
-#         harvest_original = case_when(
-#         harvest %in% c("danby_block_2", "fairfield_a5", "fairfield_a6", "goundry_a17", "5_1") ~ harvest,
-#         TRUE ~ harvest_original
-#   )
-# )
-
 
 
 ```
@@ -1618,7 +1521,7 @@ table(all_seasons$spp)
 make complete 2019 through 2024
 #df= all_seasons that results in df=yay2
 # (season x wall)
-```{r}
+```{r eval=FALSE}
 # step 1 - make a list of all species for each combination of season and wall
 
 species_per_wall <- all_seasons %>%
@@ -1713,14 +1616,7 @@ make complete 2019 through 2024
 #df= all_seasons that results in df=yay2
 # (season x harvest)
 ```{r}
-# step 1 - make a list of all species for each combination of season and wall
-# species_origin_per_harvest <- all_seasons %>%
-#   group_by(season, harvest) %>%
-#   summarize(
-#     spp_origin = list(distinct(pick(spp, origin))),
-#     .groups = "drop"
-# )
-
+#Step 1 - Create a list of distinct levels of attributes and group by season x harvest
 species_origin_per_harvest <- all_seasons %>%
   distinct(season, harvest, spp, origin) %>%
   group_by(season, harvest) %>%
@@ -1729,11 +1625,6 @@ species_origin_per_harvest <- all_seasons %>%
     .groups = "drop"
   )
 
-# species_per_harvest <- all_seasons %>%
-#   group_by(season, harvest) %>%
-#   summarize(
-#       all_species = list(unique(spp)), # this must make a narrow-long list of species
-#       .groups = "drop")
 
 # Step 2 - build all combinations
 all_combinations_harvest <- all_seasons %>%
@@ -1743,12 +1634,6 @@ all_combinations_harvest <- all_seasons %>%
   unnest(spp_origin)  # this will give you separate spp and origin columns
 
 
-# all_combinations_harvest <- all_seasons %>%
-#   select(harvest, season, wall, point) %>%
-#   distinct() %>%
-#   left_join(species_origin_per_harvest, by = c("season", "harvest")) %>% # the list of all possible harvest/season/wall/point is long, and replicated across the list of species
-#   unnest(spp_origin) %>%
-#   rename(spp = all_species)
 
 # Step 3 - combine the df and make the numeric_vars complete
 
@@ -1841,7 +1726,30 @@ yay2_harvest <- all_combinations_harvest %>%
         filename = "slash_veg_complete.Rmd",
         df = "yay2_harvest"
     ) %>% 
-    arrange(season, harvest, point, spp, origin)
+    arrange(season, harvest, point, spp, origin) %>% 
+    rename(
+        sup_sd4_12 = supA,
+        sup_sd12_5 = supB,
+        sup_sd5_9 = supC1,
+        sup_sd9_1 = supC2,
+        sup_sd5_1 = supD, #D = C1 + C2
+        sup_sp_1_5 = supP,
+        exp_sd4_12 = expA,
+        exp_sd12_5 = expB,
+        exp_sd5_9 = expC1,
+        exp_sd9_1 = expC2,
+        exp_sd5_1 = expD, #D = C1 + C2
+        exp_sp_1_5 = expP
+    ) %>% 
+    select(filename, df, season, harvest, wall, point, growingseasons, type, spp, origin,
+           seedA, total, stemcount, upperexposed, present, success,
+           sup_sd4_12, sup_sd12_5, sup_sd5_9, sup_sd9_1, sup_sd5_1, sup_sp_1_5,
+           exp_sd4_12, exp_sd12_5, exp_sd5_9, exp_sd9_1, exp_sd5_1, exp_sp_1_5,
+           clumps_per_acre, stems_per_ramet, firstgrow, year, date)
+
+#        sup_sd4_12, sup_sd12_5, sup_sd5_9, sup_sd9_1, sup_sd5_1, sup_sp_1_5,
+ #       exp_sd4_12, exp_sd12_5, exp_sd5_9, exp_sd9_1, exp_sd5_1, exp_sp_1_5
+
 ```
 
 
@@ -1863,147 +1771,12 @@ error_check02 <- yay2_harvest %>%
 # Fairfield and Danby = Region 7, Petit, Travis D (DEC) <Travis.Petit@dec.ny.gov> 
 # fairfield SF A5, contract open sept 2020 - november 2025, first growing season = 2022 (need to confirm)
 # fairfield SF a6 (aka A-6.1) cut 2009, first growing season = 2010 confirmed (logging finished 2009)
-# Danby SF block 2, contract open november 2016 to october 2019, first growing season = 2018 (need to confirm)
+# Danby SF block 2, contract open november 2016 to october 2019, EWP 5 whorls in 2024, first growing season = 2018 (need to confirm)
 # 
 # Goundry Hill SF = Region 8, Cicora, Gretchen L (DEC) <gretchen.cicora@dec.ny.gov>
 # Goundry hill SF , goundry_a17, contract open december 2016 to january 2020, first growing season = 2018 (need to confirm)
 
 
-
-
-#all_labels adapted to give plot count by wall/brush combination
-```{r}
-# all_labels %>%
-#   count(harvest, wall, height, location, trmt) %>%
-#   filter(n > 1)
-
-all_labels <- point_labels_revision %>%
-  count(harvest, wall, height, location, brush, trmt) %>%
-  filter(n > 1) %>% 
-    rename(
-        plot_count = n
-    )
-
-
-```
-
-
-notes:
-- veg01 has "seedA" but no species= "comm_sdl"
-
-
-create a df that is based on the complete 2019-2022 data, 
-but expanded by 2023 and 2024 data, plus adds attributes.
-
-# df=yay  create a new version of "yay" with the complete data from df=all_seasons
-```{r eval=FALSE}
-# yay1 <- bind_rows(veg01, regen2023_updated, regen2024_updated) %>% 
-#     filter(!harvest == "5_1")
-
-# I tested the similarity of yay1 and yay2. they appear identical based on these two table statements, 
-# and the subsequent (below) R chunk that graphs the mean of seedA
-# table(yay1$season, yay1$harvest)
-# table(yay2$season, yay2$harvest)
-
-#yay2 becomes...
-yay <- (veg02) %>% 
-  
-#seedA already exists in veg01
-    
-    full_join(regen2023_updated, by = c("harvest", "point", "spp", "origin", "wall",
-                                                  "season", "type", "trmt", "location", "height", "harvest_original",
-                                                  "forest_type", "brush", "residual", "seedA",
-                                                  "supB", "supD", "supP", "expB", "expD", "expP" )) %>% 
-    filter(!harvest == "5_1") %>%
-    
-    full_join(regen2024_updated, by = c("harvest", "point", "spp", "origin", "wall",
-                                                  "season", "type", "trmt", "location", "height", "harvest_original",
-                                                  "forest_type", "brush", "residual", "seedA", "stems_per_ramet", 
-                                                  "clumps_per_acre", "date","supB", "supD", "supP", "expB", "expD", "expP",
-                                                  "supA", "expA")) %>% 
-
-
-#the creation of df=yay results in the same number or rows and columns by either code bind and join. 
-    
-        #check variables of df=regen2024 and add to bind_rows. Check on ramet types of variables and seedA vs. comm_seedl
-    arrange(harvest, season, wall, point, spp) %>% 
-    select(harvest, season, wall, spp, point, seedA, everything()) %>% 
-    filter(!(harvest == "gas_line" & point %in% c(866, 864)))  %>%  #corrected code selects for either point at the intersection of harvest and point
-            # these points dropped because they were uncut in 2017 and heavy to beech.
-
-    #anti_join(yay, all_labels, by = c("harvest",  "point", "wall", "height", "location", "trmt", "brush"))
-    left_join(all_labels, by = c("harvest",  "wall", "height", "location", "trmt", "brush")) %>% 
-
-# df=all_labels doesn't appear to have any function in df=yay. since df=all_labels
-# counts by point, and filters n>1, the df is empty. 
-# when "point" is removed, this provides a count of the sample size for each combination of attributes   
-
-# Fairfield and Danby = Region 7, Petit, Travis D (DEC) <Travis.Petit@dec.ny.gov> 
-# fairfield SF A5, contract open sept 2020 - november 2025, first growing season = 2022 (need to confirm)
-# fairfield SF a6 (aka A-6.1) cut 2009, first growing season = 2010 confirmed (logging finished 2009)
-# Danby SF block 2, contract open november 2016 to october 2019, first growing season = 2018 (need to confirm)
-# 
-# Goundry Hill SF = Region 8, Cicora, Gretchen L (DEC) <gretchen.cicora@dec.ny.gov>
-# Goundry hill SF , goundry_a17, contract open december 2016 to january 2020, first growing season = 2018 (need to confirm)
-# 
-# 
-        select(-present, -success) %>% 
-     mutate(
-        firstgrow = 2035, # default value for the first growing season
-        firstgrow = case_when(
-          harvest %in% c("gas_line", "red_pine") ~ 2017,
-          harvest %in% c("sta_rd") ~ 2018,
-          harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2020,
-          harvest %in% c("6_6", "6_9") ~ 2022,
-          harvest %in% c("danby_block_2") ~ 2018,
-          harvest %in% c("fairfield_a5") ~ 2022,
-          harvest %in% c("fairfield_a6") ~ 2010,
-          harvest %in% c("goundry") ~ 2018,
-          TRUE ~ firstgrow  # Keeps the existing value of "firstgrow" for all other cases
-    ),
-        year = as.numeric(season),
-        growingseasons = (year - firstgrow) + 1
-  ) %>% 
-    mutate(
-    stemcount = coalesce(supB, 0) + coalesce(supC1, 0) + coalesce(supC2, 0) + coalesce(supP, 0) + 
-                coalesce(expB, 0) + coalesce(expC1, 0) + coalesce(expC2, 0) + coalesce(expP, 0),
-
-    upperexposed = coalesce(expC1, 0) + coalesce(expC2, 0) + coalesce(expP, 0),
-
-    present = if_else(stemcount > 0, 1, 0),  # Ensures output is never NA
-
-    success = if_else(upperexposed > 0, 1, 0),  # Ensures output is never NA
-
-#    stems.ramet = replace_na(stems.ramet, 0)  # Replaces NA with 0
-    
-    stems_per_ramet = if_else(is.na(stems_per_ramet), 0, stems_per_ramet)
-    ) %>% 
-    mutate(
-        across(all_of(numeric_vars.2), ~ ifelse(seedA > 0 & is.na(.), 0, .)),
-        across(all_of(numeric_vars.2), ~ ifelse(is.na(.), 0, .)), 
-        across(all_of(numeric_vars.2), ~ ifelse(seedA <1 & spp == "004", 0, .)),
-        seedA = if_else(is.na(seedA), 0, seedA),
-        total = (supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP)
-    ) %>% 
-    mutate(
-        filename = "slash_veg_complete.Rmd",
-        df = "yay"
-    ) %>% 
-    select(filename, df, harvest, season, growingseasons, wall, trmt, point, spp, origin, seedA, supB, supC1, supC2, supP,
-           expB, expC1, expC2, expP, total, everything())  
- #   filter(if_any(everything(), is.na))
-```
-
-determine if there are seedA data (= commercial species < 12" tall) for cafri in 2022 and 2023
-this test was competed on 27 july 2025, no longer needed. The issue was resolved.
-
-# df=seedA_test 
-```{r eval=FALSE}
-seedA_test <- seedlings2019_2024 %>% 
-    filter(point %in% c("176", "740", "56", "486")) %>% 
-    select(harvest, wall, season, point, spp, seedA) %>% 
-    arrange(harvest, point, season, spp)
-```
 
 
 testing yay1 vs yay2
@@ -2140,46 +1913,3 @@ output_file <- file.path(output_folder, paste0("veg_data_2019to2024_complete(30j
 write_xlsx(yay2_harvest, output_file)
 ```
 
-
-# a complicated way to add the filename to the file
-```{r eval=FALSE}
-# Create a new workbook and add a worksheet
-wb <- createWorkbook()
-addWorksheet(wb, "Data")
-
-# Get the Rmd filename, with a fallback for interactive use
-rmd_filename <- knitr::current_input()
-if (is.null(rmd_filename)) {
-  rmd_filename <- "slash_veg_complete.Rmd"  # Fallback when running in console
-}
-
-# Write the Rmd filename in the first row
-writeData(wb, "Data", data.frame(Filename = rmd_filename), startRow = 1, startCol = 1, colNames = FALSE)
-
-# Write the actual data starting in row 3 (to leave a blank row for clarity)
-writeData(wb, "Data", yay, startRow = 3, startCol = 1)
-
-# Save the workbook
-saveWorkbook(wb, output_file, overwrite = TRUE)
-```
-
-
-```{r}
-test01 <- yay %>% 
-  ungroup() %>%
-  mutate(
-      total = (seedA + supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP)
-  ) %>% 
-  group_by(harvest, season, wall, trmt) %>%
-  summarize(
-    season = first(season),
-    firstgrow = mean(firstgrow),
-    year = mean(year),
-    growingseasons = mean(growingseasons),
-    total = mean(total),
-    richness = n_distinct(spp[present > 0], na.rm = TRUE),
-    group_size = n(),
-    .groups = "drop"
-  )
-
-```

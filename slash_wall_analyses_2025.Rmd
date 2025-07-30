@@ -32,10 +32,12 @@ library(openxlsx)
 
 ```{r eval=FALSE}
 
-# the purpose of this code is to take the tabulated and complete data from 2019 through 2024 and produce output tables and graphs
+# the purpose of this code is to take the tabulated and "complete" data from 2019 through 2024 and produce output tables and graphs
 # that evaluate the effectiveness of slash walls.
 # 
-# The source file is from slash_veg_complete.Rmd will incorporate the 2024 growing season data.
+# The source file is from slash_veg_complete.Rmd df = yay2_harvest will incorporate the 2024 growing season data.
+# 
+# The input data are complete at the season x harvest level
 ```
 
 
@@ -46,17 +48,43 @@ library(openxlsx)
 file paths, input and output
 ```{r}
 #complete data
-file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(30july2025)(read_me).xlsx"
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(30july2025)(readme).xlsx"
 
-file_path_denom <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\count_of_points_stand_by_protection.xlsx"
+file_path_site <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_data_2019_2024(22july2025)(readme).xlsx"
 
+file_path_points <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme).xlsx"
 
 output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
 ```
 
+#read veg data
+```{r}
+veg_data <- read_excel(file_path_veg_complete, sheet = "Sheet1", skip = 0) 
+```
+
+
+#read site data
+```{r}
+site_data = read_excel(file_path_site, sheet = "Sheet1", skip = 0)
+
+```
+
+
 
 # read denominators, but they mostly aren't used
 ```{r}
+
+point_labels <- read_excel(file_path_points, sheet = "all_sites", skip = 0) # %>% 
+
+point_denom <- point_labels %>%
+  count(harvest, wall, height, location, brush, trmt) %>%
+  filter(n > 1) %>% 
+    rename(
+        point_count = n
+    )
+
+
+
 denom <- read_excel(file_path_denom, sheet = "Sheet 1") %>% 
     rename(
         harvest = stand,
