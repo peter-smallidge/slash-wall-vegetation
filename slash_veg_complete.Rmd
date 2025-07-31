@@ -1612,8 +1612,10 @@ yay2_wall <- all_combinations %>%
     )
 ```
 
+
+
 make complete 2019 through 2024
-#df= all_seasons that results in df=yay2
+#df= all_seasons that results in df=yay2_harvest
 # (season x harvest)
 ```{r}
 #Step 1 - Create a list of distinct levels of attributes and group by season x harvest
@@ -1638,13 +1640,15 @@ all_combinations_harvest <- all_seasons %>%
 # Step 3 - combine the df and make the numeric_vars complete
 
 yay2_harvest <- all_combinations_harvest %>%
-  left_join(all_seasons, by = c("harvest", "season", "wall", "point", "spp", "origin")) %>%
+  select(-wall) %>% 
+  left_join(all_seasons, by = c("harvest", "season",  "point", "spp", "origin")) %>%
+  select(-wall) %>% 
   mutate(
     across(all_of(numeric_vars.2), ~ replace_na(.x, 0)),
     origin = replace_na(origin, "single"),
     date = replace_na(date, "unknown")
   ) %>%
-  arrange(harvest, season, wall, point, spp, origin) %>% 
+  arrange(harvest, season, point, spp, origin) %>% 
   
      mutate(
         firstgrow = 2035, # default value for the first growing season
@@ -1653,9 +1657,9 @@ yay2_harvest <- all_combinations_harvest %>%
           harvest %in% c("sta_rd") ~ 2018,
           harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2020,
           harvest %in% c("6_6", "6_9") ~ 2022,
-          harvest %in% c("danby_block_2") ~ 2018,  #see comments after this chunk about the State Forest "firstgrow"
-          harvest %in% c("fairfield_a5") ~ 2022,
-          harvest %in% c("fairfield_a6") ~ 2010,
+          harvest %in% c("danby_block_2") ~ 2018,  #(confirmed) see comments after this chunk about the State Forest "firstgrow"
+          harvest %in% c("fairfield_a5") ~ 2022,   #(confirmed)
+          harvest %in% c("fairfield_a6") ~ 2010,   #(confirmed)
           harvest %in% c("goundry_a17") ~ 2018,
           TRUE ~ firstgrow  # Keeps the existing value of "firstgrow" for all other cases
     ),
@@ -1741,11 +1745,13 @@ yay2_harvest <- all_combinations_harvest %>%
         exp_sd5_1 = expD, #D = C1 + C2
         exp_sp_1_5 = expP
     ) %>% 
-    select(filename, df, season, harvest, wall, point, growingseasons, type, spp, origin,
+    left_join(point_labels_revision, by = c("harvest", "point")) %>% 
+    select(filename, df, season, harvest, wall, trmt, location, brush, residual, 
+           point, growingseasons, type, spp, origin,
            seedA, total, stemcount, upperexposed, present, success,
            sup_sd4_12, sup_sd12_5, sup_sd5_9, sup_sd9_1, sup_sd5_1, sup_sp_1_5,
            exp_sd4_12, exp_sd12_5, exp_sd5_9, exp_sd9_1, exp_sd5_1, exp_sp_1_5,
-           clumps_per_acre, stems_per_ramet, firstgrow, year, date)
+           clumps_per_acre, stems_per_ramet, firstgrow, year, date, height, harvest_original, forest_type)
 
 #        sup_sd4_12, sup_sd12_5, sup_sd5_9, sup_sd9_1, sup_sd5_1, sup_sp_1_5,
  #       exp_sd4_12, exp_sd12_5, exp_sd5_9, exp_sd9_1, exp_sd5_1, exp_sp_1_5
@@ -1757,6 +1763,11 @@ yay2_harvest <- all_combinations_harvest %>%
 checking for errors
 
 ```{r}
+ wontjoin <- yay2_harvest %>% 
+  anti_join(point_labels_revision, by = c("harvest", "wall", "point")) %>%
+  count(harvest, wall) 
+
+
 error_check <- yay2_harvest %>% 
     filter(spp == "empty")
 
@@ -1909,7 +1920,7 @@ yay2_harvest %>%
 
 ```{r}
 # Define the output file path
-output_file <- file.path(output_folder, paste0("veg_data_2019to2024_complete(30july2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("veg_data_2019to2024_complete(31july2025)", ".xlsx"))
 write_xlsx(yay2_harvest, output_file)
 ```
 

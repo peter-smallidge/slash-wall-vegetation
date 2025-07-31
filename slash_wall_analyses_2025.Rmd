@@ -35,7 +35,10 @@ library(openxlsx)
 # the purpose of this code is to take the tabulated and "complete" data from 2019 through 2024 and produce output tables and graphs
 # that evaluate the effectiveness of slash walls.
 # 
-# The source file is from slash_veg_complete.Rmd df = yay2_harvest will incorporate the 2024 growing season data.
+# The source file is from slash_veg_complete.Rmd df = "yay2_harvest" which includes data from the 2019 to 2024 growing seasons.
+# This data is located in R/slash-wall-vegetation/summary output. These data are the stem counts/acre of hardwood regeneration (some conifers).
+# Additional data are within R/slash-wall-vegetation/summary out/site_data_2019_2024(22july2025)(readme) which include % cover of several attributes
+# and basal area / acre of the residual overstory. BA was not measured in every year.
 # 
 # The input data are complete at the season x harvest level
 ```
@@ -48,9 +51,10 @@ library(openxlsx)
 file paths, input and output
 ```{r}
 #complete data
-file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(30july2025)(readme).xlsx"
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(31july2025)(readme).xlsx"
 
 file_path_site <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_data_2019_2024(22july2025)(readme).xlsx"
+
 
 file_path_points <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme).xlsx"
 
@@ -60,6 +64,11 @@ output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary
 #read veg data
 ```{r}
 veg_data <- read_excel(file_path_veg_complete, sheet = "Sheet1", skip = 0) 
+
+table(veg_data$harvest, veg_data$trmt, veg_data$forest_type)
+
+forest_type_df <- veg_data %>%
+  count(harvest, trmt, forest_type)
 ```
 
 
@@ -84,40 +93,13 @@ point_denom <- point_labels %>%
     )
 
 
+denom_stand_trmt <- point_labels %>% 
+    group_by(harvest, trmt, brush) %>% 
+    count(harvest, trmt, brush) %>% 
+    filter(n>1)
 
-denom <- read_excel(file_path_denom, sheet = "Sheet 1") %>% 
-    rename(
-        harvest = stand,
-        trmt = status
-        ) %>%   
-    mutate(
-      harvest = case_when(
-      harvest == "boot" ~ "sta_rd",
-      harvest == "circle1" ~ "circle",
-      harvest == "circle2" ~ "circle",
-      harvest == "circle3" ~ "circle",
-      harvest == "cricle1" ~ "circle",
-      harvest == "gasline" ~ "gas_line",
-      harvest == "recksouth" ~ "recknagel",
-      harvest == "redpine" ~ "red_pine",
-      harvest == "stationrd" ~ "sta_rd",
-      harvest == "wedge" ~ "sta_rd",
-      harvest == "old" ~ "new",
-      TRUE ~ harvest  # Keeps other values unchanged
-    )
-      )
 
-denom_stand_trmt <- denom %>% 
-    group_by(harvest, trmt) %>% 
-    summarize(
-        denom = sum(wall_denom)
-    ) %>% 
-    mutate(
-        filename = "slash_wall_analyses_2025.Rmd"
-    ) %>% 
-    select(filename, everything())
-
-output_file <- file.path(output_folder, paste0("sample_size_table(27may2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("sample_size_table(31july2025)", ".xlsx"))
 write_xlsx(denom_stand_trmt, output_file)
 
 
@@ -127,32 +109,33 @@ write_xlsx(denom_stand_trmt, output_file)
 #Notes
 # Input raw data - data are "complete" at the level of the wall
 ```{r}
-d0 <- read_excel(file_path_veg_complete, sheet = "data", skip = 2) %>% 
-    left_join(denom_stand_trmt, by = c("harvest", "trmt")) %>% 
+d0 <- veg_data %>% 
+    left_join(denom_stand_trmt, by = c("harvest", "trmt", "brush")) %>% 
         mutate(
-        GTR5ft = supD + supP + expD + expP,
-#        total = supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP, variable already exists
-        all_sizes = seedA + total
+        GTR5ft = exp_sd5_1 + exp_sp_1_5,
+#        total = supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP, variable already exists as "stemcount"
+        all_sizes = seedA + total,
+        denom = n
     ) %>% 
         mutate(spp = case_when(
         spp %in% c("004") ~ "ohw",
         TRUE ~ spp,  # Keeps the existing value of "type" for all other cases
     )) %>%
-    mutate(type = case_when(
-            type %in% c("blank") ~ "commercial",
-            TRUE ~ type,  # Keeps the existing value of "type" for all other cases
-        ),
-        origin = case_when(
-            origin %in% c("unknown") ~ "single",
-            TRUE ~ origin,  # Keeps the existing value of "origin" for all other cases
-        )
-    ) %>% 
-   mutate(type = case_when(
-        spp %in% c("sb") ~ "sb",
-        TRUE ~ type,  # Keeps the existing value of "type" for all other cases
-    )) %>%     
+   #  mutate(type = case_when(
+   #          type %in% c("blank") ~ "commercial",
+   #          TRUE ~ type,  # Keeps the existing value of "type" for all other cases
+   #      ),
+   #      origin = case_when(
+   #          origin %in% c("unknown") ~ "single",
+   #          TRUE ~ origin,  # Keeps the existing value of "origin" for all other cases
+   #      )
+   #  ) %>% 
+   # mutate(type = case_when(
+   #      spp %in% c("sb") ~ "sb",
+   #      TRUE ~ type,  # Keeps the existing value of "type" for all other cases
+   #  )) %>%     
     arrange(harvest, season, trmt, wall, point, spp) %>% 
-    select( -upperexposed, -stemcount, -total, -GTR5ft, -all_sizes)
+    select( -upperexposed, -stemcount, -total, -GTR5ft, -all_sizes) #not sure why these are removed. Recalculated in df=d1.1
 
 d0_sub <- d0 %>% 
     filter(harvest == "6_6" & season == "2023") 
@@ -179,6 +162,7 @@ d1.1 <- d0 %>% #aggregate or average to collapse "origin"
         point_count = n_distinct(point),
         n = n(),
         trmt = first(trmt),
+        forest_type = first(forest_type),
         type = first(type),
         firstgrow = first(firstgrow),
         year = first(year),
@@ -188,22 +172,22 @@ d1.1 <- d0 %>% #aggregate or average to collapse "origin"
         clumps.acre = sum(clumps.acre),  # Sum all specified numeric clumps.acre and stems.ramet calc confirmed)
         stems.ramet = sum(stems.ramet),
         seedA = sum(seedA),
-        supB = sum(supB),
+        sup_sd12_5 = sum(sup_sd12_5),    #supB = sum(supB),
 #        supC1 = sum(supC1), C! and C2 don't exist in 2023 data
 #        supC2 = sum(supC2),
-        supD = sum(supD),
-        supP = sum(supP),
-        expB = sum(expB),
+        sup_sd5_1 = sum(sup_sd5_1),   # supD = sum(supD),
+        sup_sp_1_5 = sum(sup_sp_1_5),  #supP = sum(supP),
+        exp_sd12_5 = sum(exp_sd12_5), #expB = sum(expB),
 #        expC1 = sum(expC1),
 #        expC2 = sum(expC2),
-        expD = sum(expD),
-        expP = sum(expP),
+        exp_sd5_1 = sum(exp_sd5_1),
+        exp_sp_1_5 = sum(exp_sp_1_5),   #expP = sum(expP),
         # across(all_of(numeric_vars1), sum, na.rm = TRUE),  
         # across(all_of(numeric_vars2), mean, na.rm = TRUE),  # average of all specified numeric vars2
         .groups = "drop"
     ) %>% 
     mutate(
-        GTR5ft = supD + supP + expD + expP,
+        GTR5ft = exp_sd5_1 + exp_sp_1_5,
         total = supB + supD + supP + expB + expD + expP, 
         all_sizes = seedA + total
     )
