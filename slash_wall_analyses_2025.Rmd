@@ -26,7 +26,7 @@ library(janitor)
 #install.packages("openxlsx")
 library(openxlsx)
 # install.packages("shinyaddins")
-# library(shinyaddins)
+# library %>% (shinyaddins)
 
 ```
 
@@ -157,7 +157,7 @@ write_xlsx(d0_sub, output_file)
 ```{r}
 d1.1 <- d0 %>% #aggregate or average to collapse "origin"
 # use d1a    filter(harvest == "6_6" & season == "2023") %>% 
-    group_by(harvest, season, wall, point, spp) %>%  #combines origin into spp for simple summary tables
+    group_by(harvest, season, wall, brush, point, spp) %>%  #combines origin into spp for simple summary tables
     summarize(
         filename = first(filename),
         point_count = n_distinct(point),
@@ -192,22 +192,20 @@ d1.1 <- d0 %>% #aggregate or average to collapse "origin"
         GTR1ft = sup_sd12_5 + sup_sd5_1 + sup_sp_1_5 + exp_sd12_5 + exp_sd5_1 + exp_sp_1_5, 
             # the old variable names supB + supD + supP + expB + expD + expP 
             # this used to be "total"
-        all_sizes = seedA + GTR1ft
+        all_sizes = seedA + GTR1ft, 
+        df = "d1"
     )
 
-#
-# go to slash_veg_complete and search for "cafri_point_labels" and where 6_6, ohw seedA wall 11 didn't get the correct height (likely others)
-# 
 
 d1 <- d1.1 %>%  #d1 = d1.1, just arranged differently 
     arrange(desc(season), harvest, wall, type, spp, point) %>% 
-    select(filename, harvest, wall, point, type, spp, season, trmt, everything())
+    select(filename, df, harvest, wall, point, type, spp, season, trmt, brush, everything())
 
 d1_stub <- d1 %>%   #d1a is useful to test calculation from the mostly raw data
     filter(season == "2024") %>% 
     filter(harvest == "6_6") %>% 
     filter(all_sizes > 0) %>% 
-    arrange(desc(season), harvest, wall, point, type, spp)
+    arrange(desc(season), harvest, trmt, type, brush, spp, wall,  point)
 
 #    arrange(filename, (harvest), desc(season), wall, type, spp) %>% 
 
@@ -233,9 +231,9 @@ df = summary_type
 ```{r}
 type_summary <- d1 %>%
 #    filter(season == "2023") %>%  # filter for season while checking code, then run for all seasons
-    group_by(harvest, season, wall, point, type) %>%  # include "brush"
+    group_by(trmt, harvest, season, brush, type) %>%  # include "brush"
     summarize(
-        trmt = first(trmt),
+        growingseasons = first(growingseasons),
         point_count = n_distinct(point),
         denominator = n(), #denominator = # spp x type
         type_count = n(),
@@ -266,10 +264,11 @@ type_summary <- d1 %>%
             filename = "slash_wall_analyses_2025.Rmd"
         ) %>% 
 
-        select(filename, harvest, season, trmt, wall, point, type,point_count, denominator, type_count, 
+        select(filename, harvest, season, trmt, brush,  type,point_count, denominator, type_count, 
            richness_type_all_sizes, richness_type_GTR1ft, richness_type_GTR5ft, all_sizes,  GTR1ft, GTR5ft,  
            growingseasons, clumps_per_acre, stems_per_ramet, everything()) %>% 
-        arrange(desc(season), harvest, wall, type, point)
+        arrange(desc(season), harvest, trmt, type, brush)
+    #arrange(desc(season), harvest, trmt, type, brush, spp, wall,  point)
 
 ```
 
@@ -332,7 +331,7 @@ species_by_wall <- d1 %>%
        point_count = n_distinct(point),
             #calculate the numb points 
        numb_pts_any = sum(all_sizes > 0, na.rm = TRUE),  # Count species where all_sizes > 0
-       numb_pts_GTR1ft = sum(total > 0, na.rm = TRUE),  # Count species where "total" 12"+ > 0
+       numb_pts_GTR1ft = sum(GTR1ft > 0, na.rm = TRUE),  # Count species where "total" 12"+ > 0
        numb_pts_GTR5ft = sum(GTR5ft > 0, na.rm = TRUE), # count of species where GTR5>0
        any_size_pct = numb_pts_any / point_count *100,
        GTR1ft_pct = numb_pts_GTR1ft / point_count * 100,
@@ -341,13 +340,13 @@ species_by_wall <- d1 %>%
        across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / point_count),  # Normalize by point_count
        across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / point_count),  # Normalize by point_count
        
-       x1 = sum(stems.ramet, na.rm = TRUE),
-       x2 = sum(stems.ramet > 0, na.rm = TRUE), 
-       clumps.acre = sum(clumps.acre),
-       stems.ramet = sum(stems.ramet),
-       clumps.acre = sum(clumps.acre / point_count, na.rm = TRUE), 
+       x1 = sum(stems_per_ramet, na.rm = TRUE),
+       x2 = sum(stems_per_ramet > 0, na.rm = TRUE), 
+       clumps_per_acre = sum(clumps_per_acre),
+       stems_per_ramet = sum(stems_per_ramet),
+       clumps_per_acre = sum(clumps_per_acre / point_count, na.rm = TRUE), 
             # this will calc clumps.acre based on the number of points per wall. points with zero included
-       stems.ramet = if_else(x2 > 0, x1 / x2, NA_real_),
+       stems_per_ramet = if_else(x2 > 0, x1 / x2, NA_real_),
        # stems.ramet.2 = case_when(
        #      sum(stems.ramet > 0, na.rm = TRUE) > 0 ~ sum(stems.ramet, na.rm = TRUE) / sum(stems.ramet > 0, na.rm = TRUE),
        #      TRUE ~ NA_real_), # calc confirmed, stems.ramet based on # spp that have ramets
@@ -360,10 +359,11 @@ species_by_wall <- d1 %>%
   ) %>%
     filter(all_sizes > 0) %>% 
     arrange(filename, (harvest), desc(season), trmt, type, spp) %>% 
-    select(filename, df, harvest, season, trmt, wall, growingseasons, spp, type, point_count, numb_pts_any, any_size_pct, numb_pts_GTR1ft, GTR1ft_pct, 
-           numb_pts_GTR5ft, GTR5ft_pct, clumps.acre, stems.ramet,  everything())
+    select(filename, df, harvest, season, trmt, wall, growingseasons, spp, type, 
+           point_count, numb_pts_any, any_size_pct, numb_pts_GTR1ft, GTR1ft_pct, 
+           numb_pts_GTR5ft, GTR5ft_pct, clumps_per_acre, stems_per_ramet,  everything())
 
-output_file <- file.path(output_folder, paste0("spp_x_wall_x_trmt_x_season(5march2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("spp_x_wall_x_trmt_x_season(8august2025)", ".xlsx"))
 write_xlsx(species_by_wall, output_file)
 
 
@@ -427,8 +427,9 @@ species_by_harvest <- species_by_wall %>%
     arrange(filename, (harvest), desc(season), trmt, type, spp) %>% 
     mutate(df = "species_by_harvest") %>% 
 #    select(-x1, -x2, -supC1, -supC2, -expC1, -expC2, -denom) %>% 
-        select(filename, df, harvest, season, trmt,  wall_count, points_per_harvest, growingseasons, spp, type, pct_points_any, pct_points_GTR1ft,
-           pct_points_GTR5ft, clumps.acre, stems.ramet, everything()) %>% 
+        select(filename, df, harvest, season, trmt,  wall_count, points_per_harvest, growingseasons, 
+               spp, type, pct_points_any, pct_points_GTR1ft,
+               pct_points_GTR5ft, clumps.acre, stems.ramet, everything()) %>% 
     mutate(
         across(where(is.numeric), ~ round(., 1))
     )
@@ -501,6 +502,125 @@ write_xlsx(type_by_harvest, output_file)
 ```
 
 
+#species richness (list of species, no quantitative)
+use next chunk
+```{r eval=FALSE}
+richness <- species_by_wall %>% 
+    group_by(harvest) %>% 
+    filter(year == max(year)) %>% # retain the most recent growing season within each harvest
+    ungroup() %>% 
+    select(filename, harvest, season, trmt, wall, growingseasons, spp,
+           type, point_count, numb_pts_any, numb_pts_GTR1ft, numb_pts_GTR5ft,
+           any_size_pct, GTR1ft_pct, GTR5ft_pct, seedA, all_sizes, GTR1ft, GTR5ft) %>% 
+ group_by(harvest, season, trmt, growingseasons) %>% 
+  summarize(
+    filename = first(filename),
+    df = "richness",
+
+    richness_any        = sum(numb_pts_any > 0, na.rm = TRUE),
+    spp_any             = paste(sort(unique(spp[numb_pts_any > 0])), collapse = ", "),
+
+    richness_GTR1ft     = sum(numb_pts_GTR1ft > 0, na.rm = TRUE),
+    spp_GTR1ft          = paste(sort(unique(spp[numb_pts_GTR1ft > 0])), collapse = ", "),
+
+    richness_GTR5ft     = sum(numb_pts_GTR5ft > 0, na.rm = TRUE),
+    spp_GTR5ft          = paste(sort(unique(spp[numb_pts_GTR5ft > 0])), collapse = ", "),
+
+    richness_any_pct    = sum(any_size_pct > 0, na.rm = TRUE),
+    spp_any_pct         = paste(sort(unique(spp[any_size_pct > 0])), collapse = ", "),
+
+    richness_GTR1ft_pct = sum(GTR1ft_pct > 0, na.rm = TRUE),
+    spp_GTR1ft_pct      = paste(sort(unique(spp[GTR1ft_pct > 0])), collapse = ", "),
+
+    richness_GTR5ft_pct = sum(GTR5ft_pct > 0, na.rm = TRUE),
+    spp_GTR5ft_pct      = paste(sort(unique(spp[GTR5ft_pct > 0])), collapse = ", "),
+
+    richness_all_sizes  = sum(all_sizes > 0, na.rm = TRUE),
+    spp_all_sizes       = paste(sort(unique(spp[all_sizes > 0])), collapse = ", "),
+
+    richness_GTR1ft_all = sum(GTR1ft > 0, na.rm = TRUE),
+    spp_GTR1ft_all      = paste(sort(unique(spp[GTR1ft > 0])), collapse = ", "),
+
+    richness_GTR5ft_all = sum(GTR5ft > 0, na.rm = TRUE),
+    spp_GTR5ft_all      = paste(sort(unique(spp[GTR5ft > 0])), collapse = ", "),
+
+    .groups = "drop"
+  )
+
+```
+
+
+#species richness by wall
+```{r eval=TRUE}
+
+# Step 1 — collapse to harvest/season/trmt/spp and record presence (across all walls)
+species_presence <- species_by_wall %>%
+  group_by(harvest) %>%
+  filter(year == max(year)) %>%             # keep most recent growing season for each harvest
+  ungroup() %>%
+  group_by(harvest, season, trmt, growingseasons, spp) %>%
+  summarize(
+    filename          = first(filename),
+    present_any       = any(numb_pts_any    > 0, na.rm = TRUE),
+    present_GTR1ft    = any(numb_pts_GTR1ft > 0, na.rm = TRUE),
+    present_GTR5ft    = any(numb_pts_GTR5ft > 0, na.rm = TRUE),
+    present_any_pct   = any(any_size_pct    > 0, na.rm = TRUE),
+    present_GTR1ft_pct= any(GTR1ft_pct      > 0, na.rm = TRUE),
+    present_GTR5ft_pct= any(GTR5ft_pct      > 0, na.rm = TRUE),
+    present_all_sizes = any(all_sizes       > 0, na.rm = TRUE),
+    present_GTR1ft_all= any(GTR1ft          > 0, na.rm = TRUE),
+    present_GTR5ft_all= any(GTR5ft          > 0, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Step 2 — count species and list them
+richness <- species_presence %>%
+  group_by(harvest, season, trmt, growingseasons) %>%
+  summarize(
+    filename = first(filename),
+    df       = "richness",
+
+    richness_any        = sum(present_any,       na.rm = TRUE),
+    spp_any             = paste(sort(unique(spp[present_any])), collapse = ", "),
+
+    richness_GTR1ft     = sum(present_GTR1ft,    na.rm = TRUE),
+    spp_GTR1ft          = paste(sort(unique(spp[present_GTR1ft])), collapse = ", "),
+
+    richness_GTR5ft     = sum(present_GTR5ft,    na.rm = TRUE),
+    spp_GTR5ft          = paste(sort(unique(spp[present_GTR5ft])), collapse = ", "),
+
+    # richness_any_pct    = sum(present_any_pct,   na.rm = TRUE),
+    # spp_any_pct         = paste(sort(unique(spp[present_any_pct])), collapse = ", "),
+    # 
+    # richness_GTR1ft_pct = sum(present_GTR1ft_pct,na.rm = TRUE),
+    # spp_GTR1ft_pct      = paste(sort(unique(spp[present_GTR1ft_pct])), collapse = ", "),
+    # 
+    # richness_GTR5ft_pct = sum(present_GTR5ft_pct,na.rm = TRUE),
+    # spp_GTR5ft_pct      = paste(sort(unique(spp[present_GTR5ft_pct])), collapse = ", "),
+    # 
+    # richness_all_sizes  = sum(present_all_sizes, na.rm = TRUE),
+    # spp_all_sizes       = paste(sort(unique(spp[present_all_sizes])), collapse = ", "),
+    # 
+    # richness_GTR1ft_all = sum(present_GTR1ft_all,na.rm = TRUE),
+    # spp_GTR1ft_all      = paste(sort(unique(spp[present_GTR1ft_all])), collapse = ", "),
+    # 
+    # richness_GTR5ft_all = sum(present_GTR5ft_all,na.rm = TRUE),
+    # spp_GTR5ft_all      = paste(sort(unique(spp[present_GTR5ft_all])), collapse = ", "),
+
+    .groups = "drop"
+  ) %>%
+  arrange(harvest, season, trmt, growingseasons)
+
+
+```
+
+```{r}
+
+output_file <- file.path(output_folder, paste0("species_richness_species_list)(8august20252025)", ".xlsx"))
+write_xlsx(richness, output_file)
+
+
+```
 
 # graphs of df = type x harvest
 # data preparation
