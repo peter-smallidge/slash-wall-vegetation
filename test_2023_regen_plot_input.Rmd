@@ -39,9 +39,6 @@ File Description: The purpose of this file is to:
 - convert untidy to tidy data, alphabetic species (code 06)
 
 
-DATA made COMPLETE (all spp represented for all wall x point combinations)
-    rows 648 through 743. Used df=veg2023summ, which sums is.numeric by stand, wall, status, location, point, spp, origin
-
 exported data files include:
 plot_data_2023_untidy.csv (line 237)
 regen_per_acre_2023_numeric_point_untidy.csv (line 353)
@@ -61,7 +58,6 @@ write.xlsx(wall_denominator, "count_of_points_stand_by_protection.xlsx")
 library(expss)
 library(readr)
 library(readxl)
-library(writexl)
 library(skimr)
 library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
 library(knitr)
@@ -99,21 +95,6 @@ the file "cheat sheet data-import" has details -->
 ### code 01
 ###Input Regen Data for north, south, rectangle, gas_line (code 01) 
 
-```{r}
-# file_path_input <- "C:\\Users\\pjs23\\Documents\\R\\MFO Annual Summary\\Renewal data\\renewal_2025\\database_2024.xlsx"
-file_path_input <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\regen_per_acre_all_alpha_tidy_1june2023.xlsx"
-
-file_path_point_labels <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\point_labels_all(readme).xlsx"
-
-#output_folder <- "C:\\Users\\pjs23\\Documents\\R\\MFO Annual Summary\\Renewal data\\renewal_2025"
-output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
-output_folder_raw <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\raw_data\\"
-
-
-```
-
-
-
 ```{r, input regen data from from multiple files and combine rows}
 
 #new raw data at "regen_2023_feb_1_2024(north, south, rectangle, gasline)_final.xlsx"
@@ -138,36 +119,58 @@ input_veg01 <-  read_excel("slash.wall.data.2023_1_feb_2024_regen(north, south, 
 #    filter(!harvest =="recknagel_north") %>% 
     replace_na(list(date = "other", count = 1,
                   sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
-                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0, wall = "99"
                   )) %>%   #need to change missing values to real values while variable is a character type
     mutate(
-      origin = case_when(
-      count < 2 ~ "single",
-      count >= 2 ~ "clump"
+     location = point,
+      origin = "clump", 
+      stand = as.factor(stand), 
+      season = as.numeric(season),
+      status = "vacant"
+      ) %>% 
+   mutate(stand = fct_recode(stand,
+      "recknagel" = "recknagel_south",  #"new" = "old"
+      "recknagel" = "rectangle",
+      "gasline" = "gas_line"
       )) %>% 
+    select(stand, wall, season, date, point, location, spp, origin, count, everything()) %>% 
+   arrange(stand, point, location, spp)
 
-    rename(
-        harvest = stand
-    ) %>% 
-    
-    mutate(harvest = case_when(
-      harvest == "gasline" ~ "gas_line",  #this changes "harvest" from gasline to gas_line
-      harvest == "recknagel_south" ~ "recknagel",
-      harvest == "rectangle" ~ "recknagel",
-    TRUE ~ harvest  # Keeps other values unchanged
-    )
-  ) %>% 
-    
-   select(-wall) %>% 
-   select(harvest,  season, date, point, spp, origin, count, everything()) %>% 
-   arrange(harvest, point,  spp)
 
+input_veg01$origin[input_veg01$count < 1.1] <- "single" #in "replace_na" above, missing values of "count" changed to 1. Here
+#    if the value of count is less than 1.1, then the variable origin is assigned the value of "single"
+#    see line 228 for an equal but different coding option for use within the DF
+#    
+input_veg01$location[input_veg01$stand == "recknagel_north"] <- "p"
+input_veg01$status[input_veg01$stand == "recknagel_north"] <- "protected"
+
+# the above code changes the value of the variable "origin" based on the value of the variable "count"
+# if "count" is less than 1, then "origin" is changed to "single"
 ```
 
 load the file used to assign treatment labels to the slash wall plots in the early slash walls.
 
 ```{r assign treatment class to each point}
-point_labels <- read_excel(file_path_point_labels, sheet = "Sheet1", skip = 0) 
+location_by_point <- read_excel("location_by_point.xlsx") |> 
+    mutate(
+        stand = harvest,
+        status = wall,
+        wall = "99",
+        point = as.character(point)
+    ) |> 
+    select(stand, status, point, location) |> 
+     mutate(stand = fct_recode(stand,
+          "recknagel" = "rectangle1",
+          "recknagel" = "rectangle2",
+          "recknagel" = "rectangle3",
+          "recknagel" = "rectangle4"
+   )) |> 
+#   filter(stand %in% c("gas_line", "campridge", "recknagel")) |> 
+   mutate(
+   stand = fct_drop(stand)  
+   ) #|> 
+   # filter(stand == "gasline")
+
 
 ```
 
@@ -178,12 +181,20 @@ The first DF needed to treat Recknagel North differently, otherwise treatment la
 The second DF counts the number of sample points in Recknagel North for use in calculating average per acre
 
 ```{r}
-walls01 = left_join(input_veg01, point_labels, by = c("harvest", "point")) %>% 
-    filter(harvest %in% c("gas_line", "campridge", "recknagel", "recknagel_north")) 
+walls01 = left_join(input_veg01, location_by_point, by = c("stand", "point")) |> 
+    filter(stand %in% c("gasline", "campridge", "recknagel", "recknagel_north")) |> 
+    mutate(stand = fct_drop(stand)) |> 
+    mutate(location.y = if_else(stand == "recknagel_north", location.x, location.y)) |> #when stand is reck north, assign the value of location.x to location.y
+    mutate(status.y = if_else(stand == "recknagel_north", status.x, status.y)) |> 
+    select(!c(location.x, status.x )) |> 
+    rename(
+        status = status.y,
+        location = location.y
+    )
 
-table(walls01$harvest, walls01$trmt)
-table(walls01$harvest, walls01$location)
-table(walls01$trmt, walls01$location)
+table(walls01$stand, walls01$status)
+table(walls01$stand, walls01$location)
+table(walls01$status, walls01$location)
 ```
 
 
@@ -191,31 +202,33 @@ table(walls01$trmt, walls01$location)
 code 02 - input regen data for campridge and cafri
 
 ```{r}
-#this df includes harvest - 6_6, 6_9, and campridge
+
 
 input_veg02 <- read_excel("slash.wall.data.2023.23july2024(maybe FINAL).xlsx", 
     sheet = "regen", col_types = c("text", 
-        "text", "text", "text", "text", 
+        "text", "numeric", "text", "text", 
         "text", "numeric", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
         "numeric", "numeric", "numeric", 
         "skip"), skip = 2) |> 
-    rename(
-        harvest = stand
-    ) %>% 
     replace_na(list(date = "other", count = 1,
                   sup.seed01 = 0, sup.seed02 = 0, sup.seed03 = 0, sup.sapl = 0,
-                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0
+                  exp.seed01 = 0, exp.seed02 = 0, exp.seed03 = 0, exp.sapl = 0, wall = "99"
                   )) |>   #need to change missing values to real values while variable is a character type 
+   mutate(
+        origin = "clump",
+        location = point, 
+        stand = as.factor(stand),
+        status = "vacant",
+        origin = as.factor(origin)
+        ) |> 
     mutate(origin = case_when(
         count >=2 ~ "clump",
         count <2 ~ "single"
     )) |> 
-   select(-wall) %>% 
-   select(harvest, season, date, point, spp, origin, count, everything()) %>% 
-    left_join(point_labels, by = c("harvest", "point"))
+   select(stand, wall, season, date, point, location, spp, origin, count, everything())
    
-
+#   input_veg02$origin[input_veg01$count == 1] <- "single" #in "replace_na" above, missing values of "count" changed to 1. Here
 
    
    
@@ -225,9 +238,7 @@ input_veg02 <- read_excel("slash.wall.data.2023.23july2024(maybe FINAL).xlsx",
 ```
 
 #read in the cafri categories and treatments for joining to the cafri veg data to assign treatment labels
-
-not needed
-```{r eval=FALSE}
+```{r}
 
 cafri_label <- read_excel("CAFRI Treatment & Plot Location 8-2024.xlsx", 
     sheet = "merged", skip = 6) |> 
@@ -247,11 +258,9 @@ cafri_label$status[cafri_label$height == "0"] <- "control" #this changes status 
 cafri_label$location[cafri_label$height == "0"] <- "c" #this changes status from protected to control for walls with a height = 0 ft
   
 ```
-not needed
-```{r eval=FALSE}
 
-# not needed. Left join added to input_veg02
-cafri01 = left_join(input_veg02, location_by_point, by = c("harvest", "point")) |> 
+```{r}
+cafri01 = left_join(input_veg02, cafri_label, by = c("stand", "wall", "point")) |> 
     filter(stand %in% c("6_6", "6_9")) |> 
     select(!c("status.x", "location.y")) |> 
     rename(
@@ -269,10 +278,8 @@ table(cafri01$stand, cafri01$status)
 table(cafri01$stand, cafri01$location)
 table(cafri01$status, cafri01$location)
 ```
-not needed
-```{r eval=FALSE}
 
-#not needed.  data frame configured within input_veg02
+```{r}
 campridge = left_join(input_veg02, location_by_point, by = c("stand", "point")) |> 
     filter(stand == "campridge") |> 
     select(!c("location.x", "status.x")) |> 
@@ -285,18 +292,16 @@ campridge = left_join(input_veg02, location_by_point, by = c("stand", "point")) 
 
 ```
 
-merge vegetation input files for raw 2023 veg data
 ```{r}
 ## merge the datafiles and retain the regen data
 
-veg2023_raw = bind_rows(walls01, input_veg02) |> 
-    select(harvest, wall, season, date, trmt, location, point, spp, origin, count,
+data01 = bind_rows(walls01, cafri01, campridge) |> 
+    select(stand, wall, season, date, point, spp, origin, count,
         sup.seed01, sup.seed02, sup.seed03, sup.sapl,
         exp.seed01, exp.seed02, exp.seed03, exp.sapl,
-        harvest_original, forest_type, brush
-        ) |> 
+        status, location) |> 
 mutate(spp = fct_recode(spp, 
-                          "rp" = "125",  # change spp from numeric to alpha, "new" = "old"
+                          "rp" = "125",
                           "wp" = "129",
                           "scp" = "130",
                           "he" = "261",
@@ -353,53 +358,33 @@ mutate(spp = fct_recode(spp,
                           #"sp" = "90", 
                           #"au" = "535",
                           #"ec" = "742",
-                          )) %>%  
-    arrange(harvest, wall, point) %>% 
-    mutate(
-        filename = "test_2023_regen_plot_input.Rmd",
-        df = "veg2023_raw"
-) %>% 
-    select(filename, df, harvest, wall, season, date, trmt, location, point, spp, origin, count, everything())
+                          )) |> 
+    arrange(stand, wall, point) # |> 
+  #     filter(if_any(everything(), is.na))
 
 
- # origin_test <- data01 %>% 
- #     group_by(stand, origin) |> 
- #     summarize(
- #     test_clump = mean(count)  
-     
-     # this should be the average number of stems per clump in each stand. 
-     #Note the older harvests have a lower average number
- 
+ origin_test <- data01 %>% 
+     group_by(stand, origin) |> 
+     summarize(
+     test_clump = mean(count)
+ )
 
-table(data01$harvest, data01$trmt)
-table(data01$harvest, data01$location)
-table(data01$trmt, data01$location)
+table(data01$stand, data01$status)
+table(data01$stand, data01$location)
+table(data01$status, data01$location)
 
 test_output <- data01 |> 
-    filter(harvest == "6_6" & wall == "11")
+    filter(stand == "6_6" & wall == "11")
 
 #write.xlsx(test_output, "point_data_test_calcs.xlsx")  
 ```
-
-```{r}
-
-output_file <- file.path(output_folder_raw, paste0("veg2023_raw(22july2025)", ".xlsx"))
-write_xlsx(veg2023_raw, output_file)
-
-
-
-```
-
-
 
 wrangle data to create wall denominators with output file for future use
 
 ```{r}
 
-file_path_point_attributes <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\count_of_points_harvest_x_treatment.csv"
-
 #old walls, includes "status" doesn't include "location"
-point_count_old_walls <- read_csv(file_path_point_attributes) |> 
+point_count_old_walls <- read_csv("count_of_points_harvest_x_treatment.csv") |> 
     rename(
         stand = harvest,
         status = wall
@@ -449,10 +434,7 @@ wall_denominator <- bind_rows(treatment_by_wall, count_of_points_cafri, count_po
 
 write.xlsx(wall_denominator, "count_of_points_stand_by_protection.xlsx")
 write.csv(wall_denominator, "count_of_points_stand_by_protection.csv", row.names = FALSE)
-
-file_path_point_count <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\old files but do not discard\\count_of_points_stand_by_protection.csv"
-
-wall_denominator <- read.csv(file_path_point_count) |> 
+wall_denominator <- read.csv("count_of_points_stand_by_protection.csv") |> 
     mutate(wall = as.character(wall))
 
 
@@ -475,6 +457,7 @@ sapl radius = 16.0 ft
 pi = 3.141593
 
 ```{r}
+
 #area = pi r^2
 #plot area = pi * r^2
 #per acre expansion coefficient = 43560 / plot area
@@ -483,14 +466,13 @@ pi = 3.141593
 #
 # this code for veg2023raw expands the plot data to an acre scale. the data are "per acre"
 #
-veg2023_peracre_calc <- data01 %>% 
+veg2023raw <- data01 %>% 
     mutate(
         multip01 = 43560 / (pi * (3.7^2)),  # = 1012.79
         multip02_03 = 43560 / (pi * (6^2)), # = 43560/113.1 = 385.15
         multip_sapl  = 43560 / (pi * (16^2)) # = 43560 / 256 = 170.1
     ) |> 
 mutate(
-  spp = as.character(spp),
   sup.seed01ac = sup.seed01 * multip01 * count,
   sup.seed02ac = sup.seed02 * multip02_03 * count,
   sup.seed03ac = sup.seed03 * multip02_03 * count,
@@ -504,25 +486,16 @@ mutate(
 ) %>% 
 select(
   !c(sup.seed01, sup.seed02, sup.seed03, sup.sapl,
-  exp.seed01, exp.seed02, exp.seed03, exp.sapl, multip01, multip02_03, multip_sapl)
+  exp.seed01, exp.seed02, exp.seed03, exp.sapl, multip01, multip02_03, multip_sapl, date)
 ) %>% 
-#mutate(spp = fct_relevel(spp, sort(levels(spp)))) |>
-mutate(
-    filename = "test_2023_regen_plot_input.Rmd",
-    df = "veg2023_peracre_calc"
-) %>% 
-arrange(harvest, wall, trmt, origin, spp, origin, point) %>% 
-select(filename, df, harvest, wall, location, trmt, point, spp, origin, everything())
-
-output_file <- file.path(output_folder, paste0("veg2023_peracre(19july2025)", ".xlsx"))
-write_xlsx(veg2023_peracre_calc, output_file)
-
-output_file <- file.path(output_folder, paste0("campridge_overstory_by_point_2023data(29may2025)", ".xlsx"))
-write_xlsx(plot2023_overstory, output_file)
-
-
-
-#mutate_if(is.numeric, round, 0) 
+# mutate(clumped = origin) %>%  # character variable "clumped" will allow for the enumeration of the number of clumps per acre
+# mutate(clumped = fct_recode(clumped,
+#   "1" = "clump",
+#   "0" = "single"
+# )) %>% 
+# mutate(clumped = as.character(clumped)) %>%  #going straight from factor to as.numeric resulted in singles = 2 and clumps = 1
+# mutate(clumped = as.numeric(clumped)) %>%  # variable clumped is numeric with 0 = single stem and 1 = clump of stems
+mutate_if(is.numeric, round, 0) 
 
 ##
 ## summation of average number of ramets/acre and stems per ramet was confirmed with campridge point 458 SB on 11/1/2024
@@ -533,12 +506,6 @@ write_xlsx(plot2023_overstory, output_file)
 # Data include groups at the location (p, i, c) and origin scale
 #
 #
-```
-
-
-
-
-```{r}
 veg2023summ <- veg2023raw %>% 
 ungroup |> 
 mutate(
@@ -546,40 +513,38 @@ mutate(
         clump_ac_02 = 0,
         clump_ac_03 = 0,
         clump_ac_04 = 0,
-        ramet = 0 #ramet is the number of stems per stump
+        ramet = 0
 ) |> 
   mutate(                 
       ## use case_when to calculate the number of clumps per acre by size class, but only for clumps. 
       ## Divide stem count/ac by count = multiplier = clumps/ac. 
     clump_ac_01 = case_when(
       origin == "clump" ~ (sup.seed01ac / count) + (exp.seed01ac / count),  
-      #when origin=clump, calculate the number of clumps/ac as numeric (not = number of stems). Else, change clump/ac=0 (previously else -> NA, now 0)
-      TRUE ~ 0 # within this "case_when" these were all == TRUE ~ NA_real_
+      #when origin=clump, calculate the clump/ac as numeric. Else, change clump/ac=NA
+      TRUE ~ NA_real_
     ),
     clump_ac_02 = case_when(
       origin == "clump" ~ (sup.seed02ac + exp.seed02ac) / count,
-      TRUE ~ 0
+      TRUE ~ NA_real_
     ),
     clump_ac_03 = case_when(
       origin == "clump" ~ (sup.seed03ac + exp.seed03ac) / count,
-      TRUE ~ 0
+      TRUE ~ NA_real_
     ),
     clump_ac_04 = case_when(
       origin == "clump" ~ (sup.saplac + exp.saplac),
-      TRUE ~ 0
+      TRUE ~ NA_real_
     ),
     ramet = case_when(
         origin == "clump" ~ count,
-        TRUE ~ 0
+        TRUE ~NA_real_
     )
   ) |> 
-mutate(spp = fct_relevel(spp, sort(levels(spp)))) |> #this may sort the factor "spp" alphabetically
-arrange(stand, wall, status, spp, point, origin) %>% 
-    select(stand, wall, location, status, spp, origin, point, ramet, exposed, everything()) |> 
+arrange(stand, wall, status, point, spp, origin) %>% 
 group_by(stand, wall, status, location, point, spp, origin) %>% 
 summarize(
   sup.seed01ac = sum(sup.seed01ac),
-  sup.seed02ac = sum(sup.seed02ac),  
+  sup.seed02ac = sum(sup.seed02ac),
   sup.seed03ac = sum(sup.seed03ac),
   sup.saplac = sum(sup.saplac),
   exp.seed01ac = sum(exp.seed01ac),
@@ -590,21 +555,16 @@ summarize(
         clump_ac_med = sum(clump_ac_02, na.rm=TRUE),
         clump_ac_large = sum(clump_ac_03, na.rm=TRUE),
         clump_ac_sapl = sum(clump_ac_04, na.rm=TRUE),
-  avg_ramet_size = mean(ramet[ramet > 0], na.rm = TRUE),  #avg_ramet_size is the number of stems per ramet
-  exposed = sum(exposed)
+  avg_ramet_size = mean(ramet, na.rm = TRUE)  #count is the numnber of stems per rament
 ) %>% 
-mutate(
-    avg_ramet_size = ifelse(is.nan(avg_ramet_size), 0, avg_ramet_size),
-    ) |> 
 mutate(
 type = "empty"
 ) |> 
-#mutate_if(is.numeric, round, 0)|> 
-mutate(spp = fct_relevel(spp, sort(levels(spp)))) |>
-arrange (stand, wall, status, location, origin, spp, point)
+mutate_if(is.numeric, round, 0)|> 
+    arrange (stand, wall, status, location, spp,origin,point)
 
 #
-# the clumps per acre at the point level (df = veg2023summ) to assess if values are calculated correctly
+# the clumps per acre at the point level (df = veg2023summ) is calculated correctly
 # 
 
 veg2023summ$type[veg2023summ$spp %in% c("ba", "bc", "bih", "bl", "co", "he", "rm", "ro", "sa", 
@@ -612,7 +572,7 @@ veg2023summ$type[veg2023summ$spp %in% c("ba", "bc", "bih", "bl", "co", "he", "rm
 
 veg2023summ$type[veg2023summ$spp %in% c("ab", "eh", "pc", "stm", "toh" )] <- "interfere"   #n=5
 
-veg2023summ$type[veg2023summ$spp %in% c("app", "bta", "haw", "brs", "dws", "la", "ns", "pb", "qa", "rp", "scp", "smc", "svb", "wh", "wi" )] <- "diversity" #n=14
+veg2023summ$type[veg2023summ$spp %in% c("app", "bta", "haw", "brs", "la", "ns", "pb", "qa", "rp", "scp", "smc", "svb", "wh", "wi" )] <- "diversity" #n=14
 
 veg2023summ$type[veg2023summ$spp %in% c("ah", "cc", "unk" )] <- "other"  #n=3
 
@@ -633,228 +593,6 @@ table(veg2023summ$stand, veg2023summ$status)
 table(veg2023summ$stand, veg2023summ$location)
 table(veg2023summ$status, veg2023summ$location)
 
-```
-
-
-# fill out the data matrix such that all species are represtented in all plots. This will obviate the need to calculate and include
-# variables for denominators for location or wall as each species will be represented in all calculations of average. It's uncertain how this
-# will present with the variable "origin"
-
-
-# the DF veg_point_baseline is not subsequently used.
-# Likely a test of the diversity calculations before proceeding
-# with the "complete" command
-# 
-
-```{r veg_point_baseline  eval=FALSE}
-veg_point_baseline <- veg2023summ |> 
-    #subset the dataframe to test the coding
-    select(stand, wall, status, location, point, spp, origin, sup.seed02ac, exp.seed02ac,
-           exp.seed03ac, exposed, clump_ac_med, clump_ac_sapl, avg_ramet_size) |> 
-  filter((stand == "6_9" & wall == "1") | (stand == "6_6" & wall == "11") | stand == "recknagel" & wall == "99") |>
-    arrange(stand, wall, point, spp) |> 
-    group_by(stand, wall, point) |> 
-    summarize(
-        diversity = n_distinct(spp), # counts only those species uniquely present
-        spp_count = n(),# counts spp present as both single and clump
-        .groups = "drop"
-    )
-```
-
-
-```{r  veg_point_complete}
-#create a datafile of only the numeric variables
-#insert that datafile into the fill = 0 code to avoid having to type the names of 
-# all numeric variables.
-# 
-numeric_vars2023 <- setdiff(names(select(veg2023summ, where(is.numeric))), c("status", "location"))
-# "numeric_vars" code was necessary because status and location, both character, were retained. I couldn't remove them. 
-# This code removes status and location.
-# status and location will be reintegrated with a "join" command.
-
-
-#make the 2023 growing season data "complete" by replicating all spp for 
-#all combinations of stand, wall and point.  Assign the value "0" to the created combinations
-#
-veg_point_complete <- veg2023summ |>
-  ungroup() |> 
-  #filter((stand == "6_9" & wall == "1") | (stand == "6_6" & wall == "11")) |>
-  arrange(stand, wall, point, spp) |>
-  select(stand, wall, point, spp, type, all_of(numeric_vars2023), -status, -location) |>
-  ungroup() |> 
-  group_by(stand, wall, point) |> # Group before completion
-  complete(spp, fill = list(!!!setNames(rep(NA, length(numeric_vars2023)), numeric_vars2023))) |> #I can't explain this code, provided by ChatGPT.
-  ungroup() |> 
-      arrange(stand, wall, spp, origin, point) %>% 
-  mutate(
-    clump_ac = (clump_ac_small + clump_ac_med + clump_ac_large + clump_ac_sapl),
-    origin = "single",
-    origin = if_else(clump_ac > 0, "clump", origin),
-    type = replace_na(type, "blank")
-  ) |> 
-   mutate(type = case_when(
-    spp %in% c("ba", "bc", "bih", "bl", "co", "he", "rm", "ro", "sa", 
-               "sb", "sh", "sm", "wa", "wo", "wp", "yb", "yp") ~ "commercial",
-    
-    spp %in% c("ab", "eh", "pc", "stm", "toh" ) ~ "interfere",
-
-    spp %in% c("app", "bta", "haw", "brs", "dws", "la", "ns", "pb", "qa", "rp", "scp", "smc", "svb", "wh", "wi" ) ~ "diversity",
-
-    spp %in% c("ah", "cc", "unk" ) ~ "other",
-    TRUE ~ type,  # Keeps the existing value of "type" for all other cases
-  )) |> 
-  select( stand, wall , point, spp, origin, type, everything()) %>% 
-  arrange(stand, wall, spp, origin, point)
-
-
-veg_point_complete <- veg_point_complete |>
-  mutate(across(all_of(numeric_vars2023), ~ replace_na(.x, 0))) |> 
-  mutate(
-    clump_ac = replace_na(clump_ac, 0),
-    clump_ac = (clump_ac_small + clump_ac_med + clump_ac_large + clump_ac_sapl),
-    origin = "single",
-    origin = if_else(clump_ac > 0, "clump", origin),
-    type = replace_na(type, "blank")
-  ) |> 
-  mutate(spp = fct_relevel(spp, sort(levels(spp)))) |> 
-  arrange(stand, wall, spp, point)
-```
-
-Reintegrate "type", "location", and "status" into veg_point_complete
-
-
-```{r}
-# Reintegrate "type", "location", and "status" into veg_point_complete
-# 
-veg_point_full <- cafri_label |> 
-  select(stand, wall, status, point, location, height, overstory) |> 
-  bind_rows(location_by_point) |> # df=location_by_point has the stand, wall, status and location for pre 2020 walls
-  mutate(
-        wall = replace_na(wall, "99"),
-        height = replace_na(height, "10")
-) |> 
-  filter (stand %in% c("6_6", "6_9", "campridge", "gasline", "recknagel", "recknagel_north")) |> 
-  right_join(veg_point_complete, by = c("stand", "wall", "point")) |>  
-    # "right_join" creates a complete df by point with all walls sampled in 2023
-    select(stand, wall, point, location, status, type, spp, origin, everything()) |>   
-  mutate(
-     present = 0,
-     success = 0,
-     stemcount = (sup.seed01ac + sup.seed02ac + sup.seed03ac + sup.saplac + exp.seed01ac + exp.seed02ac + exp.seed03ac + exp.saplac),
-     present = if_else(stemcount > 0, 1, present) # used to calculate diversity if a spp is present at a point
-    ) |> 
-   # mutate(
-   #    present = if_else(stemcount > 0, 1, present) # used to calculate diversity if a spp is present at a point
-   #  ) |> 
-  mutate(spp = fct_relevel(spp, sort(levels(spp)))) |>  # sorts factor=spp by the levels of spp
-  arrange(stand, wall, status, spp, point)   # allows viewing data by species for all points in a wall
-
-veg2023_colnames <- colnames(veg_point_full)
-
-
-# veg_point_full is the complete and unfiltered data for 2023 growing season.
-# the "output folder" is defined at line 106 for R/slash-wall-vegetation/summary output.
-# output_file <- file.path(output_folder, paste0("nonrespondents16jan", ".xlsx"))
-
-output_file <-  file.path(output_folder, paste("complete_full_2023", ".xlsx"))
-write_xlsx(veg_point_full, output_file)
-```
-
-
-```{r}
-#calucate mean values to compare to "non complete" data files
-#
-datax <- veg_point_full |> 
-  mutate(
-     present = 0,
-     success = 0,
-     upperexposed = exp.seed03ac + exp.saplac
-    ) |> 
-  mutate(spp = fct_relevel(spp, sort(levels(spp)))) |>  # sorts factor=spp by the levels of spp
-  arrange(stand, wall, spp, point) |>  # allows viewing data by species for all points in a wall
-    group_by(stand, wall, status, point, spp) |> 
-# the mean value is based on the number of occurrences of a spp, which was inflated for clumps
-# the first "summarize" (next) sums stem density within a species at each point
-    summarize(  
-        type = first(type),
-        height = first(height),
-        across(where(is.numeric), ~sum(.x,na.rm = TRUE)), #sums numeric variables by spp at each point, collapses "origin"
-        n = n(),
-        .groups = "drop"
-    ) |> 
-   mutate(spp = fct_relevel(spp, sort(levels(spp)))) |> 
-arrange(stand, wall, status, spp, point) |> 
-select(stand, wall, status, spp, n, spp, avg_ramet_size,everything()) |> 
-   mutate(
-      present = if_else(stemcount > 0, 1, present), # used to calculate diversity if a spp is present at a point
-      success = if_else(upperexposed > 0, 1, success) # used to calculate diversity of spp of successful stems
-    ) |> 
-    arrange(stand, wall, desc(spp)) |>  # allows viewing data by species for all points in a wall
-    group_by(stand, wall, status, spp) |> 
-    summarize(
-    #    status = paste(unique(status), collapse = ", "),  # Retain all statuses. Easier to roll "status" into the group_by 
-        type = first(type),
-        height = first(height),
-        point_count_ramet = sum(avg_ramet_size > 0, na.rm = TRUE), #counts the number of points that include ramets
-        true_avg_ramet_size = mean(avg_ramet_size[avg_ramet_size > 0], na.rm = TRUE), #this is the correct estimate of average number of stems/clump
-        numb_points = n_distinct(point),
-        #present_count = sum(present > 0),
-        #success_count = sum(success > 0),
-        across(where(is.numeric), ~mean(.x, na.rm = TRUE)), #average ramet size is correct within df=datax (1/15/2025)
-        .groups = "drop"
-    ) |> 
-    # in the second summarize command, the "across....~mean" 
-    # over rode the sum of present_count and success_count which are
-    # used to indicate the number of occupied plots for % occupancy
-    # The following mutate restores them from "mean" to "sum"
-    # 
-mutate(
-    true_avg_ramet_size = ifelse(is.nan(true_avg_ramet_size), 0, true_avg_ramet_size),
-    ) |> 
-        arrange(stand, wall, desc(spp)) |> 
-    mutate(
-        count_present = present * numb_points, #number of points on which a species occurs
-        count_success = success * numb_points, #number of points on which a species occurs that is exposed and >5 ft tall
-        pct_present = count_present / numb_points * 100,
-        pct_success = count_success / numb_points * 100
-    ) |> 
-#    mutate_if(is.numeric, round, 0)|> 
-    filter(count_present > 0) |> 
-    arrange(stand, wall, status, spp) |> 
-    select(stand, wall, height, status, spp, type, -n, point_count_ramet, true_avg_ramet_size, clump_ac, -avg_ramet_size, count_present, numb_points, 
-           pct_present, count_success, pct_success, everything() , -present, -success,) # subset of variables to compare to previous data files
-
-
-
-
-```
-
-
-diversity calculation for "complete" datafile. Calculated by point.
-
-```{r}
-#calculate diversity for each point
-# I'm not sure if this has much value.  It would allow assessing
-# the diversity as an average of the points. df=datax has the count of spp for each stand as a absolute metric
-veg_point_diversity <- veg_point_full |> 
-    select(stand, wall, point, spp, stemcount, present, everything()) |> # the variable "present" defined as stemcount > 0
-    group_by(stand, wall, point) |> 
-    summarize(
-        diversity = n_distinct(spp[present == 1]), # Only counts distinct species where present == 1
-        spp_count = sum(present == 1),            # Counts rows where present == 1
-        .groups = "drop"
-    )
-
-
-
-
-
-
-```
-
-
-
-```{r}
 ```
 
 
@@ -956,6 +694,7 @@ acre_avg_2023_recknorth <- left_join(veg2023summ, wall_denominator, by = c("stan
 ```
 
 
+
 ```{r, per acre average for recknagel north and campridge, eval=FALSE}
 #code provided by chatGPT
 #testing to stop the replication of means based on the number of occurences of a species.
@@ -1039,7 +778,7 @@ point_avg_2023 <- left_join(veg2023summ, wall_denominator, by = c("stand", "wall
         clump_ac_med = sum(clump_ac_med, na.rm=TRUE),
         clump_ac_large = sum(clump_ac_large, na.rm=TRUE),
         clump_ac_sapl = sum(clump_ac_sapl, na.rm=TRUE),
-        avg_ramet_size = mean(avg_ramet_size, na.rm = TRUE),  #count is the number of stems per ramet
+        avg_ramet_size = mean(avg_ramet_size, na.rm = TRUE),  #count is the number of stems per rament
         .groups = "drop"
      ) |> 
     mutate(
@@ -1179,7 +918,7 @@ acre_origin_avg_2023 <- point_avg_2023 |>
 
 the original code resulted in duplicated rows in the output. One row per stand for the n= of the species. For example, there were 4 points with STM in wall 11, so there were four identical rows of data in the wall summary for STM.  The solution is to include ".groups = "drop" " as the last line of each summarize code chunk.
 
-```{r}
+```{r, test}
 find_distinct <- point_avg_2023 |> 
    select(stand, wall, status, spp) %>%
   # filter(stand == "recknagel" & spp == "rp") |> 
@@ -1204,8 +943,7 @@ wall_denominator_count <- wall_denominator %>%
     count(stand, wall, location, status) |> 
   filter(n > 1)
 
-# not sure why this chunk is needed. Review DF "point_avg_2023".
-# This appears to sum clump and single for each spp at each point.  Need to confirm outcome (1/25/2025)
+
 point_summed <- point_avg_2023 |> 
     left_join(wall_denom_sums, by = c("stand", "wall", "status")) |> 
     ungroup () |> 
@@ -1233,10 +971,11 @@ point_summed <- point_avg_2023 |>
         mutate_if(is.numeric, round, 0) |> 
     arrange(stand, wall, status, spp, point)
 
-```
+# find_distinct_2 <- point_summed |> 
+#    select(stand, wall, status, point, spp) %>%
+#   summarize(count = n()) |> 
+#   filter(count > 1)
 
-
-```{r}
 acre_avg_2023 <- point_summed |> 
   group_by(stand, wall, status, spp) |> 
   summarize(
@@ -1386,7 +1125,7 @@ per_acre_tidy <- acre_avg_2023 |>
        exp_sapl = avg_exp_saplacx,
        expt_unit = wall
             ) |> 
-    mutate(across(stand, factor)) |>  # this may make the variable stand into a factor variable from character
+    mutate(across(stand, factor)) |> 
     mutate(stand = fct_recode(stand,
             "gas_line" = "gasline"
             )) |> 
