@@ -160,6 +160,7 @@ input point attributes, "point_label_all" this is the new data file of attribute
 
 cafri overstory data and cafri point labels
 ```{r}
+# data of the target residual basal area from the 2022 harvest in CAFRI 6-9 and 6-6
 cafri_point_residual_overstory <- read_excel("CAFRI Treatment & Plot Location 8-2024.xlsx", sheet = "merged", skip = 6) %>% 
     select(stand, wall, overstory, point) %>% 
     mutate(
@@ -171,6 +172,7 @@ cafri_point_residual_overstory <- read_excel("CAFRI Treatment & Plot Location 8-
         residual = overstory
     )
 
+# df includes the trmt, residual basal area target, and wall height (brush trmt not included)
 cafri_point_labels <- read_excel("CAFRI Treatment & Plot Location 8-2024.xlsx", sheet = "point counts", skip = 4) %>% 
     rename(
         harvest = stand,
@@ -194,6 +196,8 @@ cafri_point_labels <- read_excel("CAFRI Treatment & Plot Location 8-2024.xlsx", 
 # the excel file of point_labels was updated for sheet = "all_sites". that is imported here and
 # subsequent rewriting of the excel file is halted.
 
+
+#includes height, target BA, brushing, forest type, trmt, point number, wall number
 point_labels_revision <- read_excel(file_path_points, sheet = "all_sites", skip = 0) # %>% 
     # arrange(harvest, wall, trmt, point) %>% 
     # left_join(cafri_point_labels, by = c("harvest", "wall", "point", "trmt", "height", "location"))
@@ -392,7 +396,7 @@ veg2023_peracre_calc <- data01 %>%
 
 2023 veg data
 ```{r warning=FALSE}
-# data are for counts of stems per point, not per acre
+# input data are for counts of stems per point, not per acre
 # 
 #regen2023 <- read_excel(file_path_2023_veg, sheet = "Sheet1", skip = 0 ) %>% 
 regen2023 <- read_excel(file_path_2023_veg_22july2025, sheet = "Sheet1", skip = 0) %>% 
@@ -488,7 +492,7 @@ regen2023seedl <- regen2023 %>%  # extract the data for the 4" to 12" seedlings 
 2024 vegetation
 ```{r warning=FALSE}
 
-# data values in the input file are count of stems in each plot (not per acre)
+# input data values in the input file are count of stems in each plot (not per acre)
 
 regen2024 <- read_excel(
   path = file_path_2024,
@@ -838,6 +842,7 @@ cafri2023_structure_point_summary <- cafri2023dbh %>%
     select(file, df, harvest, wall, point, ba_acre, stems_acre, x_dbh, trmt, residual, height, brush ) %>% 
     mutate_if(is.numeric, round, 0)
 
+# a list of wall-level attributes
 point_labels_unique <- point_labels_revision %>%
   group_by(harvest, wall, brush) %>%
   summarize(
@@ -872,8 +877,9 @@ cafri2023_structure_wall_summary <- cafri2023_structure_point_summary %>% # use 
     select(file, df, harvest, wall, trmt, height, brush, overstory_TPA, ba_acre_2023, x_dbh, residual_target) %>% 
     mutate_if(is.numeric, round, 0)
 
+# I'm not sure why I used "bind rows". that appends the dbh data below the wall_summary data. Maybe for summary printout?
 cafri2023_summary <- cafri2023_structure_wall_summary %>% 
-    bind_rows(cafri2023_structure_point_summary, cafri2023dbh)
+    bind_rows(cafri2023dbh) #cafri2023_structure_point_summary, 
 
 output_file <- file.path(output_folder, paste0("cafri2023_dbh_basalarea_raw_summ", ".xlsx"))
 write_xlsx(cafri2023_summary, output_file)
@@ -1650,6 +1656,14 @@ yay2_harvest <- all_combinations_harvest %>%
   ) %>%
   arrange(harvest, season, point, spp, origin) %>% 
   
+# Fairfield and Danby = Region 7, Petit, Travis D (DEC) <Travis.Petit@dec.ny.gov> 
+# fairfield SF A5, contract open sept 2020 - november 2025, first growing season = 2021 (confirmed 7/31/2025)
+# fairfield SF a6 (aka A-6.1) cut 2009, first growing season = 2010 confirmed (logging finished 2009, confirmed 7/31/2025)
+# Danby SF block 2, contract open november 2016 to october 2019, EWP 5 whorls in 2024, first growing season = 2018 (7/31/2025 confirmed)
+# 
+# Goundry Hill SF = Region 8, Cicora, Gretchen L (DEC) <gretchen.cicora@dec.ny.gov>
+# Goundry hill SF , goundry_a17, contract open december 2016 to january 2020, first growing season = 2018 (confirmed 8/8/2025)
+
      mutate(
         firstgrow = 2035, # default value for the first growing season
         firstgrow = case_when(
@@ -1658,7 +1672,7 @@ yay2_harvest <- all_combinations_harvest %>%
           harvest %in% c("campridge", "recknagel", "recknagel_north", "circle", "decker") ~ 2020,
           harvest %in% c("6_6", "6_9") ~ 2022,
           harvest %in% c("danby_block_2") ~ 2018,  #(confirmed) see comments after this chunk about the State Forest "firstgrow"
-          harvest %in% c("fairfield_a5") ~ 2022,   #(confirmed)
+          harvest %in% c("fairfield_a5") ~ 2021,   #(confirmed)
           harvest %in% c("fairfield_a6") ~ 2010,   #(confirmed)
           harvest %in% c("goundry_a17") ~ 2018,
           TRUE ~ firstgrow  # Keeps the existing value of "firstgrow" for all other cases
@@ -1745,8 +1759,30 @@ yay2_harvest <- all_combinations_harvest %>%
         exp_sd5_1 = expD, #D = C1 + C2
         exp_sp_1_5 = expP
     ) %>% 
+    mutate(
+    cluster = "drop"
+)   %>%  
+    mutate(cluster = case_when(
+        harvest %in% c("gas_line", "red_pine", "sta_rd", "fairfield_a5", "danby_block_2", "goundry_a17", "fairfield_a6") ~ "early",
+        harvest %in% c("campridge", "recknagel", "circle") ~ "second",
+        harvest %in% c("6_6", "6_9") ~ "cafri",
+    TRUE ~ cluster
+)) %>% 
+    
+    
     left_join(point_labels_revision, by = c("harvest", "point")) %>% 
-    select(filename, df, season, harvest, wall, trmt, location, brush, residual, 
+ 
+      mutate(
+    wall = if_else(
+      wall == "99" & harvest %in% c("campridge", "danby_block_2", "decker", "fairfield_a5",
+                                    "fairfield_a6", "gas_line", "goundry_a17",
+                                    "recknagel", "recknagel_north", "red_pine"),
+      harvest,   # assign the harvest value to wall
+      wall       # otherwise keep wall as is
+    )) %>%
+  
+    
+    select(filename, df, cluster, season, harvest, wall, trmt, location, brush, residual, 
            point, growingseasons, type, spp, origin,
            seedA, total, stemcount, upperexposed, present, success,
            sup_sd4_12, sup_sd12_5, sup_sd5_9, sup_sd9_1, sup_sd5_1, sup_sp_1_5,
@@ -1756,7 +1792,28 @@ yay2_harvest <- all_combinations_harvest %>%
 #        sup_sd4_12, sup_sd12_5, sup_sd5_9, sup_sd9_1, sup_sd5_1, sup_sp_1_5,
  #       exp_sd4_12, exp_sd12_5, exp_sd5_9, exp_sd9_1, exp_sd5_1, exp_sp_1_5
 
+table(yay2_harvest$harvest, yay2_harvest$wall)
+table(yay2_harvest$harvest, yay2_harvest$growingseasons)
+table(yay2_harvest$harvest, yay2_harvest$cluster)
+
+# Within a harvest there can be multiple walls (e.g., harvest = recknagel includes walls: recknagel, r1, r2, r3 and r4).  
+# A higher order variable "cluster" has values of: early, second, cafri and drop. "drop" should be excluded from analysis.
+# Cluster aggregates multiple harvests that happen in the same year or same 
+# vicinity (e.g., cluster = "second" for the 2019-2020 campridge/recknagel spatial cluster).
+# Each level of cluster includes trmt = "protected" (inside) and trmt = "control" (outside)
+
 ```
+
+    mutate(
+    harvest = case_when(
+      harvest == "cgl" ~ "gasline",
+      harvest == "crp" ~ "redpine",
+      harvest == "cwb" ~ "stationrd",
+      harvest == "gl" ~ "gasline",
+      harvest == "rp" ~ "redpine",
+      TRUE ~ harvest  # Keeps other values unchanged
+    )
+  ) %>% 
 
 
 
@@ -1780,12 +1837,12 @@ error_check02 <- yay2_harvest %>%
 
 
 # Fairfield and Danby = Region 7, Petit, Travis D (DEC) <Travis.Petit@dec.ny.gov> 
-# fairfield SF A5, contract open sept 2020 - november 2025, first growing season = 2022 (need to confirm)
-# fairfield SF a6 (aka A-6.1) cut 2009, first growing season = 2010 confirmed (logging finished 2009)
-# Danby SF block 2, contract open november 2016 to october 2019, EWP 5 whorls in 2024, first growing season = 2018 (need to confirm)
+# fairfield SF A5, contract open sept 2020 - november 2025, first growing season = 2021 (confirmed 7/31/2025)
+# fairfield SF a6 (aka A-6.1) cut 2009, first growing season = 2010 confirmed (logging finished 2009, confirmed 7/31/2025)
+# Danby SF block 2, contract open november 2016 to october 2019, EWP 5 whorls in 2024, first growing season = 2018 (7/31/2025 confirmed)
 # 
 # Goundry Hill SF = Region 8, Cicora, Gretchen L (DEC) <gretchen.cicora@dec.ny.gov>
-# Goundry hill SF , goundry_a17, contract open december 2016 to january 2020, first growing season = 2018 (need to confirm)
+# Goundry hill SF , goundry_a17, contract open december 2016 to january 2020, first growing season = 2018 (confirmed 8/8/2025)
 
 
 
@@ -1847,7 +1904,7 @@ yay_test1 <- yay2_harvest %>%
 #assess if the actual number of records = # points x # species
 ```{r}
 
-
+#one
 yay2_expected_points <- yay2_harvest %>% 
   group_by(season, harvest) %>%
   summarize(
@@ -1864,11 +1921,13 @@ yay2_expected_points <- yay2_harvest %>%
 
 #there were 41 mis-matched actual vs. expected. The following code may help resolve
 
+#two
 # Identify all expected combinations
 expected_combos <- yay2_harvest %>%
   select(season, harvest, point, spp, origin) %>%
   distinct()
 
+#three
 # Group to find which are missing
 expected_missing <- yay2_harvest %>%
   select(season, harvest, point, spp, origin) %>%
@@ -1876,9 +1935,10 @@ expected_missing <- yay2_harvest %>%
   right_join(expected_combos, by = c("season", "harvest", "point", "spp", "origin")) %>%
   filter(is.na(season))  # these were not present in yay2
 
+#four
 # another way of coding the two previous pieces
 # this produces an output because "origin" isn't included
-yay2_harvest %>%
+yay2_harvest_test_expected <- yay2_harvest %>%
   group_by(season, harvest) %>%
   summarize(
     points = n_distinct(point),
@@ -1889,11 +1949,12 @@ yay2_harvest %>%
   ) %>%
   filter(difference != 0)
 
+#five
 #another check
 nrow(expected_combos) == nrow(yay2_harvest %>% distinct(season, harvest, point, spp, origin))
 
+#six
 #the mis match of actual and expected may be a result of duplicate rows. the test follows.
-
 yay2_harvest %>%
   count(season, harvest, point, spp, origin) %>%
   filter(n > 1)
