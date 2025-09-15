@@ -69,8 +69,9 @@ veg_data <- read_excel(file_path_veg_complete, sheet = "Sheet1", skip = 0)
 table(veg_data$harvest, veg_data$trmt, veg_data$forest_type)
 
 forest_type_df <- veg_data %>%
-    group_by(harvest, season, trmt, wall, brush, forest_type) %>% 
-    count(harvest,season, trmt, forest_type)
+    group_by(cluster, harvest, season, trmt, wall, brush, forest_type) %>% 
+    count(cluster, harvest,season, trmt, forest_type) %>% 
+    ungroup()
 ```
 
 
@@ -115,12 +116,12 @@ write_xlsx(denom_stand_trmt, output_file)
 # Input raw data - data are "complete" at the level of the wall
 ```{r}
 d0 <- veg_data %>% 
-    left_join(denom_stand_trmt, by = c("harvest", "trmt", "brush")) %>% 
+    left_join(denom_stand_trmt, by = c("harvest","forest_type", "trmt", "brush")) %>% 
         mutate(
-        GTR5ft = exp_sd5_1 + exp_sp_1_5,
+        GTR5ft = exp_sd5_1 + exp_sp_1_5, #already calculated as "upperexposed"
 #        total = supB + supC1 + supC2 + supP + expB + expC1 + expC2 + expP, variable already exists as "stemcount"
         all_sizes = seedA + total,
-        denom = n
+        denom = plot_count
     ) %>% 
         mutate(spp = case_when(
         spp %in% c("004") ~ "ohw",
@@ -139,7 +140,7 @@ d0 <- veg_data %>%
    #      spp %in% c("sb") ~ "sb",
    #      TRUE ~ type,  # Keeps the existing value of "type" for all other cases
    #  )) %>%     
-    arrange(harvest, season, trmt, wall, point, spp) %>% 
+    arrange(cluster, harvest, season, trmt, wall, point, spp) %>% 
     select( -upperexposed, -stemcount, -total, -GTR5ft, -all_sizes) #not sure why these are removed. Recalculated in df=d1.1
 
 d0_sub <- d0 %>% 
@@ -161,7 +162,7 @@ write_xlsx(d0_sub, output_file)
 ```{r}
 d1.1 <- d0 %>% #aggregate or average to collapse "origin"
 # use d1a    filter(harvest == "6_6" & season == "2023") %>% 
-    group_by(harvest, season, wall, brush, point, spp) %>%  #combines origin into spp for simple summary tables
+    group_by(cluster, harvest, season, wall, brush, point, spp) %>%  #combines origin into spp for simple summary tables
     summarize(
         filename = first(filename),
         point_count = n_distinct(point),
@@ -235,8 +236,9 @@ df = summary_type
 ```{r}
 type_summary <- d1 %>%
 #    filter(season == "2023") %>%  # filter for season while checking code, then run for all seasons
-    group_by(trmt, harvest, season, brush, type) %>%  # include "brush"
+    group_by(cluster, trmt, harvest, season, brush, type) %>%  # include "brush"
     summarize(
+        wall = first(wall),
         growingseasons = first(growingseasons),
         point_count = n_distinct(point),
         denominator = n(), #denominator = # spp x type
@@ -280,9 +282,9 @@ type_summary <- d1 %>%
 # aggregate into average by wall x type at the harvest scale
 ```{r}
 wall_type_occupancy <- type_summary %>%
-  group_by(harvest, season, trmt, wall, type) %>%  #include "brush"
+  group_by(cluster, harvest, season, trmt, wall, type) %>%  #include "brush"
   summarize(
-    point_count = n_distinct(point),# Total points in the wall
+    point_count = first(point_count), #n_distinct(point),# Total points in the wall
 
     plots_with_any = sum(all_sizes > 0, na.rm = TRUE), # Count of plots where type is represented by a spp
     occup_any_pct = (plots_with_any / point_count) * 100, 
@@ -309,15 +311,16 @@ wall_type_occupancy <- type_summary %>%
         across(where(is.numeric), ~ round(., 1))
   ) %>% 
   mutate(
-        filename = "slash_wall_analyses_2025.Rmd"
+        filename = "slash_wall_analyses_2025.Rmd",
+        df = "wall_type_occupancy"
   ) %>% 
-    select(filename, harvest, season, trmt, wall, growingseasons, type, point_count,  plots_with_any, occup_any_pct, plots_with_GTR1ft, 
+    select(filename, df, cluster, harvest, season, trmt, wall, growingseasons, type, point_count,  plots_with_any, occup_any_pct, plots_with_GTR1ft, 
            GTR1ft_pct, plots_with_GTR5ft, GTR5ft_pct, clumps_per_acre, stems_per_ramet, everything())
 ```
 
 
 ```{r}
-output_file <- file.path(output_folder, paste0("type_occupancy_x_wall_x_trmt_x_season(1august2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("type_occupancy_x_wall_x_trmt_x_season(15sept2025)", ".xlsx"))
 write_xlsx(wall_type_occupancy, output_file)
 
 
@@ -328,7 +331,7 @@ write_xlsx(wall_type_occupancy, output_file)
 ```{r}
 species_by_wall <- d1 %>%
 #  filter(season == "2023") %>%  # filter for season while checking code, then run for all seasons
-  group_by(harvest, season, trmt, wall, spp) %>%
+  group_by(cluster, harvest, season, trmt, wall, spp) %>%
    summarize(
        filename = first(filename), 
        type = first(type),
@@ -363,11 +366,11 @@ species_by_wall <- d1 %>%
   ) %>%
     filter(all_sizes > 0) %>% 
     arrange(filename, (harvest), desc(season), trmt, type, spp) %>% 
-    select(filename, df, harvest, season, trmt, wall, growingseasons, spp, type, 
+    select(filename, df, cluster, harvest, season, trmt, wall, growingseasons, spp, type, 
            point_count, numb_pts_any, any_size_pct, numb_pts_GTR1ft, GTR1ft_pct, 
            numb_pts_GTR5ft, GTR5ft_pct, clumps_per_acre, stems_per_ramet,  everything())
 
-output_file <- file.path(output_folder, paste0("spp_x_wall_x_trmt_x_season(8august2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("spp_x_wall_x_trmt_x_season(15sept2025)", ".xlsx"))
 write_xlsx(species_by_wall, output_file)
 
 
@@ -375,10 +378,10 @@ write_xlsx(species_by_wall, output_file)
 
 ```
 
-# species averages across walls by harvest
+# species averages across walls by harvest (changed to "by cluster" on 15sept2025)
 ```{r}
 point_counts <- species_by_wall %>% 
-        group_by(harvest, season, trmt, wall) %>% 
+        group_by(cluster, harvest, season, trmt, wall) %>% 
         summarize(
             point_count = first(point_count), # the number of points in a wall
             .groups = "drop"
@@ -387,16 +390,16 @@ point_counts <- species_by_wall %>%
 
     
 wall_counts <- point_counts %>%
-    group_by(harvest, season, trmt) %>%
+    group_by(cluster, harvest, season, trmt) %>%
     summarize(
         wall_count = n_distinct(wall), # number of walls in a harvest
         points_per_wall = sum(point_count), # could also be called points_per_trmt
         .groups = "drop")
 
-species_by_harvest <- species_by_wall %>% 
+species_by_cluster <- species_by_wall %>% 
 #        filter(harvest == "6_6" & season == "2023") %>% 
-        left_join(wall_counts, by = c("harvest", "season", "trmt")) %>%  # Join to get the correct wall_count
-        group_by(harvest, season, trmt, spp) %>% 
+        left_join(wall_counts, by = c("cluster", "harvest", "season", "trmt")) %>%  # Join to get the correct wall_count
+        group_by(cluster, harvest, season, trmt, spp) %>% 
         summarize(
             filename = first(filename),
             points_per_harvest = first(points_per_wall),
@@ -417,88 +420,134 @@ species_by_harvest <- species_by_wall %>%
            across(all_of(numeric_vars2), mean, na.rm = TRUE),
            #across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / wall_count)  # Normalize by wall_count
            #
-       x1 = sum(stems.ramet, na.rm = TRUE),
-       x2 = sum(stems.ramet > 0, na.rm = TRUE), 
-       clumps.acre = sum(clumps.acre),
-       stems.ramet = sum(stems.ramet),
-       clumps.acre = sum(clumps.acre / points_per_wall, na.rm = TRUE), 
+       x1 = sum(stems_per_ramet, na.rm = TRUE),
+       x2 = sum(stems_per_ramet > 0, na.rm = TRUE), 
+       clumps_per_acre = sum(clumps_per_acre),
+       stems_per_ramet = sum(stems_per_ramet),
+       clumps_per_acre = sum(clumps_per_acre / points_per_wall, na.rm = TRUE), 
             # this will calc clumps.acre based on the number of points per wall. points with zero included
-       stems.ramet = if_else(x2 > 0, x1 / x2, NA_real_),
+       stems_per_ramet = if_else(x2 > 0, x1 / x2, NA_real_),
 
        .groups = "drop"
         
     ) %>% 
     arrange(filename, (harvest), desc(season), trmt, type, spp) %>% 
-    mutate(df = "species_by_harvest") %>% 
+    mutate(df = "species_by_cluster") %>% 
 #    select(-x1, -x2, -supC1, -supC2, -expC1, -expC2, -denom) %>% 
-        select(filename, df, harvest, season, trmt,  wall_count, points_per_harvest, growingseasons, 
+        select(filename, df, cluster, harvest, season, trmt,  wall_count, points_per_harvest, growingseasons, 
                spp, type, pct_points_any, pct_points_GTR1ft,
-               pct_points_GTR5ft, clumps.acre, stems.ramet, everything()) %>% 
+               pct_points_GTR5ft, clumps_per_acre, stems_per_ramet, everything()) %>% 
     mutate(
         across(where(is.numeric), ~ round(., 1))
     )
 
-output_file <- file.path(output_folder, paste0("spp_x_harvest_x_trmt_x_season(5march2025)", ".xlsx"))
-write_xlsx(species_by_harvest, output_file)
+output_file <- file.path(output_folder, paste0("spp_x_cluster_x_trmt_x_season(15sept2025)", ".xlsx"))
+write_xlsx(species_by_cluster, output_file)
 
 
 ```
 
 
-# TYPE averages across walls by harvest
+# TYPE averages across walls by harvest (by cluster as of 15sept2025)
 ```{r}
 point_counts <- species_by_wall %>% 
-        group_by(harvest, season, trmt, wall) %>% 
+        group_by(cluster, harvest, season, trmt, wall) %>% 
         summarize(
             point_count = first(point_count),
             .groups = "drop"
         )
     
 wall_counts <- point_counts %>%
-    group_by(harvest, season, trmt) %>%
+    group_by(cluster, harvest, season, trmt) %>%
     summarize(
         wall_count = n_distinct(wall),
         points_per_wall = sum(point_count),
         .groups = "drop")
 
-type_by_harvest <- species_by_harvest %>% 
-#        filter(harvest == "6_6" & season == "2023") %>% 
-        left_join(wall_counts, by = c("harvest", "season", "trmt", "points_per_wall", "wall_count")) %>%  # Join to get the correct wall_count
-        group_by(harvest, season, trmt, type) %>% 
+type_by_cluster <- species_by_wall %>%  #code copied from df=species_by_cluster
+        left_join(wall_counts, by = c("cluster", "harvest", "season", "trmt")) %>%  # Join to get the correct wall_count
+        group_by(cluster, harvest, season, trmt, type) %>% 
         summarize(
             filename = first(filename),
-            points_per_wall = first(points_per_wall),
+            growingseasons = first(growingseasons),
+            points_per_cluster = sum(points_per_wall), #check this calculation as of 9/15/2025 seems high (early, danby control commercial)
             type = first(type),
             freq_by_grouping = n(),
-            wall_count = first(wall_count),
-            pts_wall_any = sum(numb_pts_any), #nonsensical.  Go to sum@point, flag a point if any comm, if any interf, etc. then summ
-            pts_wall_seedl = sum(numb_pts_seedl),
-            pts_wall_GTR5ft = sum(numb_pts_GTR5ft),
-            pct_points_any = sum(numb_pts_any) / points_per_wall *100,
-            pct_points_seedl = sum(numb_pts_seedl) / points_per_wall *100,
-            pct_points_GTR5ft = sum(numb_pts_GTR5ft) / points_per_wall * 100,
-           type_diversity = n_distinct(spp), # the number of species per type. NEED to standardize this for area
-           across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / wall_count),  # Normalize by wall_count
+
+            pct_points_any = (sum(numb_pts_any)) / points_per_cluster *100,
+            pct_points_GTR1ft = (sum(numb_pts_GTR1ft)) / points_per_cluster *100, # for stems > 12" tall
+            pct_points_GTR5ft = (sum(numb_pts_GTR5ft)) / points_per_cluster * 100,
+            
+           across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / points_per_cluster),  # summ numeric from each wall, divide by number of walls = avg/harvest
            across(all_of(numeric_vars2), mean, na.rm = TRUE),
-           #across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / wall_count)  # Normalize by wall_count
-           #
-       x1 = sum(stems.ramet, na.rm = TRUE), #the total of the stems per ramet
-       x2 = sum(stems.ramet > 0, na.rm = TRUE), # the number of spp with clumps
-       clumps.acre = sum(clumps.acre),
-       clumps.acre = sum(clumps.acre),
-       stems.ramet = if_else(x2 > 0, x1 / x2, NA_real_), #average stems.ramet
+
+       x1 = sum(stems_per_ramet, na.rm = TRUE),
+       x2 = sum(stems_per_ramet > 0, na.rm = TRUE), 
+
+       clumps_per_acre = sum(clumps_per_acre),
+       stems_per_ramet = sum(stems_per_ramet),
+       clumps_per_acre = sum(clumps_per_acre / points_per_cluster, na.rm = TRUE), 
+            # this will calc clumps.acre based on the number of points per wall. points with zero included
+       stems_per_ramet = if_else(x2 > 0, x1 / x2, NA_real_),
 
        .groups = "drop"
-        
     ) %>% 
+
     arrange(filename, (harvest), desc(season), trmt, type) %>% 
-    select(!c(pts_wall_any, pct_points_any,pts_wall_seedl,pct_points_seedl,pts_wall_GTR5ft, pct_points_GTR5ft,
-              supC1, supC2, expC1, expC2, denom)) %>% 
-        select(filename, harvest, season, growingseasons, trmt,  wall_count, points_per_wall, type, 
-           clumps.acre, stems.ramet, type_diversity, everything()) %>% 
+    mutate(df = "type_by_cluster") %>% 
+#    select(-x1, -x2, -supC1, -supC2, -expC1, -expC2, -denom) %>% 
+        select(filename, df, cluster, harvest, season, trmt, points_per_cluster, growingseasons, 
+               type, pct_points_any, pct_points_GTR1ft,
+               pct_points_GTR5ft, clumps_per_acre, stems_per_ramet, everything()) %>% 
     mutate(
         across(where(is.numeric), ~ round(., 1))
     )
+
+    
+    
+    
+    
+#####    
+#         left_join(wall_counts, by = c("cluster", "harvest", "season", "trmt", "wall_count")) %>%  # Join to get the correct wall_count
+#         group_by(cluster, harvest, season, trmt, type) %>% 
+#         summarize(
+#             filename = first(filename),
+#             points_per_wall = first(points_per_wall),
+#             type = first(type),
+#             freq_by_grouping = n(),
+#             wall_count = first(wall_count),
+# #             pts_wall_any = sum(numb_pts_any), #nonsensical.  Go to sum@point, flag a point if any comm, if any interf, etc. then summ
+# #             pts_wall_seedl = sum(numb_pts_seedl),
+# #             pts_wall_GTR5ft = sum(numb_pts_GTR5ft),
+#             pct_points_any = sum(numb_pts_any) / points_per_wall *100,
+#             pct_points_seedl = sum(numb_pts_seedl) / points_per_wall *100,
+#             pct_points_GTR5ft = sum(numb_pts_GTR5ft) / points_per_wall * 100,
+#            type_diversity = n_distinct(spp), # the number of species per type. NEED to standardize this for area
+#            across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / wall_count),  # Normalize by wall_count
+#            across(all_of(numeric_vars2), mean, na.rm = TRUE),
+#            #across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / wall_count)  # Normalize by wall_count
+#            #
+#        x1 = sum(stems_per_ramet, na.rm = TRUE), #the total of the stems per ramet
+#        x2 = sum(stems_per_ramet > 0, na.rm = TRUE), # the number of spp with clumps
+#        clumps_per_acre = sum(clumps_per_acre),
+#        clumps_per_acre = sum(clumps_per_acre),
+#        stems_per_ramet = if_else(x2 > 0, x1 / x2, NA_real_), #average stems.ramet
+# 
+#        .groups = "drop"
+#         
+#     ) %>% 
+#     mutate(
+#         df = "type_by_cluster"
+#     ) %>% 
+#     arrange(filename, (harvest), desc(season), trmt, type) %>% 
+#     select(!c(pts_wall_any, pct_points_any,pts_wall_seedl,pct_points_seedl,pts_wall_GTR5ft, pct_points_GTR5ft,
+#               supC1, supC2, expC1, expC2, denom)) %>% 
+#         select(filename, df, cluster, harvest, season, growingseasons, trmt,  wall_count, points_per_wall, type, 
+#            clumps.acre, stems.ramet, type_diversity, everything()) %>% 
+#     mutate(
+#         across(where(is.numeric), ~ round(., 1))
+#     )
+
 output_file <- file.path(output_folder, paste0("type_x_harvest_x_trmt_x_season(20feb2025)", ".xlsx"))
 write_xlsx(type_by_harvest, output_file)
 
