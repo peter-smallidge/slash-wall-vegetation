@@ -1619,7 +1619,7 @@ yay2_wall <- all_combinations %>%
 ```
 
 
-
+MAKE COMPLETE
 make complete 2019 through 2024
 #df= all_seasons that results in df=yay2_harvest
 # (season x harvest)
@@ -1795,6 +1795,7 @@ yay2_harvest <- all_combinations_harvest %>%
 table(yay2_harvest$harvest, yay2_harvest$wall)
 table(yay2_harvest$harvest, yay2_harvest$growingseasons)
 table(yay2_harvest$harvest, yay2_harvest$cluster)
+table(yay2_harvest$wall)
 
 # Within a harvest there can be multiple walls (e.g., harvest = recknagel includes walls: recknagel, r1, r2, r3 and r4).  
 # A higher order variable "cluster" has values of: early, second, cafri and drop. "drop" should be excluded from analysis.
@@ -1981,7 +1982,7 @@ yay2_harvest %>%
 
 ```{r}
 # Define the output file path
-output_file <- file.path(output_folder, paste0("veg_data_2019to2024_complete(31july2025)", ".xlsx"))
+output_file <- file.path(output_folder, paste0("veg_data_2019to2024_complete(12sept2025)", ".xlsx"))
 write_xlsx(yay2_harvest, output_file)
 ```
 

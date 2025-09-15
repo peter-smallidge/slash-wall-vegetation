@@ -51,7 +51,8 @@ library(openxlsx)
 file paths, input and output
 ```{r}
 #complete data
-file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(31july2025)(readme).xlsx"
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(12sept2025)(readme).xlsx"
+
 
 file_path_site <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\site_data_2019_2024(22july2025)(readme).xlsx"
 
