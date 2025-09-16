@@ -1760,9 +1760,10 @@ yay2_harvest <- all_combinations_harvest %>%
         exp_sp_1_5 = expP
     ) %>% 
     mutate(
-    cluster = "drop"
+    cluster = "spare"
 )   %>%  
     mutate(cluster = case_when(
+        harvest == "decker" & location == "c" ~ "early",
         harvest %in% c("gas_line", "red_pine", "sta_rd", "fairfield_a5", "danby_block_2", "goundry_a17", "fairfield_a6") ~ "early",
         harvest %in% c("campridge", "recknagel", "circle") ~ "second",
         harvest %in% c("6_6", "6_9") ~ "cafri",
