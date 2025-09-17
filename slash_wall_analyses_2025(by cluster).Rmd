@@ -201,7 +201,29 @@ group_by(forest_type, growingseasons, brush, trmt, spp, point) %>%  #summary by 
         GTR1ft = sup_sd12_5 + sup_sd5_1 + sup_sp_1_5 + exp_sd12_5 + exp_sd5_1 + exp_sp_1_5, 
         all_sizes = seed_4_12 + GTR1ft, 
         df = "FT_calc1"
+    ) %>% 
+      mutate(
+    brush = case_when(
+      brush == "b" ~ "brushed",
+      brush == "u" ~ "unbrushed",
+      TRUE ~ brush  # Keep any other values unchanged
     )
+  )
+
+table(veg_data$harvest, veg_data$forest_type)
+table(veg_data$harvest,veg_data$cluster)
+table(veg_data$cluster,  veg_data$trmt)
+table(veg_data$harvest, veg_data$growingseasons)
+```
+
+```{r}
+old <- veg_data %>% 
+    filter(harvest == "fairfield_a6")%>%
+#    summarise(distinct_species = n_distinct(spp))
+    distinct(spp) %>%
+    pull(spp)
+
+print(old)
 ```
 
 
@@ -314,7 +336,7 @@ rm(test_summary)
 rm(group_check)
 ```
 
-
+# group by forest type and spp
 ```{r}
 FT_calc2 <- FT_calc1 %>% 
 
@@ -477,8 +499,56 @@ richness <- FT_calc2 %>%
            everything()) %>% 
         arrange(forest_type, growingseasons, brush, trmt, type)
     #arrange(desc(season), harvest, trmt, type, brush, spp, wall,  point)
+    #
+
+richness_summ <- richness %>% 
+    group_by(forest_type, growingseasons, trmt, brush) %>% 
+        summarize(
+        filename = first(filename),
+        richness_all_sizes = sum(richness_type_all_sizes, na.rm = TRUE),  # Sum the actual values
+        richness_GTR1ft = sum(richness_type_GTR1ft, na.rm = TRUE),        # Sum the actual values  
+        richness_GTR5ft = sum(richness_type_GTR5ft, na.rm = TRUE),        # Sum the actual values
+        .groups = "drop"
+        )
+
+# this summarize code sums the values.  To count the values, include "sum(variable > 0, na.rm=TRUE)" as in the previous df
+```
+
+#graph richnes
+```{r}
+figure_rich_gtr5 <- richness_summ %>%
+  filter(forest_type == "n_hdwd") %>%  # Filter for both brush and forest_type
+  mutate(growingseasons = as.numeric(growingseasons)) %>%  # Convert back to numeric
+  ggplot(aes(x = factor(growingseasons), 
+             y = richness_GTR5ft, 
+             fill = trmt)) +
+  geom_col(position = "dodge", width = 0.7) +  # Side-by-side bars
+  facet_wrap(~brush, scales = "fixed") +
+#  facet_wrap(~brush, scales = "free_y") +
+  labs(
+    title = "Forest Type Woody Richness by Growing Season (N. Hardwood)",
+    subtitle = "Number of Species >5ft tall fig=rich_gtr5_NH slash_wall_analyses2025(by cluster).Rmd",
+    x = "Growing Seasons",
+    y = "Number of Species",
+    fill = "Treatment"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  ) +
+  scale_fill_manual(values = c("control" = "blue", "protected" = "green"))
+
+# Display the plot
+print(figure_rich_gtr5)
+
+# Save the plot
+ggsave("figures/forest_type_richness_Figure_rich__NH_gtr5.jpg", 
+       plot = figure_rich_gtr5, width = 8, height = 6, dpi = 300)
 
 ```
+
+
 
 # occupancy by forest type for type. 
 # 
@@ -508,27 +578,45 @@ forest_type_occupancy <- FT_calc1 %>%
     arrange(forest_type, growingseasons, trmt, brush, type) %>% 
     select(filename, df, forest_type, trmt, brush, growingseasons, type, n_forest_type, occup_any_count, occup_any, occup_GTR1ft, occup_GTR5ft, 
            everything())
+```
 
+#something wrong with filter into ggplot, next chunk
+```{r}
+forest_type_occupancy %>%
+  count(brush, forest_type) %>%
+  arrange(brush, forest_type)
+
+step1 <- forest_type_occupancy %>% filter(brush == "b")
+step2 <- forest_type_occupancy %>% filter(forest_type == "n_hdwd") 
+step3 <- forest_type_occupancy %>% filter(brush == "b", forest_type == "n_hdwd")
+
+cat("brush == 'b':", nrow(step1), "\n")
+cat("forest_type == 'n_hdwd':", nrow(step2), "\n") 
+cat("Both filters:", nrow(step3), "\n")
 ```
 
 #graph forest type occupancy
 # figure = occ_1
 ```{r}
-# Create line graph of forest type occupancy
+# Create bar graph of forest type occupancy
 library(ggplot2)
 
 # Filter for brush = "u" only and create clean plot
 figure_occ_B_bars <- forest_type_occupancy %>%
-  filter(brush == "b", forest_type == "n_hdwd") %>%  # Filter for both brush and forest_type
   mutate(growingseasons = as.numeric(growingseasons)) %>%  # Convert back to numeric
+  filter(brush == "unbrushed", forest_type == "n_hdwd", growingseasons < 7) %>%  # Filter for both brush and forest_type
+  filter(!(type == "other")) %>% 
+
   ggplot(aes(x = factor(growingseasons), 
              y = occup_GTR5ft, 
              fill = trmt)) +
+
   geom_col(position = "dodge", width = 0.7) +  # Side-by-side bars
-  facet_wrap(~type, scales = "free_y") +
+  facet_wrap(~type, scales = "fixed") +
+#  facet_wrap(~type, scales = "free_y") +
   labs(
-    title = "Forest Type Occupancy by Growing Season (N. Hardwood, Brush = B)",
-    subtitle = "% of points stems >5ft tall fig=occ_B_NH slash_wall_analyses2025(by cluster).Rmd",
+    title = "Forest Type Occupancy by Growing Season (N. Hardwood, Unbrushed)",
+    subtitle = "% of points stems >5ft tall fig=occ_U_NH slash_wall_analyses2025(by cluster).Rmd",
     x = "Growing Seasons",
     y = "Occupancy (%)",
     fill = "Treatment"
@@ -543,8 +631,15 @@ figure_occ_B_bars <- forest_type_occupancy %>%
 # Display the plot
 print(figure_occ_B_bars)
 
+#notes
+#1. oak-hdwd unbrushed, and U NH suggest there is zero occupancy comm in 7th growing season protected.
+#   confirm there are dat for this and why the pattern isn't present. The only site with 7 growing
+#   seasons and oak pine unbrushed is Danby. I don't recall that had 75% comm occupancy > 5ft.
+#   Run those data through a filtered df to test the methods.
+
+
 # Save the plot
-ggsave("figures/forest_type_occupancy_Figure_occ_B_NH_bars.jpg", 
+ggsave("figures/forest_type_occupancy_Figure_occ_U_NH_bars.jpg", 
        plot = figure_occ_B_bars, width = 8, height = 6, dpi = 300)
 ```
 
@@ -1297,11 +1392,47 @@ write_xlsx(final_result, output_file)
 
 
 
+```
+# graphs of stem counts per acre
+```{r}
+figure_tpa_B <- FT_calc2 %>%
+  mutate(growingseasons = as.numeric(growingseasons)) %>%
+  filter(forest_type == "n_hdwd", type == "interfere", growingseasons < 7) %>%
+  filter(!(growingseasons > 6 & trmt == "control")) %>% 
+  ggplot(aes(x = factor(growingseasons), 
+             y = upperexposed, 
+             fill = trmt)) +
+  geom_col(position = "dodge", width = 0.7) +
+  facet_wrap(~brush, scales = "fixed") +
+#  facet_wrap(~brush, scales = "free_y") +
+  labs(
+    title = "Interference Stems Per Acre by Growing Season (N. Hardwood)",
+    subtitle = "Stems Exposed and >5ft tall fig=tpa_B slash_wall_analyses2025(by cluster).Rmd",
+    x = "Growing Seasons",
+    y = "Stems Per Acre",
+    fill = "Treatment"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  ) +
+  scale_fill_manual(values = c("control" = "blue", "protected" = "green"))
 
+# Display the plot
+print(figure_tpa_B)
 
+#note the code above excludes one of the state forests
+#   either danby or goundry with a 7 growing seasons and apparently high commercial 
+#   stem density. Verify those calculations and consider if the comparison is valid.
+#   the NH brushed suggests there are no commercial stems outside the wall at year 7.
+#   This also doesn't seem correct.
+
+# Save the plot
+ggsave("figures/forest_type_stem_density_interfere_NH_Figure_tpa_B.jpg", 
+       plot = figure_tpa_B, width = 8, height = 6, dpi = 300)
 
 ```
-
 
 
 
