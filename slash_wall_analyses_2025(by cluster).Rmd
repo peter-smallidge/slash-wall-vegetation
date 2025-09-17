@@ -1195,7 +1195,8 @@ figure_c1 <- ggplot(comm01, aes(x = cluster, y = tpa, fill = fill_color, pattern
 ```
 
 
-# Merge the TPA data for species x harvest x trmt, assemble into an output file that can be used to make tables.
+# Merge the  data for species x forest type x trmt, assemble into an output file that can be used to make tables.
+# 
 ```{r}
 
 ## Step 1: Select top 5 species within each group
@@ -1232,7 +1233,7 @@ total_row <- bind_rows(top_spp, remainder) %>%
 
 # Combine and sort Remainder and TOTAL first
 remain_total <- bind_rows(remainder, total_row) %>%
-  arrange(spp) %>%   # Sort by spp to ensure Remainder comes before TOTAL
+  arrange(growingseasons, forest_type, trmt, brush, spp) %>%   # Sort by spp to ensure Remainder comes before TOTAL
   mutate(spp = case_when(
         spp %in% c("Total") ~ "TOTAL", # see step 3 above where spp defined as "Total" but could change to "TOTAL"
         TRUE ~ spp,  # Keeps the existing value of "spp" for all other cases
@@ -1261,33 +1262,33 @@ blank_rows <- top_spp %>%
 # Now combine with top_spp
 final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
   arrange(growingseasons, forest_type, trmt, brush, dummy) %>%  # Sort by dummy for correct order
+
+  # mutate(
+  #   date = "16sept2025",
+  #   across(
+  #     !dummy,  # All columns except dummy
+  #     ~ if_else(dummy %in% c(6, 7), NA, .x)  # Correct syntax
+  #   )
+  # ) %>% 
+    
   mutate(
     date = "16sept2025",
     across(
-      !dummy,  # All columns except dummy
-      ~ if_else(dummy %in% c(6, 7), NA, .x)  # Correct syntax
-    )
-  ) %>%  
+      !dummy,
+      ~ if_else(dummy == 8, NA, .x)  # Set to NA when dummy equals 8
+    )) %>%
+    
+    mutate(
+        across(where(is.numeric), ~ round(.x, 1))
+    ) %>% 
+    
 #  select(-x1, -x2, -denom) %>%  
-  select(filename, df, date, forest_type, trmt, brush, growingseasons, spp, type,everything())
+  select(filename, df, date, forest_type, trmt, brush, growingseasons, spp, type, 
+         n_forest_type, stemcount, GTR1ft, GTR5ft, upperexposed, everything())
 
 
 
 
-
-# final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
-#   arrange(harvest, season, trmt, dummy) %>%    # Sort by dummy for correct order
-#   mutate(
-#     date = "19 feb 2025",
-#     across(
-#       c(wall_count, growingseasons, 
-#         stems.ramet, firstgrow, year, denom, height, pct_points_any, pct_points_seedl,
-#            pct_points_GTR5ft, freq_by_grouping),
-#       ~ if_else(dummy %in% c(6, 7), NA_real_, .)# this code removes the values for these variables # for the Remainder and Total rows, for which they are nonsensical
-#     ) %>% 
-#   select(-x1, -x2, -denom)%>% 
-#   select(filename, date, harvest, trmt, season, wall_count, growingseasons, spp, everything())
- 
 
 
 output_file <- file.path(output_folder, paste0("top_spp_by_forest_type_and_growingseason(16sept2025)", ".xlsx"))
