@@ -1,0 +1,122 @@
+---
+title: "sapling_control_preharvest"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+###Initialize Libraries
+
+```{r message=FALSE}
+
+#library(ggplot2)
+#library(ggpubr)
+library(expss)
+library(readr)
+library(readxl)
+library(writexl)
+library(skimr)
+library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+library(knitr)
+library(janitor)
+#install.packages("openxlsx")
+library(openxlsx)
+# install.packages("shinyaddins")
+# library(shinyaddins)
+
+```
+
+#
+# ALT plus hypen = <- (within chunk)
+# ctrl plus shift plus m = %>% 
+# ctrl + ALT + I = insert chunk
+# ALT + - = insert assignment operator
+# filter rows, select columns
+# RMD comment = <!-- comment -->
+# 
+# 
+
+<!--
+-->
+
+<!--     -->
+
+### code 01
+### Create file path input and the output folder (code 01) 
+
+file paths, input and output
+```{r}
+file_path_field_data <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\raw_data\\sapling_control_blocks_preharvest_sapling_regen_bld_data(19sept2025).xlsx"
+
+
+output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\"
+```
+
+#data input
+```{r}
+# field data were collected at 6 plots, 6 ft radius, per treatment block. Saplings were recorded in two inch dbh classes starting at 1 inch.
+# regen data were commercial spp at least 6" tall and up to 1" dbh.  bld (BLD) was a score of the plot-level condition of beech for beech leaf
+# disease. 
+field_data <- read_excel(file_path_field_data, sheet = "data entry", skip = 5) %>% 
+    mutate(
+        expansion = 43560 / (pi * (6^2)), #multiplier to conver plot count to stems per acre
+        dGT7 = as.numeric(dGT7),
+        across(where(is.numeric), ~ replace_na(., 0)), # replace na with 0 reflecting there are zero stems of a size class
+        tpa1_3 = d1_3 * expansion, # convert to stems per acre
+        tpa3_5 = d3_5 * expansion,
+        tpa5_7 = d5_7 * expansion,
+        tpaGT7 = dGT7 * expansion,
+        regen = regen * expansion
+        ) %>% 
+    mutate(
+        location = case_when(
+        str_starts(block, "s") ~ "sta_rd",
+        str_starts(block, "l") ~ "loop_rd",
+        TRUE ~ NA_character_   # keep NA if neither matches
+    )) %>% 
+    group_by(block) %>% 
+    summarize(
+        expansion = first(expansion),
+        location = first(location),
+        plot_count = n(),
+        tpa1_3 = sum(tpa1_3) / plot_count,
+        tpa3_5 = sum(tpa3_5) / plot_count,
+        tpa5_7 = sum(tpa5_7) / plot_count,
+        tpaGT7 = sum(tpaGT7) / plot_count,
+        regen   = sum(regen) / plot_count,
+        bld     = sum(bld) / plot_count,
+        .groups = "drop"
+    )
+
+
+
+
+```
+
+#location summary
+```{r}
+location_summ <- field_data %>% 
+    group_by(location) %>% 
+    summarize(
+        block_count = n(),
+        tpa1_3 = mean(tpa1_3),
+        tpa3_5 = mean(tpa3_5),
+        tpa5_7 = mean(tpa5_7),
+        tpaGT7 = mean(tpaGT7),
+        regen = mean(regen),
+        bld = mean(bld)
+    )
+```
+
+
+```{r}
+#template
+output_file <- file.path(output_folder, paste0("cafri2023_dbh_basalarea_raw_summ", ".xlsx"))
+write_xlsx(cafri2023_summary, output_file)
+```
+
