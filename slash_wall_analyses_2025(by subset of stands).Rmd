@@ -65,20 +65,23 @@ output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary
 #read veg data
 ```{r}
 veg_data <- read_excel(file_path_veg_complete, sheet = "Sheet1", skip = 0) %>% 
-    mutate(
-    cluster = "spare"
-)   %>%  
-    mutate(cluster = case_when(
-        harvest == "decker" & location == "c" ~ "second",
-        harvest %in% c("gas_line", "red_pine", "sta_rd", "fairfield_a5", "danby_block_2", "goundry_a17", "fairfield_a6") ~ "early",
-        harvest %in% c("campridge", "recknagel", "circle") ~ "second",
-        harvest %in% c("6_6", "6_9") ~ "cafri",
-    TRUE ~ cluster
-)) %>% 
-    filter(!cluster == "spare") %>% 
-    mutate(
-        growingseasons = as.character(growingseasons)
-    )
+    filter(harvest == "6_6")  #change stand name on line 378, 398, 599
+    
+# This code is used in this filename (by cluster)   
+#     mutate(
+#     cluster = "spare"
+# )   %>%  
+#     mutate(cluster = case_when(
+#         harvest == "decker" & location == "c" ~ "second",
+#         harvest %in% c("gas_line", "red_pine", "sta_rd", "fairfield_a5", "danby_block_2", "goundry_a17", "fairfield_a6") ~ "early",
+#         harvest %in% c("campridge", "recknagel", "circle") ~ "second",
+#         harvest %in% c("6_6", "6_9") ~ "cafri",
+#     TRUE ~ cluster
+# )) %>% 
+#     filter(!cluster == "spare") %>% #removes Decker wall, and maybe Decker control...need to check
+#     mutate(
+#         growingseasons = as.character(growingseasons)
+#     )
     
 table(veg_data$harvest,veg_data$cluster,  veg_data$trmt)
 table(veg_data$cluster, veg_data$trmt, veg_data$forest_type)
@@ -89,7 +92,7 @@ table(veg_data$harvest, veg_data$forest_type, veg_data$trmt)
 
 #calc denominators for averaging
 ```{r}
-forest_type_df <- veg_data %>% 
+forest_type_df <- veg_data %>% # no longer "forest type" but leave this nomenclature to simplify subsequent code
     group_by(forest_type, growingseasons, trmt, brush ) %>% #sequence doesn't matter
     summarise(
       n_forest_type = n_distinct(point), 
@@ -173,9 +176,9 @@ write_xlsx(denom_stand_trmt, output_file)
 # Calcuations to summarize by forest type and season
 ```{r}
 FT_calc1 <- veg_data %>%  # df = FT = forest type calculations
-    left_join(forest_type_df, by = c("growingseasons", "forest_type", "trmt", "brush")) %>% 
+    left_join(forest_type_df, by = c("forest_type", "growingseasons", "trmt", "brush")) %>% 
     mutate(
-        filename = "slash_wall_analyses_2025(by cluster)"
+        filename = "slash_wall_analyses_2025(by stand)"
     ) %>% 
 
 group_by(forest_type, growingseasons, brush, trmt, spp, point) %>%  #summary by species and point to remove origin
@@ -220,6 +223,9 @@ table(veg_data$cluster,  veg_data$trmt)
 table(veg_data$harvest, veg_data$growingseasons)
 ```
 
+
+
+# test of richness in fairfield_a6
 ```{r}
 old <- veg_data %>% 
     filter(harvest == "fairfield_a6")%>%
@@ -341,6 +347,7 @@ rm(group_check)
 ```
 
 # group by forest type and spp
+#FT_calc2 dataframe
 ```{r}
 FT_calc2 <- FT_calc1 %>% 
 
@@ -367,21 +374,29 @@ group_by(forest_type, growingseasons, brush, trmt, spp) %>%  #summary by species
         .groups = "drop"
     ) %>% 
     mutate(
-        df = "FT_calc2"
+        df = "FT_calc2",
+        stand = "cafri_6_6"
     ) %>% 
+    filter(growingseasons > 2) %>%  # retain the oldest growing season
+    filter(all_sizes >0) %>% 
     arrange(
-        forest_type, growingseasons, brush, trmt, spp) %>% 
+        forest_type, growingseasons, brush, trmt, type,spp) %>% 
     select(
-        filename, df, forest_type, growingseasons, brush, trmt, spp, type, n_forest_type, upperexposed, stemcount, everything()
-    )
-    
+        filename, df, stand, forest_type, growingseasons, brush, trmt, spp, type,  upperexposed, GTR5ft, GTR1ft, all_sizes,
+        clumps_per_acre, seed_4_12, sup_sd12_5, sup_sd5_1, sup_sp_1_5, exp_sd12_5, exp_sd5_1, exp_sp_1_5, n_forest_type, stems_per_ramet
+    ) %>% 
+    mutate_if(is.numeric, round, 0)
+   
+table(FT_calc2$growingseasons)
+
+ 
 
 ```
 
-
+#ignore output_file code.  All files written to the same excel.  See line 1460
 ```{r}
-output_file <- file.path(output_folder, paste0("forest_type_spp_summary(16sept2025)", ".xlsx"))
-write_xlsx(FT_calc2, output_file)
+# output_file <- file.path(output_folder, paste0("forest_type_spp_summary_cafri6.6(23sept2025)", ".xlsx"))
+# write_xlsx(FT_calc2, output_file)
 
 ```
 
@@ -459,8 +474,7 @@ numeric_vars1 <- c("GTR1ft", "all_sizes", "GTR5ft", "upperexposed", "seed_4_12",
 
 
 # count # spp within type present at each point. Summarize tpa by point
-df = summary_type
-
+#df = richness from FT_calc2
 ```{r}
 richness <- FT_calc2 %>%
 #    filter(season == "2023") %>%  # filter for season while checking code, then run for all seasons
@@ -518,6 +532,9 @@ richness_summ <- richness %>%
 # this summarize code sums the values.  To count the values, include "sum(variable > 0, na.rm=TRUE)" as in the previous df
 ```
 
+
+
+
 #graph richnes
 ```{r}
 figure_rich_gtr5 <- richness_summ %>%
@@ -558,30 +575,32 @@ ggsave("figures/forest_type_richness_Figure_rich__NH_gtr5.jpg",
 # 
 ```{r}
 forest_type_occupancy <- FT_calc1 %>%
+    filter(growingseasons > 2) %>% 
   group_by(forest_type, trmt, brush, growingseasons, type) %>%
   summarize(
     filename = first(filename),
     n_forest_type = first(n_forest_type),
     # Count distinct points where ANY species of this type has all_sizes > 0
     occup_any_count = n_distinct(point[all_sizes > 0], na.rm = TRUE),
-    occup_any = occup_any_count / first(n_forest_type) * 100,
+    occup_any_pct = occup_any_count / first(n_forest_type) * 100,
     
     occup_GTR1ft_count = n_distinct(point[GTR1ft > 0], na.rm = TRUE),
-    occup_GTR1ft = occup_GTR1ft_count / first(n_forest_type) * 100,
+    occup_GTR1ft_pct = occup_GTR1ft_count / first(n_forest_type) * 100,
     
     occup_GTR5ft_count = n_distinct(point[GTR5ft > 0], na.rm = TRUE),
-    occup_GTR5ft = occup_GTR5ft_count / first(n_forest_type) * 100,
+    occup_GTR5ft_pct = occup_GTR5ft_count / first(n_forest_type) * 100,
     .groups = "drop"
   )  %>%   
     mutate(
         across(where(is.numeric), ~ round(., 1))
   ) %>% 
   mutate(
-        df = "forest_type_occupancy PCT of points"
+        df = "forest_type_occupancy PCT of points",
+        stand = "cafri_6_6"
   ) %>% 
     arrange(forest_type, growingseasons, trmt, brush, type) %>% 
-    select(filename, df, forest_type, trmt, brush, growingseasons, type, n_forest_type, occup_any_count, occup_any, occup_GTR1ft, occup_GTR5ft, 
-           everything())
+    select(filename, df, stand, forest_type, trmt, brush, growingseasons, type, n_forest_type, occup_any_count, 
+           occup_any_pct, occup_GTR1ft_pct, occup_GTR5ft_pct, everything())
 ```
 
 #something wrong with filter into ggplot, next chunk
@@ -708,8 +727,8 @@ table(wall_type_occupancy$harvest, wall_type_occupancy$growingseasons)
 
 
 ```{r}
-output_file <- file.path(output_folder, paste0("forest_type_occupancy(16sept2025)", ".xlsx"))
-write_xlsx(forest_type_occupancy, output_file)
+# output_file <- file.path(output_folder, paste0("forest_type_occupancy(16sept2025)", ".xlsx"))
+# write_xlsx(forest_type_occupancy, output_file)
 
 
 ```
@@ -1371,7 +1390,7 @@ final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
   # ) %>% 
     
   mutate(
-    date = "16sept2025",
+    date = "23sept2025",
     across(
       !dummy,
       ~ if_else(dummy == 8, NA, .x)  # Set to NA when dummy equals 8
@@ -1382,16 +1401,16 @@ final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
     ) %>% 
     
 #  select(-x1, -x2, -denom) %>%  
-  select(filename, df, date, forest_type, trmt, brush, growingseasons, spp, type, 
-         n_forest_type, stemcount, GTR1ft, GTR5ft, upperexposed, everything())
+  select(filename, df, date, stand, forest_type, trmt, brush, growingseasons, spp, type, 
+         n_forest_type, all_sizes, GTR1ft, GTR5ft, upperexposed, everything())
 
 
 
 
 
-
-output_file <- file.path(output_folder, paste0("top_spp_by_forest_type_and_growingseason(16sept2025)", ".xlsx"))
-write_xlsx(final_result, output_file)
+#see code below to write all dataframe output to one excel file
+# output_file <- file.path(output_folder, paste0("top_spp_by_forest_type_and_growingseason(16sept2025)", ".xlsx"))
+# write_xlsx(final_result, output_file)
 
 
 
@@ -1440,5 +1459,36 @@ ggsave("figures/forest_type_stem_density_interfere_NH_Figure_tpa_B.jpg",
 
 
 
+#write all dataframes to a single excel file
+```{r}
+# The Old Way to Write to Worksheets
+# dfs2xlsx(withNames("full_spp_list", FT_calc2,
+#                    "summary of richness", richness_summ,
+#                    "percent point occupancy", forest_type_occupancy,
+#                    "top species", final_result
+#                         ), "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\summary cafri 6_6 23sept2025")
+
+#the new way.  Need to run library for openxlsx
+wb <- createWorkbook()
+
+# add each worksheet + its data
+addWorksheet(wb, "full_spp_list")
+writeData(wb, "full_spp_list", FT_calc2)
+
+addWorksheet(wb, "summary of richness")
+writeData(wb, "summary of richness", richness_summ)
+
+addWorksheet(wb, "percent point occupancy")
+writeData(wb, "percent point occupancy", forest_type_occupancy)
+
+addWorksheet(wb, "top species")
+writeData(wb, "top species", final_result)
+
+# save workbook (note .xlsx at the end!)
+saveWorkbook(
+  wb,
+  "C:/Users/pjs23/Documents/R/slash-wall-vegetation/summary output/summary cafri 6_6 23sept2025.xlsx",
+  overwrite = FALSE)
+                   
 
 ```
