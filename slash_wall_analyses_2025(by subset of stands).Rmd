@@ -65,26 +65,20 @@ output_folder <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary
 #read veg data
 ```{r}
 veg_data <- read_excel(file_path_veg_complete, sheet = "Sheet1", skip = 0) %>% 
-    filter(harvest == "6_6")  #change stand name on line 378, 398, 599
-    
-# This code is used in this filename (by cluster)   
-#     mutate(
-#     cluster = "spare"
-# )   %>%  
-#     mutate(cluster = case_when(
-#         harvest == "decker" & location == "c" ~ "second",
-#         harvest %in% c("gas_line", "red_pine", "sta_rd", "fairfield_a5", "danby_block_2", "goundry_a17", "fairfield_a6") ~ "early",
-#         harvest %in% c("campridge", "recknagel", "circle") ~ "second",
-#         harvest %in% c("6_6", "6_9") ~ "cafri",
-#     TRUE ~ cluster
-# )) %>% 
-#     filter(!cluster == "spare") %>% #removes Decker wall, and maybe Decker control...need to check
-#     mutate(
-#         growingseasons = as.character(growingseasons)
-#     )
-    
-table(veg_data$harvest,veg_data$cluster,  veg_data$trmt)
-table(veg_data$cluster, veg_data$trmt, veg_data$forest_type)
+#search for "stand =" and "date =" and change based on filters and today's date
+     filter(harvest %in% c("gas_line", "red_pine", "sta_rd", "recknagel", "campridge", "circle", "decker",
+                           "danby_block_2", "goundry_a17", "fairfield_a5")) %>% 
+     filter(!(harvest == "decker" & trmt == "protected")) %>% 
+#    filter(harvest %in% c("6_6")) %>%   
+     filter(growingseasons > 2)
+ 
+# gas_line,goundry_a17,danby_block_2    
+# use this table command to refine the above filters     
+table(veg_data$harvest, veg_data$growingseasons)
+table(veg_data$harvest, veg_data$trmt)
+table(veg_data$harvest, veg_data$brush)
+
+
 table(veg_data$harvest, veg_data$season, veg_data$trmt)
 table(veg_data$harvest, veg_data$forest_type, veg_data$trmt)
 ```
@@ -98,14 +92,6 @@ forest_type_df <- veg_data %>% # no longer "forest type" but leave this nomencla
       n_forest_type = n_distinct(point), 
       .groups = "drop"
     )
-
-cluster_df <- veg_data %>% 
-    group_by(cluster, growingseasons, trmt, brush) %>% 
-    summarise(
-        n_cluster = n_distinct(point),
-        .groups = "drop"
-    )
-
 
 
 ```
@@ -217,10 +203,9 @@ group_by(forest_type, growingseasons, brush, trmt, spp, point) %>%  #summary by 
     )
   )
 
-table(veg_data$harvest, veg_data$forest_type)
-table(veg_data$harvest,veg_data$cluster)
-table(veg_data$cluster,  veg_data$trmt)
-table(veg_data$harvest, veg_data$growingseasons)
+
+table(veg_data$harvest,veg_data$trmt, veg_data$growingseasons)
+
 ```
 
 
@@ -346,6 +331,11 @@ rm(test_summary)
 rm(group_check)
 ```
 
+
+
+
+
+
 # group by forest type and spp
 #FT_calc2 dataframe
 ```{r}
@@ -375,7 +365,7 @@ group_by(forest_type, growingseasons, brush, trmt, spp) %>%  #summary by species
     ) %>% 
     mutate(
         df = "FT_calc2",
-        stand = "cafri_6_6"
+        stand = "all_not_CAFRI"
     ) %>% 
     filter(growingseasons > 2) %>%  # retain the oldest growing season
     filter(all_sizes >0) %>% 
@@ -387,11 +377,57 @@ group_by(forest_type, growingseasons, brush, trmt, spp) %>%  #summary by species
     ) %>% 
     mutate_if(is.numeric, round, 0)
    
-table(FT_calc2$growingseasons)
+table(FT_calc2$growingseasons) # result shows the growing season and the #obs
 
  
 
 ```
+
+```{r}
+FT_calc3 <- FT_calc1 %>% 
+
+group_by(forest_type, growingseasons, brush, trmt, type) %>%  #summary by species by forest type and treatment labels
+    summarize(
+        filename = first(filename),
+        n_forest_type = first(n_forest_type),
+#        growingseasons = first(growingseasons),
+        clumps_per_acre = sum(clumps_per_acre) / first(n_forest_type),  # Sum all specified numeric clumps.acre and stems.ramet calc confirmed)
+        stems_per_ramet = sum(stems_per_ramet) / first(n_forest_type),
+        seed_4_12 = sum(seed_4_12) / first(n_forest_type),
+        sup_sd12_5 = sum(sup_sd12_5) / first(n_forest_type),    #suppressed seedling 12" to 5 ft
+        sup_sd5_1 = sum(sup_sd5_1) / first(n_forest_type),   # suppressed seedling 5 ft to 1" dbh
+        sup_sp_1_5 = sum(sup_sp_1_5) / first(n_forest_type),  # suppressed sapling 1" to 5"
+        exp_sd12_5 = sum(exp_sd12_5) / first(n_forest_type), # exposed seedling 12" to 5 ft
+        exp_sd5_1 = sum(exp_sd5_1) / first(n_forest_type),
+        exp_sp_1_5 = sum(exp_sp_1_5) / first(n_forest_type),   #expP = sum(expP),
+        upperexposed = sum(upperexposed) / first(n_forest_type),
+        stemcount = sum(stemcount) / first(n_forest_type), # the total number of stems
+        GTR5ft = sum(coalesce(GTR5ft, 0), na.rm = TRUE) / first(n_forest_type),
+        GTR1ft = sum(GTR1ft) / first(n_forest_type),
+        all_sizes = sum(all_sizes)/ first(n_forest_type),
+        .groups = "drop"
+    ) %>% 
+    mutate(
+        df = "FT_calc3",
+        stand = "all_not_CAFRI"
+    ) %>% 
+#   filter(growingseasons > 2) %>%  # growing season filtered in df=veg_data
+    filter(all_sizes >0) %>% 
+    arrange(
+        forest_type, growingseasons, brush, trmt, type) %>% 
+    select(
+        filename, df, stand, forest_type, growingseasons, brush, trmt,  type,  upperexposed, GTR5ft, GTR1ft, all_sizes,
+        clumps_per_acre, seed_4_12, sup_sd12_5, sup_sd5_1, sup_sp_1_5, exp_sd12_5, exp_sd5_1, exp_sp_1_5, n_forest_type, stems_per_ramet
+    ) %>% 
+    mutate_if(is.numeric, round, 0)
+   
+table(FT_calc3$growingseasons) # result shows the growing season and the #obs
+
+```
+
+
+
+
 
 #ignore output_file code.  All files written to the same excel.  See line 1460
 ```{r}
@@ -519,6 +555,21 @@ richness <- FT_calc2 %>%
     #arrange(desc(season), harvest, trmt, type, brush, spp, wall,  point)
     #
 
+spp_list <- FT_calc1 %>% 
+    select (forest_type, growingseasons, brush, trmt, spp, GTR5ft) %>% 
+    filter(GTR5ft >0) %>% 
+    group_by(forest_type, growingseasons, brush, trmt) %>%
+    summarise(
+        species_present = toString(unique(spp)),   # comma-separated list
+        reported = "GTR5ft",
+        .groups = "drop"
+    ) %>% 
+    select(forest_type, growingseasons, trmt, brush, reported, species_present) %>% 
+    arrange(forest_type, growingseasons, trmt, brush)
+
+      
+  
+
 richness_summ <- richness %>% 
     group_by(forest_type, growingseasons, trmt, brush) %>% 
         summarize(
@@ -575,7 +626,7 @@ ggsave("figures/forest_type_richness_Figure_rich__NH_gtr5.jpg",
 # 
 ```{r}
 forest_type_occupancy <- FT_calc1 %>%
-    filter(growingseasons > 2) %>% 
+#    filter(growingseasons > 2) %>% 
   group_by(forest_type, trmt, brush, growingseasons, type) %>%
   summarize(
     filename = first(filename),
@@ -596,7 +647,7 @@ forest_type_occupancy <- FT_calc1 %>%
   ) %>% 
   mutate(
         df = "forest_type_occupancy PCT of points",
-        stand = "cafri_6_6"
+        stand = "all_not_CAFRI"
   ) %>% 
     arrange(forest_type, growingseasons, trmt, brush, type) %>% 
     select(filename, df, stand, forest_type, trmt, brush, growingseasons, type, n_forest_type, occup_any_count, 
@@ -823,7 +874,8 @@ species_by_cluster <- species_by_wall %>%
             pct_points_GTR1ft = (sum(numb_pts_GTR1ft)) / points_per_harvest *100, # for stems > 12" tall
             pct_points_GTR5ft = (sum(numb_pts_GTR5ft)) / points_per_harvest * 100,
             
-           across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / wall_count),  # summ numeric from each wall, divide by number of walls = avg/harvest
+           across(all_of(numeric_vars1), ~ sum(.x, na.rm = TRUE) / wall_count),  
+            # summ numeric from each wall, divide by number of walls = avg/harvest
            across(all_of(numeric_vars2), mean, na.rm = TRUE),
            #across(all_of(numeric_vars2), ~ sum(.x, na.rm = TRUE) / wall_count)  # Normalize by wall_count
            #
@@ -1321,7 +1373,7 @@ figure_c1 <- ggplot(comm01, aes(x = cluster, y = tpa, fill = fill_color, pattern
 ## there are no calculations here, just sorting the top five spp for each group_by
 top_spp <- FT_calc2 %>%
   group_by(growingseasons, forest_type, trmt, brush) %>%
-  arrange(desc(GTR1ft), .by_group = TRUE) %>%
+  arrange(desc(GTR5ft), .by_group = TRUE) %>%
   slice_head(n = 5) %>%
   ungroup()
 
@@ -1382,7 +1434,7 @@ final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
   arrange(growingseasons, forest_type, trmt, brush, dummy) %>%  # Sort by dummy for correct order
 
   # mutate(
-  #   date = "16sept2025",
+  #   date = "9oct2025",
   #   across(
   #     !dummy,  # All columns except dummy
   #     ~ if_else(dummy %in% c(6, 7), NA, .x)  # Correct syntax
@@ -1390,7 +1442,7 @@ final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
   # ) %>% 
     
   mutate(
-    date = "23sept2025",
+    date = "9oct2025",
     across(
       !dummy,
       ~ if_else(dummy == 8, NA, .x)  # Set to NA when dummy equals 8
@@ -1416,6 +1468,191 @@ final_result <- bind_rows(top_spp, remain_total, blank_rows) %>%
 
 
 ```
+
+# summary by "type" for type x forest type x trmt
+```{r}
+
+# Merge the  data for type x forest type x trmt, assemble into an output file that can be used to make tables.
+# 
+
+
+## Step 1: Select top 5 species within each group
+## there are no calculations here, just pulling in the type summary 
+type_summ <- FT_calc3 %>%
+  group_by(growingseasons, forest_type, trmt, brush, type) %>%
+  arrange(growingseasons, forest_type, trmt, brush, type, .by_group = TRUE) %>%
+  ungroup()
+
+# Step 2: Calculate remainder for all other species
+# this step isn't needed
+remainder_type <- FT_calc2 %>%
+  group_by(growingseasons, forest_type, trmt, brush) %>%
+  filter(!type %in% type_summ$type) %>%  # Exclude top 5 spp
+  summarize(
+    type = "Remainder",  # Label for remaining species
+    across(where(is.numeric), sum, na.rm = TRUE),  # Sum numeric variables
+    #(average?)  stems.ramet = mean(stems.ramet)
+    .groups = "drop"
+  )
+
+# Step 3: Calculate total (sum of top 5 + remainder)
+total_row_type <- bind_rows(top_spp, remainder) %>%
+  group_by(growingseasons, forest_type, trmt, brush) %>%
+  summarize(
+    type = "TOTAL",  # Label for total
+    across(where(is.numeric), sum, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Step 4: Combine top 5 species, remainder,  total and add a blank row.
+# use a dummy variable to force the sort given there is no existing variable that
+# would sort ascending or descending.
+
+# Combine and sort Remainder and TOTAL first
+remain_total_type <- bind_rows(remainder_type, total_row_type) %>%
+  arrange(growingseasons, forest_type, trmt, brush, type) %>%   # Sort by spp to ensure Remainder comes before TOTAL
+  
+    # mutate(type = case_when(
+    #     type %in% c("Total") ~ "TOTAL", # see step 3 above where spp defined as "Total" but could change to "TOTAL"
+    #     TRUE ~ type,  # Keeps the existing value of "spp" for all other cases
+    # )) %>% 
+  mutate(dummy = case_when(
+        type == "Remainder" ~ 6,
+        type == "TOTAL" ~ 7,
+        TRUE ~ NA_real_  # Assign NA for other cases
+  ))
+
+# Assign dummy values to top_spp
+type_summ <- type_summ %>%
+  group_by(growingseasons, forest_type, trmt, brush, type) %>%
+  mutate(dummy = row_number()) %>%  # Assign 1 to 5
+  ungroup()
+
+blank_rows_type <- type_summ %>%
+  group_by(growingseasons, forest_type, trmt, brush) %>%
+  summarize(
+      type = "", 
+      TOTAL = NA, 
+      dummy = 8, 
+      .groups = "drop"
+      )
+
+# Now combine with top_spp
+final_result_type <- bind_rows(type_summ, remain_total_type, blank_rows_type) %>%
+  arrange(growingseasons, forest_type, trmt, brush, dummy) %>%  # Sort by dummy for correct order
+
+  mutate(
+    date = "9oct2025",
+    across(
+      !dummy,
+      ~ if_else(dummy == 8, NA, .x)  # Set to NA when dummy equals 8
+    )) %>%
+    
+    mutate(
+        across(where(is.numeric), ~ round(.x, 1))
+    ) %>% 
+    
+#  select(-x1, -x2, -denom) %>%  
+  select(filename, df, date, stand, forest_type, trmt, brush, growingseasons, type, 
+         n_forest_type, upperexposed, GTR5ft, GTR1ft, all_sizes, everything())
+
+
+
+```
+
+
+#summary by type x trmt x growing season
+```{r}
+# Merge the  data for type x forest type x trmt, assemble into an output file that can be used to make tables.
+# 
+
+
+## Step 1: Select top 5 species within each group
+## there are no calculations here, just pulling in the type summary 
+type_summ <- FT_calc3 %>%
+  group_by(growingseasons, trmt, type) %>% #group_by(growingseasons, forest_type, trmt, brush, type) %>%
+  arrange(growingseasons,  trmt, type, .by_group = TRUE) %>%
+  ungroup()
+
+# Step 2: Calculate remainder for all other species
+# this step isn't needed
+remainder_type <- FT_calc2 %>%
+  group_by(growingseasons, trmt, type) %>%   #group_by(growingseasons, forest_type, trmt, brush) %>%
+  filter(!type %in% type_summ$type) %>%  # Exclude top 5 spp
+  summarize(
+    type = "Remainder",  # Label for remaining species
+    across(where(is.numeric), sum, na.rm = TRUE),  # Sum numeric variables
+    #(average?)  stems.ramet = mean(stems.ramet)
+    .groups = "drop"
+  )
+
+# Step 3: Calculate total (sum of top 5 + remainder)
+total_row_type <- bind_rows(type_summ, remainder_type) %>%
+  group_by(growingseasons, trmt) %>%   #group_by(growingseasons, forest_type, trmt, brush) %>%
+  summarize(
+    type = "TOTAL",  # Label for total
+    across(where(is.numeric), sum, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Step 4: Combine top 5 species, remainder,  total and add a blank row.
+# use a dummy variable to force the sort given there is no existing variable that
+# would sort ascending or descending.
+
+# Combine and sort Remainder and TOTAL first
+remain_total_type <- bind_rows(remainder_type, total_row_type) %>%
+  arrange(growingseasons, trmt, type) %>%   # Sort by spp to ensure Remainder comes before TOTAL
+  
+    # mutate(type = case_when(
+    #     type %in% c("Total") ~ "TOTAL", # see step 3 above where spp defined as "Total" but could change to "TOTAL"
+    #     TRUE ~ type,  # Keeps the existing value of "spp" for all other cases
+    # )) %>% 
+  mutate(dummy = case_when(
+        type == "Remainder" ~ 6,
+        type == "TOTAL" ~ 7,
+        TRUE ~ NA_real_  # Assign NA for other cases
+  ))
+
+# Assign dummy values to top_spp
+type_summ <- type_summ %>%
+  group_by(growingseasons,  trmt, type) %>%
+  mutate(dummy = row_number()) %>%  # Assign 1 to 5
+  ungroup()
+
+blank_rows_type <- type_summ %>%
+  group_by(growingseasons,  trmt) %>%
+  summarize(
+      type = "", 
+      TOTAL = NA, 
+      dummy = 8, 
+      .groups = "drop"
+      )
+
+# Now combine with top_spp
+final_result_type <- bind_rows(type_summ, remain_total_type, blank_rows_type) %>%
+  arrange(growingseasons, trmt,  ) %>%  # Sort by dummy for correct order
+
+  mutate(
+    date = "9oct2025",
+    across(
+      !dummy,
+      ~ if_else(dummy == 8, NA, .x)  # Set to NA when dummy equals 8
+    )) %>%
+    
+    mutate(
+        across(where(is.numeric), ~ round(.x, 1))
+    ) %>% 
+    
+#  select(-x1, -x2, -denom) %>%  
+  select(filename, df, date, stand, trmt, growingseasons, type, 
+         n_forest_type, upperexposed, GTR5ft, GTR1ft, all_sizes, everything())
+
+```
+
+
+
+
+
 # graphs of stem counts per acre
 ```{r}
 figure_tpa_B <- FT_calc2 %>%
@@ -1472,23 +1709,33 @@ ggsave("figures/forest_type_stem_density_interfere_NH_Figure_tpa_B.jpg",
 wb <- createWorkbook()
 
 # add each worksheet + its data
-addWorksheet(wb, "full_spp_list")
-writeData(wb, "full_spp_list", FT_calc2)
+addWorksheet(wb, "top species")
+writeData(wb, "top species", final_result)
+
+addWorksheet(wb, "type summ")
+writeData(wb, "type summ", final_result_type)
 
 addWorksheet(wb, "summary of richness")
 writeData(wb, "summary of richness", richness_summ)
 
+addWorksheet(wb, "list of species")
+writeData(wb, "list of species", spp_list)
+
 addWorksheet(wb, "percent point occupancy")
 writeData(wb, "percent point occupancy", forest_type_occupancy)
 
-addWorksheet(wb, "top species")
-writeData(wb, "top species", final_result)
+addWorksheet(wb, "full_spp_list")
+writeData(wb, "full_spp_list", FT_calc2)
+
+addWorksheet(wb, "type_list")
+writeData(wb, "type_list", FT_calc3)
+
 
 # save workbook (note .xlsx at the end!)
 saveWorkbook(
   wb,
-  "C:/Users/pjs23/Documents/R/slash-wall-vegetation/summary output/summary cafri 6_6 23sept2025.xlsx",
-  overwrite = FALSE)
+  "C:/Users/pjs23/Documents/R/slash-wall-vegetation/summary output/summary cafri_6_6  24sept2025.xlsx",
+  overwrite = TRUE)
                    
 
 ```

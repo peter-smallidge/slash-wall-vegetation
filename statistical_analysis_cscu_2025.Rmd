@@ -1,0 +1,359 @@
+---
+title: "slash wall stats - paste from CSCU"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#version copied from 9/22/2025
+```{r}
+library(ggplot2)
+library(dplyr)
+
+library(readxl)
+
+library(lme4)
+
+library(emmeans)
+#library(lmerTest)
+```
+
+
+
+
+```{r}
+file_path_veg_complete <- "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\veg_data_2019to2024_complete(12sept2025)(readme).xlsx"
+
+```
+
+
+```{r}
+veg_data <- read_excel(file_path_veg_complete, sheet = "Sheet1", skip = 0) %>% 
+# # 
+# veg_data <- read_excel("veg_data_2019to2024_complete(12sept2025).xlsx") %>%
+
+    filter(
+        !(harvest %in% c("6_6", "6_9", "recknagel_north")) &  #removes these harvests, but need decker=control
+        !(harvest == "decker" & trmt == "protected") ) %>% 
+    mutate(cluster = case_when(
+        harvest == "decker" ~ "second",
+        TRUE ~ cluster
+    ))       
+ 
+ 
+  # mutate(cluster = case_when(
+  #   harvest %in% c("campridge", "recknagel",  "circle" ) ~ "recknagel", 
+  #   harvest %in% c("red_pine", "danby_block_2",  "gas_line" , "sta_rd"  ) ~ "recknagel",  ))
+
+table(veg_data$trmt, veg_data$harvest)
+table(veg_data$harvest, veg_data$cluster)
+table(veg_data$harvest, veg_data$growingseasons)
+
+#danby is somewhere else, and due to similarity of age is a control for red pine and gasline. 
+
+View(veg_data)
+#each row is a species at a plot, either clump/singles. 
+table(veg_data$harvest, veg_data$wall)
+# wall 99 means the only wall at that site, control, protected. 
+table(veg_data$trmt, veg_data$wall)
+
+table(veg_data$harvest, veg_data$brush)
+
+table(veg_data$brush)
+
+
+table(veg_data$harvest,veg_data$cluster,  veg_data$trmt)
+
+
+table(veg_data$brush, veg_data$trmt)
+#brushed and unbrushed only exist in 6/6 and 6/9
+#subset out only brushed for the first anlaysis. 
+
+
+#upperexposed is the response variables (density = stems/acre)
+```
+
+
+
+```{r}
+veg_data %>%
+# not a good graph
+  ggplot(aes(y=upperexposed, x = trmt, color=type ))+
+  geom_point()+
+  facet_wrap(~spp)
+
+#diversity and interfere species are of more interest than commerical. 
+
+
+#a good graph: 
+veg_data %>%
+    ggplot(aes(y=upperexposed, x = growingseasons, color=type ))+
+  geom_jitter(height=0, width=0.2)+
+  facet_grid(type~trmt)
+
+#observe higher upperexposed in protected group. 
+#also from literature, define a "success" threshold which says number of stems where you declare "success"- at what year do we achieve that? 
+
+#
+```
+
+
+```{r}
+agg_data <- veg_data%>%
+  group_by(season, cluster, harvest, wall, point, growingseasons, trmt,  type )%>%
+  summarize(total_upperexposed= sum(upperexposed)) %>%
+  filter(growingseasons < 10 & growingseasons > 1)%>%
+  filter(type!="other")  #take out other, not so interesting to report
+
+
+agg_data %>%
+    ggplot(aes(y=total_upperexposed, x = growingseasons, color=type ))+
+  geom_jitter(height=0, width=0.2)+
+  facet_grid(type~trmt)
+
+table(agg_data$harvest, agg_data$wall)
+# wall 99 means the only wall at that site, control, protected. 
+table(agg_data$trmt, agg_data$wall)
+
+#table(agg_data$harvest, agg_data$brush)
+
+table(agg_data$brush)
+
+table(veg_data$growingseasons, veg_data$season)
+table(veg_data$growingseasons, veg_data$harvest)
+
+agg_data %>%
+  ggplot(aes(y=total_upperexposed, x = growingseasons, color=trmt, 
+             group=interaction(point, harvest)))+
+  geom_line()+
+  geom_jitter(height=0, width=0.2)+
+  facet_grid(harvest~wall)
+# 
+# library(lme4)
+# mod <- glmer(total_upperexposed ~ as.factor(growingseasons) * type * trmt + (1 | harvest/ wall/ point), data=agg_data, family="poisson")
+# #This won't run
+# summary(mod)
+
+#with(agg_data, table(point, growingseasons, harvest, trmt))
+```
+
+
+```{r}
+max_agedata <- agg_data %>%
+  group_by( harvest, wall, trmt )%>%
+  filter(growingseasons == max(growingseasons))
+
+
+
+
+max_agedata %>%
+  ggplot(aes(y=total_upperexposed, x = growingseasons, color=trmt, 
+             group=interaction(point, harvest)))+
+  geom_line()+
+  geom_jitter(height=0, width=0.2)+
+  facet_grid(harvest~wall)
+# 
+###########
+
+
+
+agg_data %>%
+  group_by(cluster, point, harvest)%>%
+  count()
+```
+
+
+```{r}
+#This is what we will want
+agg_data %>%
+  ggplot(aes(y=total_upperexposed, x = growingseasons, color=type, 
+             group=interaction(cluster, point, harvest, type)))+
+  geom_line()+
+  geom_jitter(height=0, width=0.2)+
+  facet_grid(trmt~cluster)+
+  scale_y_continuous(trans="log")
+
+# # #This won't run
+# library(lme4)
+# mod <- glmer(total_upperexposed ~ as.factor(growingseasons) * type * trmt + (1 | cluster/ harvest/ point), data=agg_data, family="poisson")
+# summary(mod)
+
+#because counts are high, we can probably do a normal distribution and log transform it
+#mod <- lmer(log(total_upperexposed+1) ~ as.factor(growingseasons) * type * trmt + (1 | cluster/ harvest/ point), data=agg_data)
+#This won't run
+#summary(mod)
+
+
+agg_data %>%
+  #filter(present==1)%>%
+  filter(harvest %in% c("gas_line", "red_pine", "recknagel", "sta_rd", "goundry_a17", "danby_block_2"))%>%
+    #need to include Decker control, why not use veg_data?
+  ggplot(aes(y=total_upperexposed, x = growingseasons, color=type, 
+             group=interaction(cluster, point, harvest, type)))+
+  geom_line()+
+  geom_jitter(height=0, width=0.2)+
+  facet_grid(trmt~harvest)
+
+#Try hurdle model
+#make a new variable, which is 1/0 for presense of the plant
+agg_data$present= as.numeric(agg_data$total_upperexposed > 0)
+
+
+agg_data %>%
+  filter(present==1)%>%
+  ggplot(aes(y=total_upperexposed, x = growingseasons, color=type, 
+             group=interaction(cluster, point, harvest, type)))+
+  geom_line()+
+  geom_jitter(height=0, width=0.2)+
+  facet_grid(trmt~cluster)+
+  scale_y_continuous(trans="log")
+
+#this is a hurdle model of 1 vs. 0
+posmod <- lmer(log(total_upperexposed) ~ as.factor(growingseasons) * type * trmt + (1 | cluster/ harvest/ point), data=subset(agg_data, present==1))
+plot(predict(posmod), residuals(posmod))
+hist(residuals(posmod))
+# no convergence warnings!!!  *******
+
+summary(posmod) #output is all relative to a reference value selected based on alphanumeric rank order
+# so, not very useful
+anova(posmod)
+# assess whehter there are any significant values. Doesn't work for the binomial model.
+
+#this asks for the mean predicted value for every group of treament/type/growingseason, 
+# and also compares treatments (control-protected) for every type/growingseaon
+posmod.emm <- emmeans(posmod, pairwise ~ trmt | type + as.factor(growingseasons) )
+posmod.emm
+#this is the "estimated marginal means interaction plot" which plots the means from the above table
+# according to growingseasons=color, trmt= x-axis, and type=panels.
+#try different combos, all are mathematcially correct, some are more applicable to your story
+posmod.emmip1 <- emmip(posmod, growingseasons~trmt | type, CIs=TRUE) 
+posmod.emmip1
+
+posmod.emmip2 <- emmip(posmod, type~trmt | growingseasons, CIs=TRUE) 
+posmod.emmip2
+
+```
+
+
+```{r}
+#  Let's do the presence/absence model
+with(agg_data, table(present, growingseasons, type, trmt))
+#No tall commerical species in a control plot as of season two (makes biological sense, too short)
+# to make the model work, we will switch one of the 0 observations to 1, 
+# candidates are either sta_rd (early) or recknagel (second)
+
+
+with(agg_data, table(present, growingseasons, type, trmt, harvest))
+agg_data %>%
+  filter(growingseasons=="2", type=="commercial", harvest %in% c("sta_rd", "recknagel"))%>%
+  with(., table(present, growingseasons, type, trmt, harvest))
+
+# make a 0 value into 1 from a point that eventually has a presence
+#find a control point who ended up having a commercial present in a later season
+agg_data %>%
+  filter( type=="commercial", harvest ==  "recknagel", trmt=="control")%>%
+  with(., table(growingseasons,present,  point, type, trmt, harvest))
+
+#find a comparable protected trmt point who ended up having a commercial present in a later season
+agg_data %>%
+  filter( type=="commercial", harvest ==  "recknagel", trmt=="protected")%>%
+  with(., table(growingseasons,present,  point, type, trmt, harvest))
+
+# commerical in protected for Recknagel is 23%, for sta_rd is 11%.  Changing a Recknagel 0 to 1 will make less of a difference. 
+
+agg_data[(agg_data$point==415) & (agg_data$growingseasons==2) & agg_data$type=="commercial","present"] <- 1
+#also change one from protected
+agg_data[(agg_data$point==138) & (agg_data$growingseasons==2) & agg_data$type=="commercial","present"] <- 1
+
+#22sept2025 (this model failed to converge)
+PAmod_1 <- glmer(present ~ as.factor(growingseasons) * type * trmt + (1 | cluster/ harvest/ point), data=agg_data, family="binomial")
+
+#1oct2025  #this model ran successfully
+PAmod <- glmer(present ~ as.factor(growingseasons) * type * trmt + (1 | cluster/ harvest/ point), data=agg_data, family="binomial", control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+#unsure if or when this code is needed. It wasn't run as of 1oct2025
+    # allFit(model, maxfun = 1e5) #replace "model" with the name of the model
+    # 
+    # install.packages("glmmTMB")
+    # library(glmmTMB) #need to load this.
+    # #this code uses glmmTMB, but is not necessary because PAmod on line 277 ran without convergence
+    # #with optimizer = "bobyqa"
+    # PAmod_3 <- glmmTMB(present ~ as.factor(growingseasons) * type * trmt + 
+    #                        (1 | cluster/ harvest/ point), data=agg_data, family="binomial") 
+    # # similar to glmer. TMB uses a different optimization model than Nelder_Mead or bobyqa
+
+             
+#fixed = type, trmt   "fixed" are variables/factors of interest and importance. Usually two or just a few levels
+# random effect = represents something that may not be independent, not of particular importance 
+#   for analysis or discussion (cluster, harvest, point). May have many levels for a variable/factor (e.g., point)
+
+
+#summary, emm, emmip are all resultant from the bobyqa optimizer and presence absence data
+summary(PAmod) #values are relative, not very useful output
+PAmod.emm <- emmeans(PAmod, ~type+trmt | growingseasons, CIs=TRUE, type="response") 
+    #estimated means. 
+
+
+
+#following code from CSCU
+#estimate values for each growing season make comparisons between all types and trmts
+PAmod.emm
+#estimates the probability, by season and trmt, if a seedling is present
+
+PAmod.emmip <- emmip(PAmod, type~trmt | growingseasons, CIs=TRUE, type="response")
+PAmod.emmip #plotting values, separate plot for each growing season
+
+PAmod.emmip2 <- emmip(PAmod, trmt~growingseasons | type, CIs=TRUE, type="response")
+PAmod.emmip2 #growingseason on x-axis, separate plot for each "type"
+#something strange in growingseason = 6
+
+with(agg_data, table( harvest,  trmt, growingseasons))
+with(agg_data, table( harvest,  trmt, cluster))
+
+
+PAmod_results_01 <- emmeans(PAmod, pairwise ~ trmt | type*growingseasons, CIs=TRUE, type="response")
+#consider type 1 error corrections with Erika
+#
+
+emmeans_df <- as.data.frame(PAmod_results_01$emmeans)  # Extract the emmeans part (not the contrasts)
+contrasts_df <- as.data.frame(PAmod_results_01$contrasts) # Extract the contrasts/pairwise comparisons
+
+# Create a list of dataframes
+results_list <- list(
+  emmeans = as.data.frame(PAmod_results_01$emmeans),
+  contrasts = as.data.frame(PAmod_results_01$contrasts)
+)
+
+write_xlsx(results_list, 
+           "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\PAmod_results_01.xlsx")  # Write to Excel with multiple sheets
+
+```
+
+
+```{r}
+
+###
+###  code suggested by claude.ai
+#note, format of emmeans is different than PAmod.emm, above
+#this saves the results to a df
+PAmod_results_02 <- emmeans(PAmod, pairwise ~ trmt | type*growingseasons,CIs=TRUE, type="response")
+
+emmeans_df <- as.data.frame(PAmod_results_02$emmeans)  # Extract the emmeans part (not the contrasts)
+contrasts_df <- as.data.frame(PAmod_results_02$contrasts) # Extract the contrasts/pairwise comparisons
+
+# Create a list of dataframes
+results_list <- list(
+  emmeans = as.data.frame(PAmod_results_02$emmeans),
+  contrasts = as.data.frame(PAmod_results_02$contrasts)
+)
+
+write_xlsx(results_list, 
+           "C:\\Users\\pjs23\\Documents\\R\\slash-wall-vegetation\\summary output\\PAmod_results_02.xlsx")  # Write to Excel with multiple sheets
+
+```
+
