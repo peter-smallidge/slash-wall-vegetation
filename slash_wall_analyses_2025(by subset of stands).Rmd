@@ -396,8 +396,8 @@ group_by(forest_type, growingseasons, brush, trmt, spp) %>%  #summary by species
     arrange(
         forest_type, growingseasons, brush, trmt, type,spp) %>% 
     select(
-        filename, df, stand, forest_type, growingseasons, brush, trmt, spp, type,  upperexposed, GTR5ft, GTR1ft, all_sizes,
-        clumps_per_acre, seed_4_12, sup_sd12_5, sup_sd5_1, sup_sp_1_5, exp_sd12_5, exp_sd5_1, exp_sp_1_5, n_forest_type, stems_per_ramet
+        filename, df, stand, forest_type,n_forest_type,  growingseasons, brush, trmt, spp, type,  upperexposed, GTR5ft, GTR1ft, all_sizes,
+        clumps_per_acre, seed_4_12, sup_sd12_5, sup_sd5_1, sup_sp_1_5, exp_sd12_5, exp_sd5_1, exp_sp_1_5, stems_per_ramet
     ) %>% 
     mutate_if(is.numeric, round, 0)
    
@@ -407,6 +407,34 @@ table(FT_calc2$growingseasons) # result shows the growing season and the #obs
 
 ```
 
+
+
+#test calc of FT_cal2
+# test calc validated 16oct2025
+```{r}
+FT_calc2_test <- FT_calc1 %>% 
+    filter(growingseasons == "3" & spp %in%c("bc", "rm") & trmt == "control") %>% 
+    select(forest_type,n_forest_type,  growingseasons, brush, trmt, spp, type,   GTR5ft, GTR1ft, all_sizes) %>%
+    group_by(forest_type, growingseasons, brush, trmt, spp) %>%  #summary by species by forest type and treatment labels
+    summarize(
+        type = first(type),
+        n_forest_type = first(n_forest_type),
+        GTR5ft = sum(coalesce(GTR5ft, 0), na.rm = TRUE) / first(n_forest_type),
+        GTR1ft = sum(GTR1ft) / first(n_forest_type),
+        all_sizes = sum(all_sizes)/ first(n_forest_type),
+        .groups = "drop"
+    ) %>% 
+
+    filter(growingseasons > 2) %>%  # retain the oldest growing season
+    filter(all_sizes >0) %>% 
+    arrange(
+        forest_type, growingseasons, brush, trmt, type,spp) %>% 
+    select(
+        forest_type,n_forest_type,  growingseasons, brush, trmt, spp, type,   GTR5ft, GTR1ft, all_sizes
+    ) %>% 
+    mutate_if(is.numeric, round, 0)
+
+```
 
 
 
@@ -468,7 +496,6 @@ group_by(growingseasons, trmt, type) %>%  #summary by type (not spp) and treatme
     summarize(
         filename = first(filename),
         n_trmt_df = first(n_trmt_df),
-#        growingseasons = first(growingseasons),
         clumps_per_acre = sum(clumps_per_acre) / first(n_trmt_df),  # Sum all specified numeric clumps.acre and stems.ramet calc confirmed)
         stems_per_ramet = sum(stems_per_ramet) / first(n_trmt_df),
         seed_4_12 = sum(seed_4_12) / first(n_trmt_df),
@@ -506,24 +533,26 @@ table(FT_calc4$growingseasons) # result shows the growing season and the #obs
 
 
 ## summary output from FT_calc2 doesn't agree with FT_calc4 (14october2025)
-# this chunk was to rectify the miscalc of calc2 and calc4. Due to point counts where danby and goundry had same point numbers
-```{r eval=FALSE}
+# this chunk was to rectify the miscalc of FT_ calc2 and calc4. Due to point counts where danby and goundry had same point numbers
+# as of 16oct2025 there is still misalignment of calculations
+```{r eval=TRUE}
 d2 <- FT_calc2 %>% 
     filter(growingseasons == 3 | growingseasons == 5) %>%  #retain if growingseasons equal 3 or 5
     filter(brush == "brushed") %>% 
     select(forest_type, n_forest_type, growingseasons, brush, trmt, spp, type, GTR1ft, GTR5ft, all_sizes) %>% 
     group_by(trmt, growingseasons, type) %>% 
     summarize(
-        n_forest_type = first(n_forest_type),
-        all_sizes = sum(all_sizes),
-        GTR1ft = sum(GTR1ft),
-        GTR5ft = sum(GTR5ft)
+        n = sum(n_forest_type),
+        n_forest_type_d2 = first(n_forest_type),
+        all_sizes_d2 = sum(all_sizes),
+        GTR1ft_d2 = sum(GTR1ft),
+        GTR5ft_d2 = sum(GTR5ft)
     )
 
 d2_total <- d2 %>% 
     group_by(trmt, growingseasons) %>% 
   summarize(
-    n = first(n_forest_type),
+    n_d2 = first(n_forest_type_d2),
     type = "total",  # Label for remaining species
     across(where(is.numeric), sum, na.rm = TRUE),  # Sum numeric variables
     .groups = "drop"
@@ -536,16 +565,16 @@ d4 <- FT_calc4 %>%
      select(growingseasons, n_trmt_df, trmt, type, GTR1ft, GTR5ft, all_sizes) %>% 
      group_by(trmt, growingseasons, type) %>% 
      summarize(
-        n_trmt_df = first(n_trmt_df),
-        all_sizes = sum(all_sizes),
-        GTR1ft = sum(GTR1ft),
-        GTR5ft = sum(GTR5ft)
+        n_trmt_df_d4 = first(n_trmt_df),
+        all_sizes_d4 = sum(all_sizes),
+        GTR1ft_d4 = sum(GTR1ft),
+        GTR5ft_d4 = sum(GTR5ft)
      )
 
 d4_total <- d4 %>% 
     group_by(trmt, growingseasons) %>% 
     summarize(
-    n = first(n_trmt_df),
+    n_d4 = first(n_trmt_df_d4),
         type = "total",  # Label for remaining species
     across(where(is.numeric), sum, na.rm = TRUE),  # Sum numeric variables
     .groups = "drop"
@@ -553,9 +582,60 @@ d4_total <- d4 %>%
     bind_rows(d4) %>% 
     arrange(growingseasons, trmt, type)
    
+mesh <- d2_total %>% 
+    full_join(d4_total, by = c("trmt", "growingseasons", "type")) %>% 
+    select(trmt,type, growingseasons,n_forest_type_d2,n_trmt_df_d4,all_sizes_d2,all_sizes_d4,
+           GTR1ft_d2,GTR1ft_d4,GTR5ft_d2,GTR5ft_d4)
 ```
 
 
+
+#recommended test of coding provided by claude AI on 17 oct 2025
+```{r}
+# Check the calculation method
+d4_check <- FT_calc1 %>%
+    left_join(trmt_df, by = c("growingseasons", "trmt")) %>% 
+    group_by(growingseasons, trmt, type) %>%
+    summarise(
+        total_stems = sum(stemcount, na.rm = TRUE),
+        trmt_df = first(n_trmt_df),
+        avg_stems_per_acre2 = total_stems / trmt_df,
+        .groups = "drop"
+    )
+
+# Verify by spot-checking one combination manually
+d4_check %>% filter(growingseasons == 3, trmt == "control", type == "commercial")
+# the value from this checks with the output from the TYPE BY TRMT code at the bottom
+
+
+d4_by_forest <- FT_calc1 %>%
+#  left_join(forest_type_df, by = c("growingseasons", "trmt", "forest_type")) %>%
+  group_by(growingseasons, trmt, forest_type, brush, type, spp) %>%
+  summarise(
+    total_stems = sum(stemcount, na.rm = TRUE),
+    forest_n = first(n_forest_type),
+    avg_stems_per_acre = total_stems / forest_n,
+    .groups = "drop"
+  )
+
+# Then sum across forest types
+d4_from_forests <- d4_by_forest %>%
+  group_by(growingseasons, trmt, type) %>%
+  summarise(
+    combined_total_stems = sum(total_stems),
+    combined_n_points = sum(forest_n),
+    combined_avg = combined_total_stems / combined_n_points,
+    .groups = "drop"
+  )
+
+# Compare with your d4_check
+comparison <- d4_check %>%
+  left_join(d4_from_forests, by = c("growingseasons", "trmt", "type")) %>%
+  mutate(diff = round(avg_stems_per_acre2 - combined_avg, 4))
+
+comparison
+
+```
 
 
 
