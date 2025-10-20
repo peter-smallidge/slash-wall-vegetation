@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+explore species-area relationships
+https://cran.r-project.org/web/packages/sars/vignettes/sars-r-package.html 
+
+
 # activate library functions
 ```{r message=FALSE}
 
@@ -1774,6 +1778,7 @@ final_result_type <- bind_rows(type_summ, remain_total_type, blank_rows_type) %>
 # Merge the  data for type x forest type x trmt, assemble into an output file that can be used to make tables.
 # 
 
+#unbrushed sites removed in the calculations for df=FT_calc4
 
 ## Step 1: Select top 5 species within each group
 ## there are no calculations here, just pulling in the type summary 

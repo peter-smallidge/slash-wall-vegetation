@@ -1,0 +1,49 @@
+---
+title: "species area curves"
+author: "Peter Smalldige"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message=FALSE}
+library(sars)
+
+
+
+# library(ggplot2)
+# library(ggpattern)
+# #library(ggpubr)
+# library(expss)
+# library(readr)
+# library(readxl)
+# library(writexl)
+# library(skimr)
+# library(tidyverse)  # includes: tidyr, dplyr, haven, readr, readxl, forcats, stringer, ggplot2. See all with tidyverse_packages()
+# library(knitr)
+# library(janitor)
+# # library %>% (shinyaddins)
+# library(openxlsx)
+
+
+# install.packages("shinyaddins")
+# install.packages("openxlsx")
+# 
+# 
+```
+
+#instructions for sars
+# https://cran.r-project.org/web/packages/sars/vignettes/sars-r-package.html 
+
+
+```{r}
+data(galap) 
+fit <- sar_loga(data = galap, grid_start = "partial") 
+summary(fit) 
+
+```
+
